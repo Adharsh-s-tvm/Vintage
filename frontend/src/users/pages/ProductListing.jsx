@@ -69,7 +69,7 @@ const ProductListing = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(4); // Number of products per page
+  const [itemsPerPage] = useState(8); // Number of products per page
 
   const navigate = useNavigate();
 
@@ -314,7 +314,7 @@ const ProductListing = () => {
 
   // Format price in rupees
   const formatPrice = (price) => {
-    return `₹${(price ).toFixed(2)}`;
+    return `₹${(price).toFixed(2)}`;
   };
 
   // Get all images for a product (main + sub images from first variant with subImages)
@@ -621,29 +621,53 @@ const ProductListing = () => {
                   />
                 </div>
 
-                {/* Thumbnail images */}
+                {/* Updated thumbnail carousel */}
                 {images.length > 1 && (
-                  <div className="flex gap-2 p-2 overflow-x-auto">
-                    {images.slice(0, 4).map((img, index) => (
-                      <div
-                        key={index}
-                        className={cn(
-                          "h-16 w-16 flex-shrink-0 cursor-pointer border-2 rounded",
-                          activeImage[product._id] === img ? "border-primary" : "border-transparent"
-                        )}
-                        onClick={() => handleImageChange(product._id, img)}
-                      >
-                        <img
-                          src={img}
-                          alt={`${product.name} thumbnail ${index}`}
-                          className="h-full w-full object-cover rounded"
-                        />
-                      </div>
-                    ))}
+                  <div className="relative px-8 py-2">
+                    <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+                      {images.map((img, index) => (
+                        <div
+                          key={index}
+                          className={cn(
+                            "h-12 w-12 flex-shrink-0 cursor-pointer border-2 rounded transition-all",
+                            activeImage[product._id] === img ? "border-primary" : "border-transparent"
+                          )}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleImageChange(product._id, img);
+                          }}
+                        >
+                          <img
+                            src={img}
+                            alt={`${product.name} thumbnail ${index}`}
+                            className="h-full w-full object-cover rounded"
+                          />
+                        </div>
+                      ))}
+                    </div>
                     {images.length > 4 && (
-                      <div className="h-16 w-16 flex-shrink-0 flex items-center justify-center bg-gray-100 text-gray-600 rounded">
-                        +{images.length - 4}
-                      </div>
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const container = e.currentTarget.parentElement?.querySelector('.overflow-x-auto');
+                            if (container) container.scrollLeft -= 100;
+                          }}
+                          className="absolute left-1 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow hover:bg-white"
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const container = e.currentTarget.parentElement?.querySelector('.overflow-x-auto');
+                            if (container) container.scrollLeft += 100;
+                          }}
+                          className="absolute right-1 top-1/2 -translate-y-1/2 bg-white/80 rounded-full p-1 shadow hover:bg-white"
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </button>
+                      </>
                     )}
                   </div>
                 )}
@@ -728,4 +752,7 @@ const ProductListing = () => {
 };
 
 export default ProductListing;
+
+
+
 
