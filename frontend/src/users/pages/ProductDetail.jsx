@@ -96,6 +96,7 @@ export default function ProductDetail() {
   const [isHovering, setIsHovering] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showRatingDetails, setShowRatingDetails] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState([]);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -105,6 +106,8 @@ export default function ProductDetail() {
         console.log("Single product: ", productData);
 
         setProduct(productData);
+        // Fetch related products after getting product details
+        await fetchRelatedProducts(productData);
         // Set initial variant if available
         if (productData.variants && productData.variants.length > 0) {
           setSelectedVariant(productData.variants[0]);
@@ -204,6 +207,24 @@ export default function ProductDetail() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  // Add this function to fetch related products
+  const fetchRelatedProducts = async (product) => {
+    try {
+      // Fetch products with the same category or brand
+      const response = await axios.get(`${api}/products`, {
+        params: {
+          category: product.category._id,
+          brand: product.brand._id,
+          exclude: product._id // Exclude current product
+        }
+      });
+
+      setRelatedProducts(response.data.products.slice(0, 4)); // Limit to 4 related products
+    } catch (error) {
+      console.error('Error fetching related products:', error);
+    }
   };
 
   if (loading) {
@@ -648,6 +669,51 @@ export default function ProductDetail() {
             </AccordionItem>
           </Accordion>
         </div>
+
+        {/* After the Accordion section */}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-2xl font-bold mb-6">You May Also Like</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {relatedProducts.map((relatedProduct) => {
+                const lowestPrice = Math.min(...relatedProduct.variants.map(v => v.price));
+                const mainImage = relatedProduct.variants[0]?.mainImage;
+
+                return (
+                  <div
+                    key={relatedProduct._id}
+                    className="group relative"
+                    onClick={() => window.location.href = `/products/${relatedProduct._id}`}
+                  >
+                    <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
+                      <img
+                        src={mainImage}
+                        alt={relatedProduct.name}
+                        className="h-full w-full object-cover object-center group-hover:opacity-75 transition-opacity"
+                      />
+                    </div>
+                    <div className="mt-4 space-y-1">
+                      <div className="flex justify-between">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {relatedProduct.name}
+                        </h3>
+                        <p className="text-sm font-medium text-gray-900">
+                          ₹{lowestPrice.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-gray-500">
+                        <p>{relatedProduct.brand.name}</p>
+                        <div className="flex items-center">
+                          {renderStars(4.5)} {/* You can replace with actual rating */}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
