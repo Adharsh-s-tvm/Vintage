@@ -4,9 +4,8 @@ import { Button } from '../../ui/Button';
 import { AlertTriangle } from 'lucide-react';
 
 export function DeleteProductDialog({ product, open, onOpenChange }) {
-    const handleDelete = () => {
-        // Here you would typically delete the product
-        // For this demo, we'll just close the dialog
+    const handleBlock = () => {
+        
         onOpenChange(false);
     };
 
@@ -16,7 +15,7 @@ export function DeleteProductDialog({ product, open, onOpenChange }) {
                 <DialogHeader>
                     <DialogTitle>Delete Product</DialogTitle>
                     <DialogDescription>
-                        Are you sure you want to delete this product? This action cannot be undone.
+                        Are you sure you want to block this product? 
                     </DialogDescription>
                 </DialogHeader>
 
@@ -32,8 +31,8 @@ export function DeleteProductDialog({ product, open, onOpenChange }) {
                     <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                         Cancel
                     </Button>
-                    <Button type="button" variant="destructive" onClick={handleDelete}>
-                        Delete
+                    <Button type="button" variant="destructive" onClick={handleBlock}>
+                        Block
                     </Button>
                 </DialogFooter>
             </DialogContent>

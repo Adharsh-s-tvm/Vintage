@@ -338,7 +338,7 @@ const Products = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmBlock= async () => {
     try {
       if (deleteType === 'variant') {
         await axios.delete(`${API_BASE_URL}/products/variant/${itemToDelete}`);
@@ -357,7 +357,7 @@ const Products = () => {
     }
   };
 
-  const handleCloseDelete = () => {
+  const handleCloseBlock = () => {
     setDeleteConfirmOpen(false);
     setItemToDelete(null);
     setDeleteType('');
@@ -413,7 +413,7 @@ const Products = () => {
           color="error"
           onClick={handleConfirm}
         >
-          Delete
+          Block
         </Button>
       </Modal.Footer>
     </Modal>
@@ -1023,8 +1023,8 @@ const Products = () => {
       {/* Add Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         open={deleteConfirmOpen}
-        handleClose={handleCloseDelete}
-        handleConfirm={handleConfirmDelete}
+        handleClose={handleCloseBlock}
+        handleConfirm={handleConfirmBlock}
         itemType={deleteType}
       />
 

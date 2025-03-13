@@ -11,7 +11,7 @@ import { Input } from '../../ui/Input';
 import { Button } from '../../ui/Button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
 import { EditProductDialog } from './EditProductDialog';
-import { DeleteProductDialog } from './DeleteProductDialog';
+import { DeleteProductDialog } from './BlockProductDialog';
 import { Edit, Trash2, Search, ArrowUpDown } from 'lucide-react';
 import { mockProducts } from './mockData';
 
