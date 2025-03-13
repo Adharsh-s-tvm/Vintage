@@ -387,3 +387,50 @@ export const updateVariant = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+// Update product block status
+export const updateProductBlockStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isBlocked } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { isBlocked },
+      { new: true }
+    ).populate('category', 'name')
+      .populate('brand', 'name');
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error('Error updating product block status:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Update variant block status
+export const updateVariantBlockStatus = async (req, res) => {
+  try {
+    const { variantId } = req.params;
+    const { isBlocked } = req.body;
+
+    const updatedVariant = await Variant.findByIdAndUpdate(
+      variantId,
+      { isBlocked },
+      { new: true }
+    ).populate('product', 'name');
+
+    if (!updatedVariant) {
+      return res.status(404).json({ message: "Variant not found" });
+    }
+
+    res.status(200).json(updatedVariant);
+  } catch (error) {
+    console.error('Error updating variant block status:', error);
+    res.status(400).json({ message: error.message });
+  }
+};

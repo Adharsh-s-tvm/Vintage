@@ -1,6 +1,6 @@
 import express from "express";
 
-import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant } from "../controllers/adminProductController.js";
+import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant, updateProductBlockStatus, updateVariantBlockStatus } from "../controllers/adminProductController.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import { handleUpload } from "../middlewares/multer.js";
 
@@ -49,5 +49,11 @@ router.put("/product/:id/status", asyncHandler(updateProductStatus));
 
 // Update variant
 router.put("/variant/:variantId", asyncHandler(updateVariant));
+
+// Block/unblock product
+router.put("/product/:id/block", asyncHandler(updateProductBlockStatus));
+
+// Block/unblock variant
+router.put("/variant/:variantId/block", asyncHandler(updateVariantBlockStatus));
 
 export default router

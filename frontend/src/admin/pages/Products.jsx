@@ -19,7 +19,8 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Collapse
+  Collapse,
+  Chip
 } from "@mui/material";
 import { ExpandMore, Search, Add, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -60,9 +61,9 @@ const Products = () => {
     sub3: null
   });
   const [expandedRows, setExpandedRows] = useState({});
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState(null);
-  const [deleteType, setDeleteType] = useState('');
+  const [blockConfirmOpen, setBlockConfirmOpen] = useState(false);
+  const [itemToBlock, setItemToBlock] = useState(null);
+  const [blockType, setBlockType] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedVariant, setSelectedVariant] = useState(null);
@@ -332,41 +333,47 @@ const Products = () => {
     }));
   };
 
-  const handleDeleteVariant = async (variantId) => {
-    setItemToDelete(variantId);
-    setDeleteType('variant');
-    setDeleteConfirmOpen(true);
+  const handleCloseBlock = () => {
+    setBlockConfirmOpen(false);
+    setItemToBlock(null);
+    setBlockType('');
   };
 
-  const handleConfirmBlock= async () => {
+  const handleConfirmBlock = async () => {
     try {
-      if (deleteType === 'variant') {
-        await axios.delete(`${API_BASE_URL}/products/variant/${itemToDelete}`);
-        toast.success('Variant deleted successfully');
-      } else if (deleteType === 'product') {
-        await axios.delete(`${API_BASE_URL}/products/${itemToDelete}`);
-        toast.success('Product deleted successfully');
+      if (blockType === 'product') {
+        await handleBlockProduct(itemToBlock._id, itemToBlock.isBlocked);
+      } else if (blockType === 'variant') {
+        await handleBlockVariant(itemToBlock._id, itemToBlock.isBlocked);
       }
-      fetchProducts();
+      handleCloseBlock();
     } catch (error) {
-      toast.error(`Failed to delete ${deleteType}`);
-    } finally {
-      setDeleteConfirmOpen(false);
-      setItemToDelete(null);
-      setDeleteType('');
+      toast.error('Failed to update status');
     }
   };
 
-  const handleCloseBlock = () => {
-    setDeleteConfirmOpen(false);
-    setItemToDelete(null);
-    setDeleteType('');
+  const handleBlockProduct = async (productId, currentStatus) => {
+    try {
+      await axios.put(`${API_BASE_URL}/products/product/${productId}/block`, {
+        isBlocked: !currentStatus
+      });
+      toast.success(`Product ${currentStatus ? 'unblocked' : 'blocked'} successfully`);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update product status');
+    }
   };
 
-  const handleDeleteProduct = (productId) => {
-    setItemToDelete(productId);
-    setDeleteType('product');
-    setDeleteConfirmOpen(true);
+  const handleBlockVariant = async (variantId, currentStatus) => {
+    try {
+      await axios.put(`${API_BASE_URL}/products/variant/${variantId}/block`, {
+        isBlocked: !currentStatus
+      });
+      toast.success(`Variant ${currentStatus ? 'unblocked' : 'blocked'} successfully`);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update variant status');
+    }
   };
 
   const handleToggleProductStatus = async (productId, currentStatus) => {
@@ -392,31 +399,57 @@ const Products = () => {
     }
   };
 
-  const DeleteConfirmDialog = ({ open, handleClose, handleConfirm, itemType }) => (
+  const BlockConfirmDialog = ({ open, handleClose, handleConfirm, itemType }) => (
     <Modal show={open} onHide={handleClose} centered>
       <Modal.Header closeButton>
-        <Modal.Title>Confirm Delete</Modal.Title>
+        <Modal.Title>Confirm Action</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        Are you sure you want to delete this {itemType}?
+        Are you sure you want to {itemToBlock?.isBlocked ? 'unblock' : 'block'} this {itemType}?
       </Modal.Body>
       <Modal.Footer>
-        <Button
-          variant="outlined"
-          onClick={handleClose}
-          sx={{ mr: 1 }}
-        >
+        <Button variant="secondary" onClick={handleClose}>
           Cancel
         </Button>
         <Button
           variant="contained"
-          color="error"
+          color={itemToBlock?.isBlocked ? "primary" : "error"}
           onClick={handleConfirm}
         >
-          Block
+          {itemToBlock?.isBlocked ? 'Unblock' : 'Block'}
         </Button>
       </Modal.Footer>
     </Modal>
+  );
+
+  const ProductActionButton = ({ product }) => (
+    <Button
+      variant="contained"
+      size="small"
+      color={product.isBlocked ? 'primary' : 'error'}
+      onClick={() => {
+        setItemToBlock(product);
+        setBlockType('product');
+        setBlockConfirmOpen(true);
+      }}
+    >
+      {product.isBlocked ? 'Unblock' : 'Block'}
+    </Button>
+  );
+
+  const VariantActionButton = ({ variant }) => (
+    <Button
+      variant="contained"
+      size="small"
+      color={variant.isBlocked ? 'primary' : 'error'}
+      onClick={() => {
+        setItemToBlock(variant);
+        setBlockType('variant');
+        setBlockConfirmOpen(true);
+      }}
+    >
+      {variant.isBlocked ? 'Unblock' : 'Block'}
+    </Button>
   );
 
   return (
@@ -617,21 +650,7 @@ const Products = () => {
                           >
                             Edit
                           </Button>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              backgroundColor: "#d32f2f",
-                              '&:hover': {
-                                backgroundColor: "#b71c1c",
-                                transform: 'translateY(-2px)'
-                              },
-                              transition: 'all 0.2s'
-                            }}
-                            onClick={() => handleDeleteProduct(product._id)}
-                          >
-                            Delete
-                          </Button>
+                          <ProductActionButton product={product} />
                         </Box>
                       </TableCell>
                       <TableCell align="center">
@@ -713,42 +732,13 @@ const Products = () => {
                                     <TableCell>{variant.stock}</TableCell>
                                     <TableCell>₹{variant.price}</TableCell>
                                     <TableCell align="center">
-                                      <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Button
-                                          variant="contained"
+                                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                        <Chip
+                                          label={variant.isBlocked ? 'Blocked' : 'Active'}
+                                          color={variant.isBlocked ? 'error' : 'success'}
                                           size="small"
-                                          onClick={() => {
-                                            setSelectedVariant(variant);
-                                            setVariantFormData({
-                                              size: variant.size,
-                                              color: variant.color,
-                                              stock: variant.stock,
-                                              price: variant.price
-                                            });
-                                            setShowEditVariantModal(true);
-                                          }}
-                                          sx={{
-                                            backgroundColor: "#1565c0",
-                                            '&:hover': {
-                                              backgroundColor: "#0d47a1"
-                                            }
-                                          }}
-                                        >
-                                          Edit
-                                        </Button>
-                                        <Button
-                                          variant="contained"
-                                          size="small"
-                                          onClick={() => handleDeleteVariant(variant._id)}
-                                          sx={{
-                                            backgroundColor: "#d32f2f",
-                                            '&:hover': {
-                                              backgroundColor: "#b71c1c"
-                                            }
-                                          }}
-                                        >
-                                          Delete
-                                        </Button>
+                                        />
+                                        <VariantActionButton variant={variant} />
                                       </Box>
                                     </TableCell>
                                   </TableRow>
@@ -1020,12 +1010,12 @@ const Products = () => {
         </Modal.Footer>
       </Modal>
 
-      {/* Add Delete Confirmation Dialog */}
-      <DeleteConfirmDialog
-        open={deleteConfirmOpen}
+      {/* Add Block Confirmation Dialog */}
+      <BlockConfirmDialog
+        open={blockConfirmOpen}
         handleClose={handleCloseBlock}
         handleConfirm={handleConfirmBlock}
-        itemType={deleteType}
+        itemType={blockType}
       />
 
       {/* Edit Variant Modal */}
