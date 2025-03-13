@@ -13,20 +13,48 @@ import { googleAuth } from '../../utils/api';
 import axios from 'axios';
 
 export default function SignIn() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
 
-  // Add effect to check authentication status
+  // Move responseGoogle function before it's used
+  const responseGoogle = async (authResult) => {
+    try {
+      if (authResult.code) {
+        const result = await axios.post('http://localhost:7000/api/google', {
+          code: authResult.code
+        });
+
+        console.log("Authentication result:", result);
+
+        if (result.data.token) {
+          localStorage.setItem('token', result.data.token);
+          localStorage.setItem('userInfo', JSON.stringify(result.data.user));
+          navigate('/');
+        }
+      }
+    } catch (error) {
+      console.error("Error during Google login:", error.response?.data || error.message);
+    }
+  };
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: responseGoogle,
+    onError: responseGoogle,
+    flow: 'auth-code'
+  });
+
   useEffect(() => {
     const token = localStorage.getItem('jwt');
     if (token) {
-      // User is already logged in, redirect to home page
       navigate('/');
       toast.info('You are already logged in');
+    } else {
+      setIsAuthenticated(false);
     }
   }, [navigate]);
 
@@ -61,32 +89,6 @@ export default function SignIn() {
   if (token) {
     return null; // Or you could return a loading spinner if needed
   }
-
-  const responseGoogle = async (authResult) => {
-    try {
-      if (authResult.code) {
-        const result = await axios.post('http://localhost:7000/api/google', {
-          code: authResult.code
-        });
-
-        console.log("Authentication result:", result);
-
-        if (result.data.token) {
-          localStorage.setItem('token', result.data.token);
-          localStorage.setItem('userInfo', JSON.stringify(result.data.user));
-          navigate('/');
-        }
-      }
-    } catch (error) {
-      console.error("Error during Google login:", error.response?.data || error.message);
-    }
-  };
-
-  const googleLogin = useGoogleLogin({
-    onSuccess: responseGoogle,
-    onError: responseGoogle,
-    flow: 'auth-code'
-  })
 
   return (
     <div className="flex items-center justify-center min-h-[80vh]">
