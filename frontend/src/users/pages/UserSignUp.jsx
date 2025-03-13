@@ -41,7 +41,7 @@ function UserSignUp() {
     const [timer, setTimer] = useState(60);
     const [email, setEmail] = useState(formData.email)
 
-    
+
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -72,18 +72,20 @@ function UserSignUp() {
         e.preventDefault();
         const { firstName, lastName, email, password, confirmPassword } = formData;
 
-        if (!firstName || !lastName || !email || !password || !confirmPassword) {
-            setError("Please fill in all fields");
+        // Check for empty or whitespace-only names
+        if (!firstName?.trim() || !lastName?.trim()) {
+            toast.error("First name and last name cannot be empty", { position: "top-center" });
             return;
         }
 
-        if (firstName.length < 2) {
+        // Check for minimum length after trimming whitespace
+        if (firstName.trim().length < 2) {
             toast.error("First name must be at least 2 characters long", { position: "top-center" });
             return;
         }
 
-        if (lastName.length < 1) {
-            toast.error("Last name must be at least 1 character", { position: "top-center" });
+        if (lastName.trim().length < 1) {
+            toast.error("Last name must be at least 1 character long", { position: "top-center" });
             return;
         }
 
@@ -94,7 +96,8 @@ function UserSignUp() {
 
         if (!validatePassword(password)) {
             toast.error(
-                "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters", { position: "top-center" }
+                "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters",
+                { position: "top-center" }
             );
             return;
         }
@@ -121,15 +124,15 @@ function UserSignUp() {
     };
 
     const verifyOtpAndSignup = async (otp) => {
-        console.log("Thisd is the otp bu yusser" , otp);
-        
+        console.log("Thisd is the otp bu yusser", otp);
+
         try {
             // First verify OTP
             const verifyResponse = await axios.post("http://localhost:7000/api/user/otp/verify", {
                 email: formData.email.toLowerCase(),
                 otp,
             });
-            
+
             if (verifyResponse.data.success) {
                 // If OTP is verified, proceed with signup
                 const signupData = {
@@ -198,9 +201,9 @@ function UserSignUp() {
         }, 1000);
     };
 
-    const handleOtp = useCallback(()=>{
+    const handleOtp = useCallback(() => {
         console.log();
-        
+
     })
 
     return (
@@ -363,11 +366,11 @@ function UserSignUp() {
                     </Button>
                 </div>
             </div>
-            <OtpModal 
-            formData={formData}
-            showOtpModal={showOtpModal}
-            setShowOtpModal={setShowOtpModal}
-            verifyOtpAndSignup={verifyOtpAndSignup} 
+            <OtpModal
+                formData={formData}
+                showOtpModal={showOtpModal}
+                setShowOtpModal={setShowOtpModal}
+                verifyOtpAndSignup={verifyOtpAndSignup}
             />
         </div>
     )
