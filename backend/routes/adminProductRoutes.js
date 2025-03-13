@@ -1,8 +1,8 @@
 import express from "express";
 
-import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct } from "../controllers/adminProductController.js";
+import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant } from "../controllers/adminProductController.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
-import  { handleUpload } from "../middlewares/multer.js";
+import { handleUpload } from "../middlewares/multer.js";
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.post("/add", asyncHandler(addProduct));
 router.get("/", asyncHandler(getAllProducts));
 
 router.post("/variant/add",
-    
+
     handleUpload,
     asyncHandler(addVariant)
 );
@@ -40,8 +40,14 @@ router.get("/brands", asyncHandler(getAllBrands));
 router.put("/brand/:id/status", asyncHandler(updateBrandStatus));
 router.put("/brand/:id", asyncHandler(updateBrand));
 
-router.put("/product/:id",
+router.put("/:id",
     asyncHandler(updateProduct)
 );
+
+// Update product status
+router.put("/product/:id/status", asyncHandler(updateProductStatus));
+
+// Update variant
+router.put("/variant/:variantId", asyncHandler(updateVariant));
 
 export default router

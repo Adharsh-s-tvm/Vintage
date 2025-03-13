@@ -65,6 +65,14 @@ const Products = () => {
   const [deleteType, setDeleteType] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [showEditVariantModal, setShowEditVariantModal] = useState(false);
+  const [variantFormData, setVariantFormData] = useState({
+    size: '',
+    color: '',
+    stock: 0,
+    price: 0
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -279,12 +287,40 @@ const Products = () => {
 
   const handleEditProduct = async () => {
     try {
-      await axios.put(`${API_BASE_URL}/products/${selectedProduct._id}`, formData);
-      toast.success('Product updated successfully');
-      setShowProductModal(false);
-      setEditMode(false);
-      fetchProducts();
+      // Add validation
+      if (!formData.name || !formData.category || !formData.brand || !formData.description) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Log the request details for debugging
+      console.log('Updating product:', selectedProduct._id, formData);
+
+      const response = await axios.put(
+        `${API_BASE_URL}/products/${selectedProduct._id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      // Check if the update was successful
+      if (response.data) {
+        toast.success('Product updated successfully');
+        setShowProductModal(false);
+        setEditMode(false);
+        setFormData({
+          name: '',
+          category: '',
+          description: '',
+          brand: ''
+        });
+        await fetchProducts(); // Refresh the products list
+      }
     } catch (error) {
+      console.error('Error updating product:', error);
       toast.error(error.response?.data?.message || 'Failed to update product');
     }
   };
@@ -331,6 +367,29 @@ const Products = () => {
     setItemToDelete(productId);
     setDeleteType('product');
     setDeleteConfirmOpen(true);
+  };
+
+  const handleToggleProductStatus = async (productId, currentStatus) => {
+    try {
+      await axios.put(`${API_BASE_URL}/products/${productId}/status`, {
+        isListed: !currentStatus
+      });
+      toast.success('Product status updated successfully');
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update product status');
+    }
+  };
+
+  const handleEditVariant = async () => {
+    try {
+      await axios.put(`${API_BASE_URL}/products/variant/${selectedVariant._id}`, variantFormData);
+      toast.success('Variant updated successfully');
+      setShowEditVariantModal(false);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update variant');
+    }
   };
 
   const DeleteConfirmDialog = ({ open, handleClose, handleConfirm, itemType }) => (
@@ -638,7 +697,7 @@ const Products = () => {
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {product.variants && product.variants.map((variant) => (
+                                {product.variants.map((variant) => (
                                   <TableRow
                                     key={variant._id}
                                     sx={{
@@ -654,23 +713,43 @@ const Products = () => {
                                     <TableCell>{variant.stock}</TableCell>
                                     <TableCell>₹{variant.price}</TableCell>
                                     <TableCell align="center">
-                                      <Button
-                                        variant="contained"
-                                        size="small"
-                                        sx={{
-                                          backgroundColor: "#ef5350",
-                                          '&:hover': {
-                                            backgroundColor: "#c62828",
-                                            transform: 'translateY(-2px)'
-                                          },
-                                          transition: 'all 0.2s',
-                                          minWidth: '80px',
-                                          fontWeight: 'bold'
-                                        }}
-                                        onClick={() => handleDeleteVariant(variant._id)}
-                                      >
-                                        Delete
-                                      </Button>
+                                      <Box sx={{ display: 'flex', gap: 1 }}>
+                                        <Button
+                                          variant="contained"
+                                          size="small"
+                                          onClick={() => {
+                                            setSelectedVariant(variant);
+                                            setVariantFormData({
+                                              size: variant.size,
+                                              color: variant.color,
+                                              stock: variant.stock,
+                                              price: variant.price
+                                            });
+                                            setShowEditVariantModal(true);
+                                          }}
+                                          sx={{
+                                            backgroundColor: "#1565c0",
+                                            '&:hover': {
+                                              backgroundColor: "#0d47a1"
+                                            }
+                                          }}
+                                        >
+                                          Edit
+                                        </Button>
+                                        <Button
+                                          variant="contained"
+                                          size="small"
+                                          onClick={() => handleDeleteVariant(variant._id)}
+                                          sx={{
+                                            backgroundColor: "#d32f2f",
+                                            '&:hover': {
+                                              backgroundColor: "#b71c1c"
+                                            }
+                                          }}
+                                        >
+                                          Delete
+                                        </Button>
+                                      </Box>
                                     </TableCell>
                                   </TableRow>
                                 ))}
@@ -948,9 +1027,74 @@ const Products = () => {
         handleConfirm={handleConfirmDelete}
         itemType={deleteType}
       />
+
+      {/* Edit Variant Modal */}
+      <Modal show={showEditVariantModal} onHide={() => setShowEditVariantModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Edit Variant</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <TextField
+            fullWidth
+            label="Size"
+            name="size"
+            value={variantFormData.size}
+            onChange={(e) => setVariantFormData(prev => ({
+              ...prev,
+              size: e.target.value
+            }))}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="Color"
+            name="color"
+            value={variantFormData.color}
+            onChange={(e) => setVariantFormData(prev => ({
+              ...prev,
+              color: e.target.value
+            }))}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="Stock"
+            name="stock"
+            type="number"
+            value={variantFormData.stock}
+            onChange={(e) => setVariantFormData(prev => ({
+              ...prev,
+              stock: Number(e.target.value)
+            }))}
+            margin="normal"
+          />
+          <TextField
+            fullWidth
+            label="Price"
+            name="price"
+            type="number"
+            value={variantFormData.price}
+            onChange={(e) => setVariantFormData(prev => ({
+              ...prev,
+              price: Number(e.target.value)
+            }))}
+            margin="normal"
+          />
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowEditVariantModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleEditVariant}>
+            Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Box>
   );
 };
 
 export default Products;
+
+
 

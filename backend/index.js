@@ -4,6 +4,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from 'cors'
+import morgan from "morgan";
 
 
 // Utiles 
@@ -37,6 +38,8 @@ app.use((req, res, next) => {
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use(cookieParser())
+
+app.use(morgan("dev"))
 
 app.use("/api", userRoutes);
 app.use("/api/admin", adminRoutes);

@@ -280,20 +280,32 @@ export const getProductVariants = async (req, res) => {
 
 // Add a controller to update product
 export const updateProduct = async (req, res) => {
+  console.log('Update Prodict')
   try {
     const { id } = req.params;
     const updateData = req.body;
 
+    // Validate input data
+    if (!updateData.name || !updateData.category || !updateData.brand) {
+      return res.status(400).json({ message: "Required fields are missing" });
+    }
+
+    // Log the update operation
+    console.log('Updating product:', id, updateData);
+
     const updatedProduct = await Product.findByIdAndUpdate(
       id,
       updateData,
-      { new: true }
+      { new: true, runValidators: true }
     ).populate('category', 'name')
       .populate('brand', 'name');
 
     if (!updatedProduct) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    // Log the updated product
+    console.log('Updated product:', updatedProduct);
 
     res.status(200).json(updatedProduct);
   } catch (error) {
@@ -325,5 +337,53 @@ export const deleteVariant = async (req, res) => {
   } catch (error) {
     console.error('Error deleting variant:', error);
     res.status(500).json({ message: 'Error deleting variant' });
+  }
+};
+
+// Update product status (block/unblock)
+export const updateProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isListed } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      id,
+      { isListed },
+      { new: true }
+    ).populate('category', 'name')
+      .populate('brand', 'name');
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.status(200).json(updatedProduct);
+  } catch (error) {
+    console.error('Error updating product status:', error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
+// Update variant
+export const updateVariant = async (req, res) => {
+
+  try {
+    const { variantId } = req.params;
+    const updateData = req.body;
+
+    const updatedVariant = await Variant.findByIdAndUpdate(
+      variantId,
+      updateData,
+      { new: true }
+    ).populate('product', 'name');
+
+    if (!updatedVariant) {
+      return res.status(404).json({ message: "Variant not found" });
+    }
+
+    res.status(200).json(updatedVariant);
+  } catch (error) {
+    console.error('Error updating variant:', error);
+    res.status(400).json({ message: error.message });
   }
 };
