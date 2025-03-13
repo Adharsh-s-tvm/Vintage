@@ -541,7 +541,6 @@ const Products = () => {
               <TableCell>Name</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Brand</TableCell>
-              <TableCell>Description</TableCell>
               <TableCell align="center">Actions</TableCell>
               <TableCell align="center">Variants</TableCell>
             </TableRow>
@@ -591,66 +590,67 @@ const Products = () => {
                           : brands.find(brand => brand._id === product.brand)?.name || 'N/A'}
                       </TableCell>
                       <TableCell>
-                        {product.description.length > 50
-                          ? `${product.description.substring(0, 50)}...`
-                          : product.description}
-                      </TableCell>
-                      <TableCell>
                         <Box sx={{
                           display: 'flex',
+                          flexDirection: 'column',
                           gap: 1,
-                          justifyContent: 'center',
-                          '& .MuiButton-root': {
-                            minWidth: '100px',
-                            fontWeight: 'bold',
-                            textTransform: 'none',
-                            boxShadow: 2
-                          }
+                          alignItems: 'flex-start'
                         }}>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setShowVariantModal(true);
-                            }}
-                            sx={{
-                              backgroundColor: "#00796b", // Teal
-                              '&:hover': {
-                                backgroundColor: "#004d40",
-                                transform: 'translateY(-2px)'
-                              },
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            Add Variant
-                          </Button>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            sx={{
-                              backgroundColor: "#1565c0", // Blue
-                              '&:hover': {
-                                backgroundColor: "#0d47a1",
-                                transform: 'translateY(-2px)'
-                              },
-                              transition: 'all 0.2s'
-                            }}
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setFormData({
-                                name: product.name,
-                                category: product.category._id,
-                                brand: product.brand._id,
-                                description: product.description
-                              });
-                              setEditMode(true);
-                              setShowProductModal(true);
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <ProductActionButton product={product} />
+                          {/* Status Chip */}
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Chip
+                              label={product.isBlocked ? 'Blocked' : 'Active'}
+                              color={product.isBlocked ? 'error' : 'success'}
+                              size="small"
+                            />
+                          </Box>
+                          {/* Action Buttons */}
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setShowVariantModal(true);
+                              }}
+                              sx={{
+                                backgroundColor: "#00796b",
+                                '&:hover': {
+                                  backgroundColor: "#004d40",
+                                  transform: 'translateY(-2px)'
+                                },
+                                transition: 'all 0.2s'
+                              }}
+                            >
+                              Add Variant
+                            </Button>
+                            <Button
+                              variant="contained"
+                              size="small"
+                              sx={{
+                                backgroundColor: "#1565c0",
+                                '&:hover': {
+                                  backgroundColor: "#0d47a1",
+                                  transform: 'translateY(-2px)'
+                                },
+                                transition: 'all 0.2s'
+                              }}
+                              onClick={() => {
+                                setSelectedProduct(product);
+                                setFormData({
+                                  name: product.name,
+                                  category: product.category._id,
+                                  brand: product.brand._id,
+                                  description: product.description
+                                });
+                                setEditMode(true);
+                                setShowProductModal(true);
+                              }}
+                            >
+                              Edit
+                            </Button>
+                            <ProductActionButton product={product} />
+                          </Box>
                         </Box>
                       </TableCell>
                       <TableCell align="center">
@@ -1085,6 +1085,11 @@ const Products = () => {
 };
 
 export default Products;
+
+
+
+
+
 
 
 
