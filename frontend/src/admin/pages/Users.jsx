@@ -13,6 +13,8 @@ export default function Users() {
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState(null);
     const { toast } = useToast();
+    const [currentPage, setCurrentPage] = useState(1);
+    const [usersPerPage] = useState(5);
 
     useEffect(() => {
         fetchUsers();
@@ -107,6 +109,33 @@ export default function Users() {
         }
     };
 
+    const indexOfLastUser = currentPage * usersPerPage;
+    const indexOfFirstUser = indexOfLastUser - usersPerPage;
+    const currentUsers = users.slice(indexOfFirstUser, indexOfLastUser);
+    const totalPages = Math.ceil(users.length / usersPerPage);
+
+    const Pagination = () => (
+        <div className="flex justify-center gap-2 mt-4">
+            <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+            >
+                Previous
+            </button>
+            <span className="px-3 py-1">
+                Page {currentPage} of {totalPages}
+            </span>
+            <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+            >
+                Next
+            </button>
+        </div>
+    );
+
     return (
         <>
             <div className="mb-6">
@@ -115,11 +144,12 @@ export default function Users() {
 
             <div className="animate-fade-in">
                 <UsersTable
-                    users={users} // Pass fetched users to UsersTable
+                    users={currentUsers}
                     onNewUser={handleNewUser}
                     onEditUser={handleEditUser}
                     onDeleteUser={handleDeleteUser}
                 />
+                <Pagination />
             </div>
 
             <UserFormModal

@@ -17,6 +17,8 @@ const Brand = () => {
   const [newBrand, setNewBrand] = useState("");
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredBrands, setFilteredBrands] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     fetchBrands();
@@ -135,6 +137,35 @@ const Brand = () => {
     }
   };
 
+  // Add pagination calculation
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentBrands = filteredBrands.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
+
+  // Add pagination controls component
+  const Pagination = () => (
+    <div className="flex justify-center gap-2 mt-4">
+      <button
+        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+      >
+        Previous
+      </button>
+      <span className="px-3 py-1">
+        Page {currentPage} of {totalPages}
+      </span>
+      <button
+        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+      >
+        Next
+      </button>
+    </div>
+  );
+
   return (
     <div className={`container mx-auto p-6 ${isOpen || isAddOpen || isConfirmOpen ? "backdrop-blur-sm" : ""}`}>
       <div className="flex justify-between items-center mb-4">
@@ -167,7 +198,7 @@ const Brand = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredBrands.map((brand) => (
+            {currentBrands.map((brand) => (
               <tr key={brand._id} className="border-b border-gray-300">
                 <td className="p-3">{brand.name}</td>
                 <td className="p-3">
@@ -196,6 +227,7 @@ const Brand = () => {
             ))}
           </tbody>
         </table>
+        <Pagination />
       </div>
 
       {/* Edit Brand Modal */}

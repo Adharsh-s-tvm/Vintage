@@ -20,6 +20,8 @@ const Category = () => {
   const [categoryToToggle, setCategoryToToggle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredCategories, setFilteredCategories] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(5);
 
   // Open & Close Modals
   function closeModal() {
@@ -138,6 +140,35 @@ const Category = () => {
     }
   };
 
+  // Add pagination calculation
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentCategories = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
+
+  // Add pagination controls component
+  const Pagination = () => (
+    <div className="flex justify-center gap-2 mt-4">
+      <button
+        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+      >
+        Previous
+      </button>
+      <span className="px-3 py-1">
+        Page {currentPage} of {totalPages}
+      </span>
+      <button
+        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+      >
+        Next
+      </button>
+    </div>
+  );
+
   return (
     <div className={`container mx-auto p-6 ${isOpen || isAddOpen ? "backdrop-blur-sm" : ""}`}>
       <div className="flex justify-between items-center mb-4">
@@ -170,7 +201,7 @@ const Category = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredCategories.map((category) => (
+            {currentCategories.map((category) => (
               <tr key={category._id} className="border-b border-gray-300">
                 <td className="p-3">{category.name}</td>
                 <td className="p-3">
@@ -199,6 +230,7 @@ const Category = () => {
             ))}
           </tbody>
         </table>
+        <Pagination />
       </div>
 
       {/* Edit Category Modal */}
