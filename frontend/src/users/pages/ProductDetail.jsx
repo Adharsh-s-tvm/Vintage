@@ -10,7 +10,7 @@ import {
   RefreshCw,
   ShieldCheck
 } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { toast } from '../../hooks/useToast';
 import {
   Tabs,
@@ -87,6 +87,7 @@ const dummyCoupons = [
 
 export default function ProductDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState('');
@@ -105,6 +106,17 @@ export default function ProductDetail() {
         const productData = response.data.product;
         console.log("Single product: ", productData);
 
+        // Check if product is blocked
+        if (productData.isBlocked) {
+          toast({
+            variant: "destructive",
+            title: "Product Unavailable",
+            description: "This product is currently not available.",
+          });
+          navigate('/products'); // Redirect to product listing
+          return;
+        }
+
         setProduct(productData);
         // Fetch related products after getting product details
         await fetchRelatedProducts(productData);
@@ -119,13 +131,14 @@ export default function ProductDetail() {
           title: "Error",
           description: "Failed to load product details",
         });
+        navigate('/products'); // Redirect to product listing on error
       } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [id]);
+  }, [id, navigate]);
 
   // Update selected variant when size changes
   useEffect(() => {

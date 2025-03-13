@@ -197,7 +197,9 @@ const ProductListing = () => {
       const response = await axios.get(`${api}/products/categories`);
       console.log("Category fetched :", response.data)
       const categoriesData = response.data.categories || response.data;
-      setCategories(categoriesData);
+      // Filter out blocked categories
+      const activeCategories = categoriesData.filter(category => !category.isBlocked);
+      setCategories(activeCategories);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
     }
@@ -208,7 +210,9 @@ const ProductListing = () => {
       const response = await axios.get(`${api}/admin/products/brands`);
       console.log('Brands response:', response.data);
       const brandsData = response.data.brands || response.data;
-      setBrands(brandsData);
+      // Filter out blocked brands
+      const activeBrands = brandsData.filter(brand => !brand.isBlocked);
+      setBrands(activeBrands);
     } catch (error) {
       console.error('Failed to fetch brands:', error);
     }
@@ -216,15 +220,25 @@ const ProductListing = () => {
 
   // Extract unique categories, brands, and sizes for filters
 
-  const sizes = [...new Set(products.flatMap(product => product.variants.map(variant => variant.size)))];
+  const sizes = [...new Set(products
+    .flatMap(product =>
+      product.variants
+        .filter(variant => !variant.isBlocked) // Only include active variants
+        .map(variant => variant.size)
+    ))
+  ];
 
   // Function to get lowest price variant for each product
   const getLowestPrice = (product) => {
-    return Math.min(...product.variants.map(variant => variant.price));
+    const activeVariants = product.variants.filter(variant => !variant.isBlocked);
+    return Math.min(...activeVariants.map(variant => variant.price));
   };
 
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {
+    // First check if product is blocked
+    if (product.isBlocked) return false;
+
     // Search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
@@ -238,8 +252,9 @@ const ProductListing = () => {
       }
     }
 
-    // Price filter
-    const productLowestPrice = getLowestPrice(product);
+    // Price filter - only consider prices from active variants
+    const activeVariants = product.variants.filter(variant => !variant.isBlocked);
+    const productLowestPrice = Math.min(...activeVariants.map(variant => variant.price));
     if (productLowestPrice < priceRange[0] || productLowestPrice > priceRange[1]) {
       return false;
     }
@@ -254,10 +269,10 @@ const ProductListing = () => {
       return false;
     }
 
-    // Size filter
+    // Size filter - only consider sizes from active variants
     if (selectedSizes.length > 0) {
-      const productSizes = product.variants.map(variant => variant.size);
-      if (!selectedSizes.some(size => productSizes.includes(size))) {
+      const activeSizes = activeVariants.map(variant => variant.size);
+      if (!selectedSizes.some(size => activeSizes.includes(size))) {
         return false;
       }
     }
