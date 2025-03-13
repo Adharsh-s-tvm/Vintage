@@ -20,8 +20,8 @@ export default function ECommerce() {
           </Button>
         </Link>
       </div>
-      {/* <Categories /> */}
-      <FeaturedProducts />
+      <Categories />
+      {/* <FeaturedProducts /> */}
       {/* <Testimonials /> */}
       {/* <Newsletter /> */}
     </Layout>

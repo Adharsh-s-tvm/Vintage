@@ -11,7 +11,7 @@ export function HeroSection() {
             <div className="text-left">
               <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
                 <span className="block">Winter Collection</span>
-                <span className="block text-primary">2023</span>
+                <span className="block text-primary">2025</span>
               </h1>
               <p className="mt-3 text-base text-gray-600 sm:mt-5 sm:text-lg sm:max-w-xl">
                 Discover our premium selection of jackets designed for style, comfort, and durability. From winter warmth to lightweight summer options.
