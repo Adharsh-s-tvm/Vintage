@@ -56,7 +56,6 @@ Reference Video : Demo Login gadgetStoreApp.mp4
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
-<!-- Add pagination for all tables -->
 <!-- Search need to done from backend in shop -->
 <!-- Forget password -->
 <!-- Crop image -->

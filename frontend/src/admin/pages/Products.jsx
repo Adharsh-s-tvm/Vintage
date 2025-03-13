@@ -452,6 +452,28 @@ const Products = () => {
     </Button>
   );
 
+  const Pagination = () => (
+    <div className="flex justify-center gap-2 mt-4">
+      <button
+        onClick={() => setPage(prev => Math.max(prev - 1, 0))}
+        disabled={page === 0}
+        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+      >
+        Previous
+      </button>
+      <span className="px-3 py-1">
+        Page {page + 1} of {Math.ceil(filteredProducts.length / rowsPerPage)}
+      </span>
+      <button
+        onClick={() => setPage(prev => Math.min(prev + 1, Math.ceil(filteredProducts.length / rowsPerPage) - 1))}
+        disabled={page >= Math.ceil(filteredProducts.length / rowsPerPage) - 1}
+        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+      >
+        Next
+      </button>
+    </div>
+  );
+
   return (
     <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
       {/* Header Section */}
@@ -810,15 +832,7 @@ const Products = () => {
 
       {/* Update Pagination */}
       <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-        <TablePagination
-          component="div"
-          count={filteredProducts.length}
-          page={page}
-          onPageChange={handleChangePage}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
-        />
+        <Pagination />
       </Box>
 
       {/* Snackbar */}
