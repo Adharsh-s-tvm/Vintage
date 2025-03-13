@@ -23,7 +23,7 @@ export function HeroSection() {
                   </Button>
                 </div>
                 <div className="mt-3 sm:mt-0 sm:ml-3">
-                 
+
                 </div>
               </div>
               <div className="mt-6 bg-white/30 backdrop-blur-md rounded-lg p-4 inline-block">

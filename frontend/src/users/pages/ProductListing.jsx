@@ -30,7 +30,7 @@ import {
 
 
 // Add this constant at the top of your file, outside the component
-const DEFAULT_SIZES = ['S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL'];
 
 // Mock product data with the new structure
 const products = [];
