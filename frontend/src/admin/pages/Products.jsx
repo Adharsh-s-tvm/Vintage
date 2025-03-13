@@ -527,13 +527,15 @@ const Products = () => {
         <Table>
           <TableHead>
             <TableRow sx={{
-              backgroundColor: "#1a237e",
+              background: 'linear-gradient(45deg, #1a237e 30%, #283593 90%)',
               '& th': {
                 color: "white",
                 fontWeight: 'bold',
                 fontSize: '1rem',
                 padding: '16px',
-                borderBottom: 'none'
+                borderBottom: 'none',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
               },
               '& th:first-of-type': { borderTopLeftRadius: 8 },
               '& th:last-child': { borderTopRightRadius: 8 }
@@ -541,6 +543,7 @@ const Products = () => {
               <TableCell>Name</TableCell>
               <TableCell>Category</TableCell>
               <TableCell>Brand</TableCell>
+              <TableCell align="center">Status</TableCell>
               <TableCell align="center">Actions</TableCell>
               <TableCell align="center">Variants</TableCell>
             </TableRow>
@@ -557,25 +560,24 @@ const Products = () => {
             ) : (
               filteredProducts
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((product) => (
+                .map((product, index) => (
                   <React.Fragment key={product._id}>
                     <TableRow
                       sx={{
-                        backgroundColor: 'white',
-                        '&:nth-of-type(odd)': {
-                          backgroundColor: '#f8f9fa'
-                        },
+                        background: index % 2 === 0
+                          ? 'linear-gradient(to right, #ffffff, #f8f9fa)'
+                          : 'linear-gradient(to right, #f5f5f5, #e9ecef)',
                         '&:hover': {
-                          backgroundColor: '#e8eaf6',
+                          background: 'linear-gradient(to right, #e3f2fd, #bbdefb)',
                           transform: 'scale(1.002)',
                           transition: 'all 0.2s ease',
                           boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
                         },
                         '& td': {
                           padding: '16px',
-                          border: 'none'
-                        },
-                        marginBottom: '8px'
+                          border: 'none',
+                          borderBottom: '1px solid rgba(224, 224, 224, 0.4)'
+                        }
                       }}
                     >
                       <TableCell>{product.name}</TableCell>
@@ -589,68 +591,80 @@ const Products = () => {
                           ? product.brand?.name
                           : brands.find(brand => brand._id === product.brand)?.name || 'N/A'}
                       </TableCell>
+                      <TableCell align="center">
+                        <Chip
+                          label={product.isBlocked ? 'Blocked' : 'Active'}
+                          color={product.isBlocked ? 'error' : 'success'}
+                          size="small"
+                          sx={{
+                            fontWeight: 'bold',
+                            minWidth: '80px',
+                            background: product.isBlocked
+                              ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                              : 'linear-gradient(45deg, #2e7d32 30%, #43a047 90%)',
+                            color: 'white',
+                            '& .MuiChip-label': {
+                              color: 'white'
+                            }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell>
                         <Box sx={{
                           display: 'flex',
-                          flexDirection: 'column',
                           gap: 1,
-                          alignItems: 'flex-start'
+                          justifyContent: 'center',
+                          '& .MuiButton-root': {
+                            minWidth: '100px',
+                            fontWeight: 'bold',
+                            textTransform: 'none',
+                            boxShadow: 2
+                          }
                         }}>
-                          {/* Status Chip */}
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Chip
-                              label={product.isBlocked ? 'Blocked' : 'Active'}
-                              color={product.isBlocked ? 'error' : 'success'}
-                              size="small"
-                            />
-                          </Box>
-                          {/* Action Buttons */}
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button
-                              variant="contained"
-                              size="small"
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setShowVariantModal(true);
-                              }}
-                              sx={{
-                                backgroundColor: "#00796b",
-                                '&:hover': {
-                                  backgroundColor: "#004d40",
-                                  transform: 'translateY(-2px)'
-                                },
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              Add Variant
-                            </Button>
-                            <Button
-                              variant="contained"
-                              size="small"
-                              sx={{
-                                backgroundColor: "#1565c0",
-                                '&:hover': {
-                                  backgroundColor: "#0d47a1",
-                                  transform: 'translateY(-2px)'
-                                },
-                                transition: 'all 0.2s'
-                              }}
-                              onClick={() => {
-                                setSelectedProduct(product);
-                                setFormData({
-                                  name: product.name,
-                                  category: product.category._id,
-                                  brand: product.brand._id,
-                                  description: product.description
-                                });
-                                setEditMode(true);
-                                setShowProductModal(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <ProductActionButton product={product} />
-                          </Box>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setShowVariantModal(true);
+                            }}
+                            sx={{
+                              backgroundColor: "#00796b", // Teal
+                              '&:hover': {
+                                backgroundColor: "#004d40",
+                                transform: 'translateY(-2px)'
+                              },
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            Add Variant
+                          </Button>
+                          <Button
+                            variant="contained"
+                            size="small"
+                            sx={{
+                              backgroundColor: "#1565c0", // Blue
+                              '&:hover': {
+                                backgroundColor: "#0d47a1",
+                                transform: 'translateY(-2px)'
+                              },
+                              transition: 'all 0.2s'
+                            }}
+                            onClick={() => {
+                              setSelectedProduct(product);
+                              setFormData({
+                                name: product.name,
+                                category: product.category._id,
+                                brand: product.brand._id,
+                                description: product.description
+                              });
+                              setEditMode(true);
+                              setShowProductModal(true);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <ProductActionButton product={product} />
                         </Box>
                       </TableCell>
                       <TableCell align="center">
@@ -732,12 +746,50 @@ const Products = () => {
                                     <TableCell>{variant.stock}</TableCell>
                                     <TableCell>₹{variant.price}</TableCell>
                                     <TableCell align="center">
-                                      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                      <Box sx={{
+                                        display: 'flex',
+                                        gap: 1,
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                      }}>
                                         <Chip
                                           label={variant.isBlocked ? 'Blocked' : 'Active'}
                                           color={variant.isBlocked ? 'error' : 'success'}
                                           size="small"
+                                          sx={{
+                                            fontWeight: 'bold',
+                                            minWidth: '80px',
+                                            background: variant.isBlocked
+                                              ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                                              : 'linear-gradient(45deg, #2e7d32 30%, #43a047 90%)',
+                                            color: 'white'
+                                          }}
                                         />
+                                        <Button
+                                          variant="contained"
+                                          size="small"
+                                          sx={{
+                                            background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                                            color: 'white',
+                                            '&:hover': {
+                                              background: 'linear-gradient(45deg, #0d47a1 30%, #1565c0 90%)',
+                                              transform: 'translateY(-2px)'
+                                            },
+                                            transition: 'all 0.2s'
+                                          }}
+                                          onClick={() => {
+                                            setSelectedVariant(variant);
+                                            setVariantFormData({
+                                              size: variant.size,
+                                              color: variant.color,
+                                              stock: variant.stock,
+                                              price: variant.price
+                                            });
+                                            setShowEditVariantModal(true);
+                                          }}
+                                        >
+                                          Edit
+                                        </Button>
                                         <VariantActionButton variant={variant} />
                                       </Box>
                                     </TableCell>
@@ -1085,6 +1137,12 @@ const Products = () => {
 };
 
 export default Products;
+
+
+
+
+
+
 
 
 
