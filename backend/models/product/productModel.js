@@ -22,6 +22,10 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isBlocked: {  // Add this field
+      type: Boolean,
+      default: false,
+    },
     variants: [
       {
         type: mongoose.Schema.Types.ObjectId,

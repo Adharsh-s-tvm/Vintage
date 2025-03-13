@@ -23,6 +23,10 @@ const variantSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    isBlocked: {  // Add this field
+      type: Boolean,
+      default: false,
+    },
     mainImage: {
       type: String,
       required: false,
