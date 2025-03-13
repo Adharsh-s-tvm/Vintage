@@ -9,7 +9,7 @@ Category management
 <!-- Implement search along with cancel or clear button to reset the results (should be done from backend). -->
 <!-- Pagination  (should be done from backend). -->
 Product management
-<!-- Implement Add,Edit and Delete(Soft Delete) products. -->
+Implement Add,Edit and Delete(Soft Delete) products.
 <!-- Images should be cropped and resized properly before upload. -->
 
 User side :
@@ -27,7 +27,7 @@ zZ - aA
 Popularity  (Optional)
 Average ratings (Optional)
 New arrivals (Optional)
-<!-- Featured (Optional) -->
+Featured (Optional)
 Filter based on : 
 Category
 Price Range
@@ -56,7 +56,6 @@ Reference Video : Demo Login gadgetStoreApp.mp4
 
 ------------------------------------------------------------------------------------------------------------------------------------------
 
-<!-- Edit product  -->
 <!-- Add pagination for all tables -->
 <!-- Search need to done from backend in shop -->
 <!-- Forget password -->
