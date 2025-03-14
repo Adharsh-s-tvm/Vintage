@@ -6,6 +6,8 @@ import {
     getCurrentUserProfile,
     updateCurrentUserProfile,
     googleLogin,
+    checkEmail,
+    resetPassword,
 } from "../controllers/userController.js";
 
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
@@ -25,9 +27,9 @@ router
     .get(authenticate, getCurrentUserProfile)
     .put(authenticate, updateCurrentUserProfile);
 
-
 router.post('/google', googleLogin)
 
-
+router.post("/check-email", checkEmail);
+router.post("/reset-password", resetPassword);
 
 export default router;

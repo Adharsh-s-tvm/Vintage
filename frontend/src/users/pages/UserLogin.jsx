@@ -11,6 +11,7 @@ import { setUserInfo } from '../../redux/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
 import { googleAuth } from '../../utils/api';
 import axios from 'axios';
+import { api } from '../../lib/api';
 
 export default function SignIn() {
   const dispatch = useDispatch();
@@ -23,6 +24,11 @@ export default function SignIn() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [isResetting, setIsResetting] = useState(false);
+  const [otpModalOpen, setOtpModalOpen] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [newPasswordModalOpen, setNewPasswordModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   // Move responseGoogle function before it's used
   const responseGoogle = async (authResult) => {
@@ -91,14 +97,63 @@ export default function SignIn() {
     e.preventDefault();
     try {
       setIsResetting(true);
-      // Add your API call here to handle password reset
-      // const response = await resetPassword(resetEmail);
-      toast.success('Password reset link sent to your email!');
+      // First check if email exists
+      const checkEmailResponse = await axios.post(`${api}/check-email`, { email: resetEmail });
+
+      if (!checkEmailResponse.data.exists) {
+        toast.error('Email not found in our records');
+        return;
+      }
+
+      // If email exists, send OTP
+      const response = await axios.post(`${api}/user/otp/send`, { email: resetEmail });
+      toast.success('OTP sent to your email!');
       setIsModalOpen(false);
+      setOtpModalOpen(true);
     } catch (error) {
-      toast.error('Failed to send reset link: ' + error.message);
+      toast.error('Failed to send OTP: ' + error.response?.data?.message || error.message);
     } finally {
       setIsResetting(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e) => {
+    console.log('called verify frontend');
+    
+    e.preventDefault();
+    try {
+      const response = await axios.post(`${api}/user/otp/verify`, {
+        email: resetEmail,
+        otp: otp
+      });
+
+      if (response.data.success) {
+        toast.success('OTP verified successfully!');
+        setOtpModalOpen(false);
+        setNewPasswordModalOpen(true);
+      }
+    } catch (error) {
+      toast.error('Invalid OTP');
+    }
+  };
+
+  const handlePasswordReset = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${api}/reset-password`, {
+        email: resetEmail,
+        password: newPassword
+      });
+
+      toast.success('Password reset successfully!');
+      setNewPasswordModalOpen(false);
+    } catch (error) {
+      toast.error('Failed to reset password');
     }
   };
 
@@ -245,6 +300,83 @@ export default function SignIn() {
                   type="button"
                   variant="outline"
                   onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* OTP Verification Modal */}
+      {otpModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Enter OTP</h2>
+            <form onSubmit={handleVerifyOTP} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="otp">Enter OTP sent to your email</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="Enter OTP"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">
+                  Verify OTP
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setOtpModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Password Modal */}
+      {newPasswordModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Reset Password</h2>
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirm Password</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1">
+                  Save New Password
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setNewPasswordModalOpen(false)}
                 >
                   Cancel
                 </Button>

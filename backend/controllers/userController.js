@@ -234,6 +234,32 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
 });
 
+const checkEmail = asyncHandler(async (req, res) => {
+    console.log('called');
+    
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    res.json({ exists: !!user });
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ message: "Password reset successful" });
+});
 
 export {
     createUser,
@@ -242,4 +268,6 @@ export {
     getCurrentUserProfile,
     updateCurrentUserProfile,
     googleLogin,
+    checkEmail,
+    resetPassword,
 };

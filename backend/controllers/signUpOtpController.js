@@ -84,6 +84,8 @@ export const sendOTP = asyncHandler(async (req, res) => {
 
 
 export const verifyOTP = async (req, res) => {
+  console.log("called b verigy");
+  
   try {
     const { email, otp } = req.body;
     console.log(req.body);
