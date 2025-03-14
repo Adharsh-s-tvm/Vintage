@@ -51,7 +51,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth); // Get user from Redux
+  const { user } = useSelector((state) => state.auth.userInfo); // Get user from Redux
   const [storedUser, setStoredUser] = useState(null);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
@@ -116,14 +116,14 @@ export function Navbar() {
                   <Search className="h-5 w-5" />
                 </button>
 
-                <Link to="/" className="p-2 text-gray-500 hover:text-primary relative">
+                <Link to="/wishlist" className="p-2 text-gray-500 hover:text-primary relative">
                   <Heart className="h-5 w-5" />
                   <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                     2
                   </span>
                 </Link>
 
-                <Link to="/" className="p-2 text-gray-500 hover:text-primary relative">
+                <Link to="/cart" className="p-2 text-gray-500 hover:text-primary relative">
                   <ShoppingBag className="h-5 w-5" />
                   <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                     3
@@ -133,19 +133,19 @@ export function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
-                      <User className="h-5 w-5" />
+                      <User className="h-5 w-5" /> 
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => navigate('/')}>
+                    <DropdownMenuItem onClick={() => navigate('/profile')}>
                       <UserCircle className="mr-2 h-4 w-4" />
                       <span>My Account</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/')}>
+                    <DropdownMenuItem onClick={() => navigate('/orders')}>
                       <ShoppingBag className="mr-2 h-4 w-4" />
                       <span>My Orders</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/')}>
+                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                       <Heart className="mr-2 h-4 w-4" />
                       <span>My Wishlist</span>
                     </DropdownMenuItem>
