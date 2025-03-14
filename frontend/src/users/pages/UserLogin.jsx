@@ -221,7 +221,7 @@ export default function SignIn() {
               <div className="space-y-2">
                 <Label htmlFor="reset-email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  {/* <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
                   <Input
                     id="reset-email"
                     type="email"
@@ -239,7 +239,7 @@ export default function SignIn() {
                   className="flex-1"
                   disabled={isResetting}
                 >
-                  {isResetting ? 'Sending...' : 'Send Reset Link'}
+                  {isResetting ? 'Sending...' : 'Send Otp'}
                 </Button>
                 <Button
                   type="button"
