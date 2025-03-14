@@ -83,13 +83,16 @@ const ProductListing = () => {
       queryParams.set('page', currentPage);
       queryParams.set('limit', itemsPerPage);
 
+      // Add search query if it exists
+      if (searchQuery.trim()) {
+        queryParams.set('search', searchQuery.trim());
+      }
+
       const response = await axios.get(`${api}/products?${queryParams}`);
       console.log("Products fetched ", response.data);
 
-      // Update products and pagination info
       setProducts(response.data.products || []);
 
-      // Update totalPages from the pagination object
       if (response.data.pagination) {
         console.log("Pagination data:", response.data.pagination);
         setTotalPages(response.data.pagination.totalPages);
@@ -97,7 +100,7 @@ const ProductListing = () => {
       }
     } catch (error) {
       console.log(error);
-      setTotalPages(1); // Set default value in case of error
+      setTotalPages(1);
     }
   }
 
@@ -238,19 +241,6 @@ const ProductListing = () => {
   const filteredProducts = products.filter(product => {
     // First check if product is blocked
     if (product.isBlocked) return false;
-
-    // Search filter
-    if (searchQuery) {
-      const searchLower = searchQuery.toLowerCase();
-      const matchesName = product.name.toLowerCase().includes(searchLower);
-      const matchesDescription = product.description.toLowerCase().includes(searchLower);
-      const matchesBrand = product.brand.name.toLowerCase().includes(searchLower);
-      const matchesCategory = product.category.name.toLowerCase().includes(searchLower);
-
-      if (!(matchesName || matchesDescription || matchesBrand || matchesCategory)) {
-        return false;
-      }
-    }
 
     // Price filter - only consider prices from active variants
     const activeVariants = product.variants.filter(variant => !variant.isBlocked);
@@ -526,7 +516,7 @@ const ProductListing = () => {
     navigate(`/products/${productId}`);
   };
 
-  // Add this useEffect for debouncing search
+  // Update the search debounce effect
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery !== debouncedSearchQuery) {
@@ -538,8 +528,9 @@ const ProductListing = () => {
           params.delete('search');
         }
         setSearchParams(params);
+        setCurrentPage(1); // Reset to first page when searching
       }
-    }, 500); // 500ms delay
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [searchQuery]);

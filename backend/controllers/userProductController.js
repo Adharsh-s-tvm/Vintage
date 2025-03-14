@@ -18,11 +18,22 @@ export const getAllShopProducts = async (req, res) => {
             size,
             sort,
             page = 1,
-            limit = 4
+            limit = 4,
+            search
         } = req.query;
 
 
         const baseQuery = {}
+
+        // Add search query if provided
+        if (search) {
+            baseQuery.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } },
+                { 'brand.name': { $regex: search, $options: 'i' } },
+                { 'category.name': { $regex: search, $options: 'i' } }
+            ];
+        }
 
         // Category filter
         if (category) {
@@ -73,6 +84,19 @@ export const getAllShopProducts = async (req, res) => {
             }
         ];
 
+        // Then add the search query if it exists
+        if (search) {
+            aggregationPipeline.push({
+                $match: {
+                    $or: [
+                        { name: { $regex: search, $options: 'i' } },
+                        { description: { $regex: search, $options: 'i' } },
+                        { 'brand.name': { $regex: search, $options: 'i' } },
+                        { 'category.name': { $regex: search, $options: 'i' } }
+                    ]
+                }
+            });
+        }
 
         // Add size filter if provided
         if (size) {
