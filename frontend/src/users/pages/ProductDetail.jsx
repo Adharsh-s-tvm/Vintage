@@ -106,24 +106,18 @@ export default function ProductDetail() {
         const productData = response.data.product;
         console.log("Single product: ", productData);
 
-        // Check if product is blocked
         if (productData.isBlocked) {
           toast({
             variant: "destructive",
             title: "Product Unavailable",
             description: "This product is currently not available.",
           });
-          navigate('/products'); // Redirect to product listing
+          navigate('/products');
           return;
         }
 
         setProduct(productData);
-        // Fetch related products after getting product details
         await fetchRelatedProducts(productData);
-        // Set initial variant if available
-        if (productData.variants && productData.variants.length > 0) {
-          setSelectedVariant(productData.variants[0]);
-        }
       } catch (error) {
         console.error('Error fetching product:', error);
         toast({
@@ -131,7 +125,7 @@ export default function ProductDetail() {
           title: "Error",
           description: "Failed to load product details",
         });
-        navigate('/products'); // Redirect to product listing on error
+        navigate('/products');
       } finally {
         setLoading(false);
       }
@@ -394,13 +388,13 @@ export default function ProductDetail() {
             {/* Price section */}
             <div className="mt-4 flex items-center justify-between">
               <span className="text-2xl font-bold text-gray-900">
-                ₹{((selectedVariant?.price || product.variants[0]?.price)).toFixed(2)}
+                ₹{selectedVariant ? selectedVariant.price.toFixed(2) : product?.variants[0]?.price.toFixed(2)}
               </span>
 
-              {/* Add this new stock status section */}
-              <div className="flex items-center">
-                {selectedVariant ? (
-                  selectedVariant.stock > 0 ? (
+              {/* Stock status only shown when variant is selected */}
+              {selectedVariant && (
+                <div className="flex items-center">
+                  {selectedVariant.stock > 0 ? (
                     <div className="flex items-center">
                       <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
                       <span className="text-sm font-medium text-green-600">
@@ -412,14 +406,9 @@ export default function ProductDetail() {
                       <div className="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div>
                       <span className="text-sm font-medium text-red-600">Out of Stock</span>
                     </div>
-                  )
-                ) : (
-                  <div className="flex items-center">
-                    <div className="h-2.5 w-2.5 rounded-full bg-yellow-500 mr-2"></div>
-                    <span className="text-sm font-medium text-yellow-600">Select a size</span>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Description */}
