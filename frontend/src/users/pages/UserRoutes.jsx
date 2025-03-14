@@ -11,6 +11,7 @@ import Orders from './Orders'
 import UserDashboard from './UserDashboard'
 import ProductDetail from './ProductDetail'
 import ProtectedRoute from '../../utils/ProtectedRoute'
+import Profile from './profile/UserProfile'
 
 function UserRoutes() {
   return (
@@ -27,7 +28,7 @@ function UserRoutes() {
           <Route path='/cart' element={<Cart />} />
           <Route path='/wishlist' element={<WishList />} />
           <Route path='/orders' element={<Orders />} />
-          <Route path='/dashboard' element={<UserDashboard />} />
+          <Route path='/profile' element={<Profile />} />
         </Route>
       </Routes>
     </>
