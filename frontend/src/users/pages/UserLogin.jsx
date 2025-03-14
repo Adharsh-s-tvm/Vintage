@@ -20,6 +20,9 @@ export default function SignIn() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [isResetting, setIsResetting] = useState(false);
 
   // Move responseGoogle function before it's used
   const responseGoogle = async (authResult) => {
@@ -84,6 +87,21 @@ export default function SignIn() {
     }
   };
 
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    try {
+      setIsResetting(true);
+      // Add your API call here to handle password reset
+      // const response = await resetPassword(resetEmail);
+      toast.success('Password reset link sent to your email!');
+      setIsModalOpen(false);
+    } catch (error) {
+      toast.error('Failed to send reset link: ' + error.message);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
   // Add early return if there's a token
   const token = localStorage.getItem('jwt');
   if (token) {
@@ -102,7 +120,7 @@ export default function SignIn() {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <div className="relative">
-              <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              {/* <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
               <Input
                 id="email"
                 type="email"
@@ -118,12 +136,16 @@ export default function SignIn() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">Password</Label>
-              <a href="#" className="text-sm font-medium text-primary hover:underline">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(true)}
+                className="text-sm font-medium text-primary hover:underline"
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
             <div className="relative">
-              <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              {/* <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
               <Input
                 id="password"
                 type={showPassword ? 'text' : 'password'}
@@ -189,6 +211,48 @@ export default function SignIn() {
           </Button> */}
         </div>
       </div>
+
+      {/* Add Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-bold mb-4">Reset Password</h2>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    className="pl-10"
+                    value={resetEmail}
+                    onChange={(e) => setResetEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={isResetting}
+                >
+                  {isResetting ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

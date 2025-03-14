@@ -219,7 +219,7 @@ function UserSignUp() {
                     <div className="space-y-2">
                         <Label htmlFor="name">First Name</Label>
                         <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            {/* <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
                             <Input
                                 id="firstName"
                                 name="firstName"
@@ -236,7 +236,7 @@ function UserSignUp() {
                     <div className="space-y-2">
                         <Label htmlFor="name">Last Name</Label>
                         <div className="relative">
-                            <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            {/* <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
                             <Input
                                 id="lastName"
                                 name="lastName"
@@ -253,7 +253,7 @@ function UserSignUp() {
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            {/* <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
                             <Input
                                 id="email"
                                 name="email"
@@ -270,7 +270,7 @@ function UserSignUp() {
                     <div className="space-y-2">
                         <Label htmlFor="password">Password</Label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            {/* <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
                             <Input
                                 id="password"
                                 name="password"
@@ -296,7 +296,7 @@ function UserSignUp() {
                     <div className="space-y-2">
                         <Label htmlFor="password">Confirm Password</Label>
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                            {/* <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
                             <Input
                                 id="password"
                                 name="confirmPassword"
@@ -329,12 +329,12 @@ function UserSignUp() {
                 <div className="mt-8 text-center text-sm">
                     <p className="text-gray-500">
                         Already have an account?{' '}
-                        <Link to="/signin" className="font-medium text-primary hover:underline">
+                        <Link to="/login" className="font-medium text-primary hover:underline">
                             Sign in
                         </Link>
                     </p>
                 </div>
-
+{/* 
                 <div className="mt-6 flex items-center gap-2">
                     <div className="h-px flex-1 bg-gray-100"></div>
                     <span className="text-xs font-medium text-gray-500">OR CONTINUE WITH</span>
@@ -364,7 +364,7 @@ function UserSignUp() {
                         </svg>
                         GitHub
                     </Button>
-                </div>
+                </div> */}
             </div>
             <OtpModal
                 formData={formData}
