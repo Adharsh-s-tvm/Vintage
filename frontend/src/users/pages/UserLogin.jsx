@@ -41,13 +41,21 @@ export default function SignIn() {
         console.log("Authentication result:", result);
 
         if (result.data.token) {
+          // Store token
           localStorage.setItem('token', result.data.token);
+          localStorage.setItem('jwt', result.data.token);
+
+          // Store user info in localStorage and Redux
           localStorage.setItem('userInfo', JSON.stringify(result.data.user));
+          dispatch(setUserInfo(result.data.user));
+
+          toast.success('Successfully signed in with Google!');
           navigate('/');
         }
       }
     } catch (error) {
       console.error("Error during Google login:", error.response?.data || error.message);
+      toast.error('Google login failed: ' + error.response?.data?.message || error.message);
     }
   };
 
@@ -58,8 +66,11 @@ export default function SignIn() {
   });
 
   useEffect(() => {
+    // Check for both JWT token and userInfo
     const token = localStorage.getItem('jwt');
-    if (token) {
+    const userInfo = localStorage.getItem('userInfo');
+
+    if (token && userInfo) {
       navigate('/');
       toast.info('You are already logged in');
     } else {
@@ -119,7 +130,7 @@ export default function SignIn() {
 
   const handleVerifyOTP = async (e) => {
     console.log('called verify frontend');
-    
+
     e.preventDefault();
     try {
       const response = await axios.post(`${api}/user/otp/verify`, {
@@ -157,10 +168,13 @@ export default function SignIn() {
     }
   };
 
-  // Add early return if there's a token
+  // Modify the early return to check for both token and userInfo
   const token = localStorage.getItem('jwt');
-  if (token) {
-    return null; // Or you could return a loading spinner if needed
+  const userInfo = localStorage.getItem('userInfo');
+
+  if (token && userInfo) {
+    navigate('/');
+    return null;
   }
 
   return (
