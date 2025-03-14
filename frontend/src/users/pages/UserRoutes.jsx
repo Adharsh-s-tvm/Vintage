@@ -12,6 +12,7 @@ import UserDashboard from './UserDashboard'
 import ProductDetail from './ProductDetail'
 import ProtectedRoute from '../../utils/ProtectedRoute'
 import Profile from './profile/UserProfile'
+import EditProfile from './profile/EditProfile'
 
 function UserRoutes() {
   return (
@@ -29,6 +30,7 @@ function UserRoutes() {
           <Route path='/wishlist' element={<WishList />} />
           <Route path='/orders' element={<Orders />} />
           <Route path='/profile' element={<Profile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
         </Route>
       </Routes>
     </>
