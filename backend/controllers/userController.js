@@ -96,16 +96,17 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("Invalid password");
     }
 
-    // If we get here, both email and password are valid
     const token = createToken(res, existingUser._id);
 
     res.status(200).json({
         success: true,
         _id: existingUser._id,
+        firstname: existingUser.firstname,
+        lastname: existingUser.lastname,
         username: existingUser.username,
         email: existingUser.email,
         isAdmin: existingUser.isAdmin,
-        token: token // Include token in response if needed on frontend
+        token // Include token in response
     });
 });
 
@@ -236,7 +237,7 @@ const googleLogin = asyncHandler(async (req, res) => {
 
 const checkEmail = asyncHandler(async (req, res) => {
     console.log('called');
-    
+
     const { email } = req.body;
     const user = await User.findOne({ email });
 

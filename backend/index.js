@@ -14,7 +14,10 @@ import adminRoutes from "./routes/adminRoutes.js";
 import signUpOtpRoutes from './routes/signUpOtpRoutes.js'
 import adminProductRoutes from './routes/adminProductRoutes.js'
 import userProductRoutes from './routes/userProductRoutes.js'
+import userProfileRoutes from './routes/userProfileRoutes.js'
+
 import { errorHandler } from "./middlewares/errorHandler.js";
+
 
 dotenv.config()
 const port = process.env.PORT || 7000;
@@ -51,7 +54,7 @@ app.use("/api/products", userProductRoutes)
 
 app.use("/api/user/otp", signUpOtpRoutes);
 
-
+app.use("/api/user/profile", userProfileRoutes )
 
 app.use(errorHandler)
 app.listen(port, () => console.log(`Server running on port : ${port}`));

@@ -12,7 +12,7 @@ import {
 
 import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
 
-const  router = express.Router();
+const router = express.Router();
 
 router
     .route("/signup")
@@ -31,5 +31,7 @@ router.post('/google', googleLogin)
 
 router.post("/check-email", checkEmail);
 router.post("/reset-password", resetPassword);
+
+
 
 export default router;

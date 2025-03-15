@@ -6,8 +6,14 @@ import asyncHandler from "./asyncHandler.js";
 const authenticate = asyncHandler(async (req, res, next) => {
   let token;
 
-  // Read JWT from the 'jwt' cookie or 'token' cookie
-  token = req.cookies.jwt || req.cookies.token;
+  // Check Authorization header
+  if (req.headers.authorization?.startsWith('Bearer')) {
+    token = req.headers.authorization.split(' ')[1];
+  }
+  // Check cookies if no token in header
+  if (!token) {
+    token = req.cookies.jwt || req.cookies.token;
+  }
 
   if (token) {
     try {
@@ -15,12 +21,11 @@ const authenticate = asyncHandler(async (req, res, next) => {
       req.user = await User.findById(decoded.userId).select("-password");
       next();
     } catch (error) {
-      res.status(401);
-      throw new Error("Not authorized, token failed.");
+      console.error('Auth error:', error);
+      res.status(401).json({ message: "Not authorized, token failed" });
     }
   } else {
-    res.status(401);
-    throw new Error("Not authorized, no token.");
+    res.status(401).json({ message: "Not authorized, no token" });
   }
 });
 

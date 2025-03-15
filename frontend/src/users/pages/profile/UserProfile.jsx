@@ -9,6 +9,7 @@ import { setUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../../lib/api';
 
 function UserProfile() {
   const dispatch = useDispatch();
@@ -16,10 +17,35 @@ function UserProfile() {
   const { userInfo } = useSelector((state) => state.auth);
   const [addresses, setAddresses] = useState([]);
   const [profileImage, setProfileImage] = useState(userInfo?.image || null);
+  const [userDetails, setUserDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    fetchUserDetails();
     fetchUserAddresses();
-  }, [userInfo]);
+  }, []);
+
+  const fetchUserDetails = async () => {
+    try {
+      console.log('Fetching user details...');
+      const response = await axios.get(`${api}/user/profile/details`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      console.log('Response:', response.data);
+      setUserDetails(response.data);
+      if (response.data.image) {
+        setProfileImage(response.data.image);
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching user details:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch user details');
+      setLoading(false);
+    }
+  };
 
   const fetchUserAddresses = async () => {
     try {
@@ -32,6 +58,16 @@ function UserProfile() {
       setAddresses([]);
     }
   };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="max-w-7xl mx-auto p-4">
+          <div>Loading...</div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -94,23 +130,32 @@ function UserProfile() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-sm text-gray-500">First Name</Label>
-                <p className="text-sm font-medium">{userInfo?.firstname}</p>
+                <p className="text-sm font-medium">{userDetails?.firstname || 'Not provided'}</p>
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Last Name</Label>
-                <p className="text-sm font-medium">{userInfo?.lastname}</p>
+                <p className="text-sm font-medium">{userDetails?.lastname || 'Not provided'}</p>
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Email</Label>
-                <p className="text-sm font-medium">{userInfo?.email}</p>
+                <p className="text-sm font-medium">{userDetails?.email || 'Not provided'}</p>
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Mobile</Label>
-                <p className="text-sm font-medium">{userInfo?.mobile || 'Not provided'}</p>
+                <p className="text-sm font-medium">{userDetails?.mobile || 'Not provided'}</p>
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Username</Label>
-                <p className="text-sm font-medium">{userInfo?.username}</p>
+                <p className="text-sm font-medium">{userDetails?.username || 'Not provided'}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-500">Member Since</Label>
+                <p className="text-sm font-medium">
+                  {userDetails?.createdAt
+                    ? new Date(userDetails.createdAt).toLocaleDateString()
+                    : 'Not available'
+                  }
+                </p>
               </div>
             </div>
 
