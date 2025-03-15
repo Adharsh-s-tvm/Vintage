@@ -32,9 +32,9 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    phone:{
-        type: Number,
-        required:false,
+    phone: {
+        type: String,
+        required: false,
     },
     createdAt: {
         type: Date,
@@ -52,10 +52,10 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    status: { 
-        type: String, 
-        enum: ["active", "banned"], 
-        default: "active" 
+    status: {
+        type: String,
+        enum: ["active", "banned"],
+        default: "active"
     },
 
 },

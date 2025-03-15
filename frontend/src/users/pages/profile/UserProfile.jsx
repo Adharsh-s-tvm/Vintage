@@ -49,7 +49,7 @@ function UserProfile() {
 
   const fetchUserAddresses = async () => {
     try {
-      const response = await axios.get('/api/users/addresses', {
+      const response = await axios.get(`${api}/user/profile/address`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
       setAddresses(Array.isArray(response.data) ? response.data : []);
@@ -142,7 +142,7 @@ function UserProfile() {
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Mobile</Label>
-                <p className="text-sm font-medium">{userDetails?.mobile || 'Not provided'}</p>
+                <p className="text-sm font-medium">{userDetails?.phone || 'Not provided'}</p>
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Username</Label>

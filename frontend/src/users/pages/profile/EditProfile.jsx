@@ -9,38 +9,74 @@ import { setUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../../../lib/api';
 
 function EditProfile() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { userInfo } = useSelector((state) => state.auth);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [profileImage, setProfileImage] = useState(userInfo?.image || null);
 
     const [formData, setFormData] = useState({
-        firstname: userInfo?.firstname || '',
-        lastname: userInfo?.lastname || '',
-        email: userInfo?.email || '',
-        username: userInfo?.username || '',
-        mobile: userInfo?.mobile || '',
-        image: userInfo?.image || '',
+        firstname: '',
+        lastname: '',
+        email: '',
+        username: '',
+        phone: '',
+        image: ''
     });
+
+    // Fetch current user data when component mounts
+    useEffect(() => {
+        const fetchUserData = async () => {
+            try {
+                const response = await axios.get(`${api}/user/profile/details`, {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('jwt')}`
+                    }
+                });
+
+                // Pre-fill the form with current user data
+                setFormData({
+                    firstname: response.data.firstname || '',
+                    lastname: response.data.lastname || '',
+                    email: response.data.email || '',
+                    username: response.data.username || '',
+                    phone: response.data.phone || '',
+                    image: response.data.image || ''
+                });
+                setLoading(false);
+            } catch (error) {
+                console.error('Error fetching user details:', error);
+                toast.error(error.response?.data?.message || 'Failed to fetch user details');
+                setLoading(false);
+            }
+        };
+
+        fetchUserData();
+    }, []);
 
     const handleProfileUpdate = async () => {
         try {
-            const response = await axios.put('/api/users/profile', formData, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            });
+            const response = await axios.put(
+                `${api}/user/profile/details`,
+                formData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem('jwt')}`
+                    }
+                }
+            );
 
             // Update both Redux state and localStorage
-            const updatedUserInfo = { ...userInfo, ...response.data };
-            dispatch(setUserInfo(updatedUserInfo));
-            localStorage.setItem('userInfo', JSON.stringify(updatedUserInfo));
+            dispatch(setUserInfo(response.data));
+            localStorage.setItem('userInfo', JSON.stringify(response.data));
 
             toast.success('Profile updated successfully');
-            navigate('/profile'); // Navigate back to profile page
+            navigate('/profile');
         } catch (error) {
-            toast.error('Failed to update profile');
+            toast.error(error.response?.data?.message || 'Failed to update profile');
         }
     };
 
@@ -52,7 +88,7 @@ function EditProfile() {
 
             try {
                 setLoading(true);
-                const response = await axios.post('/api/users/upload-image', formData, {
+                const response = await axios.post(`${api}/user/profile/upload-image`, formData, {
                     headers: {
                         'Content-Type': 'multipart/form-data',
                         Authorization: `Bearer ${localStorage.getItem('jwt')}`
@@ -69,6 +105,10 @@ function EditProfile() {
             }
         }
     };
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <Layout>
@@ -131,12 +171,12 @@ function EditProfile() {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="mobile">Mobile Number</Label>
+                            <Label htmlFor="phone">Mobile Number</Label>
                             <Input
-                                id="mobile"
+                                id="phone"
                                 type="tel"
-                                value={formData.mobile}
-                                onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                                 className="mt-1"
                             />
                         </div>
