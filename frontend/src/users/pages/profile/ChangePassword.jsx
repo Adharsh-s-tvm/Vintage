@@ -3,7 +3,7 @@ import { Layout } from '../../layout/Layout';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Label } from '../../../ui/Label';
-import { Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { api } from '../../../lib/api';
@@ -22,6 +22,14 @@ function ChangePassword() {
         newPassword: false,
         confirmPassword: false
     });
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [resetEmail, setResetEmail] = useState('');
+    const [isResetting, setIsResetting] = useState(false);
+    const [otpModalOpen, setOtpModalOpen] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [newPasswordModalOpen, setNewPasswordModalOpen] = useState(false);
+    const [resetNewPassword, setResetNewPassword] = useState('');
+    const [resetConfirmPassword, setResetConfirmPassword] = useState('');
 
     const handleChange = (e) => {
         setFormData({
@@ -74,18 +82,66 @@ function ChangePassword() {
         }
     };
 
-    const handleForgotPassword = async () => {
-        const email = prompt('Please enter your email address');
-        if (!email) return;
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+        try {
+            setIsResetting(true);
+            // Check if email exists
+            const checkEmailResponse = await axios.post(`${api}/check-email`, { email: resetEmail });
+
+            if (!checkEmailResponse.data.exists) {
+                toast.error('Email not found in our records');
+                return;
+            }
+
+            // If email exists, send OTP
+            const response = await axios.post(`${api}/user/otp/send`, { email: resetEmail });
+            toast.success('OTP sent to your email!');
+            setIsModalOpen(false);
+            setOtpModalOpen(true);
+        } catch (error) {
+            toast.error('Failed to send OTP: ' + error.response?.data?.message || error.message);
+        } finally {
+            setIsResetting(false);
+        }
+    };
+
+    const handleVerifyOTP = async (e) => {
+        e.preventDefault();
+        try {
+            const response = await axios.post(`${api}/user/otp/verify`, {
+                email: resetEmail,
+                otp: otp
+            });
+
+            if (response.data.success) {
+                toast.success('OTP verified successfully!');
+                setOtpModalOpen(false);
+                setNewPasswordModalOpen(true);
+            }
+        } catch (error) {
+            toast.error('Invalid OTP');
+        }
+    };
+
+    const handlePasswordReset = async (e) => {
+        e.preventDefault();
+        if (resetNewPassword !== resetConfirmPassword) {
+            toast.error('Passwords do not match');
+            return;
+        }
 
         try {
-            setLoading(true);
-            await axios.post(`${api}/user/forgot-password`, { email });
-            toast.success('Password reset link sent to your email');
+            const response = await axios.post(`${api}/reset-password`, {
+                email: resetEmail,
+                password: resetNewPassword
+            });
+
+            toast.success('Password reset successfully!');
+            setNewPasswordModalOpen(false);
+            navigate('/profile');
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to send reset link');
-        } finally {
-            setLoading(false);
+            toast.error('Failed to reset password');
         }
     };
 
@@ -185,7 +241,7 @@ function ChangePassword() {
                             <Button
                                 type="button"
                                 variant="link"
-                                onClick={handleForgotPassword}
+                                onClick={() => setIsModalOpen(true)}
                                 className="text-sm text-blue-600 hover:text-blue-800"
                             >
                                 Forgot Password?
@@ -194,6 +250,105 @@ function ChangePassword() {
                     </form>
                 </div>
             </div>
+
+            {/* Email Modal */}
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                        <h2 className="text-xl font-bold mb-4">Reset Password</h2>
+                        <form onSubmit={handleForgotPassword} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="reset-email">Email</Label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                    <Input
+                                        id="reset-email"
+                                        type="email"
+                                        placeholder="Enter your email"
+                                        className="pl-10"
+                                        value={resetEmail}
+                                        onChange={(e) => setResetEmail(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="submit" className="flex-1" disabled={isResetting}>
+                                    {isResetting ? 'Sending...' : 'Send OTP'}
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* OTP Modal */}
+            {otpModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                        <h2 className="text-xl font-bold mb-4">Enter OTP</h2>
+                        <form onSubmit={handleVerifyOTP} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="otp">Enter OTP sent to your email</Label>
+                                <Input
+                                    id="otp"
+                                    type="text"
+                                    placeholder="Enter OTP"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="submit" className="flex-1">Verify OTP</Button>
+                                <Button type="button" variant="outline" onClick={() => setOtpModalOpen(false)}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* New Password Modal */}
+            {newPasswordModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+                        <h2 className="text-xl font-bold mb-4">Reset Password</h2>
+                        <form onSubmit={handlePasswordReset} className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="new-password">New Password</Label>
+                                <Input
+                                    id="new-password"
+                                    type="password"
+                                    value={resetNewPassword}
+                                    onChange={(e) => setResetNewPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="confirm-password">Confirm Password</Label>
+                                <Input
+                                    id="confirm-password"
+                                    type="password"
+                                    value={resetConfirmPassword}
+                                    onChange={(e) => setResetConfirmPassword(e.target.value)}
+                                    required
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button type="submit" className="flex-1">Save New Password</Button>
+                                <Button type="button" variant="outline" onClick={() => setNewPasswordModalOpen(false)}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </Layout>
     );
 }
