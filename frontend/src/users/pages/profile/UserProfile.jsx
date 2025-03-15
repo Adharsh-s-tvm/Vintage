@@ -162,31 +162,36 @@ function UserProfile() {
             {/* Addresses Section */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold">Addresses</h2>
+                <h2 className="text-lg font-bold">Default Address</h2>
+                <Button variant="link" onClick={() => navigate('/addresses')}>
+                  Manage Addresses
+                </Button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {addresses.map((address) => (
-                  <div key={address._id} className="border p-3 rounded-lg text-sm">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-semibold">{address.fullName}</p>
-                        <p className="text-gray-600">{address.phone}</p>
-                        <p className="text-gray-600">{address.street}</p>
-                        <p className="text-gray-600">{`${address.city}, ${address.state} ${address.postalCode}`}</p>
-                        <p className="text-gray-600">{address.country}</p>
-                      </div>
-                      <div className="flex space-x-1">
-                        <Button variant="outline" size="xs">
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button variant="outline" size="xs" className="text-red-500">
-                          <Trash className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
+              <div className="border p-3 rounded-lg text-sm">
+                {addresses.find(addr => addr.isDefault) ? (
+                  <div>
+                    {/* Show default address details */}
+                    <p className="font-semibold">{addresses.find(addr => addr.isDefault).fullName}</p>
+                    <p className="text-gray-600">{addresses.find(addr => addr.isDefault).phone}</p>
+                    <p className="text-gray-600">{addresses.find(addr => addr.isDefault).street}</p>
+                    <p className="text-gray-600">
+                      {`${addresses.find(addr => addr.isDefault).city}, ${addresses.find(addr => addr.isDefault).state} ${addresses.find(addr => addr.isDefault).postalCode}`}
+                    </p>
+                    <p className="text-gray-600">{addresses.find(addr => addr.isDefault).country}</p>
                   </div>
-                ))}
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-500">No default address set</p>
+                    <Button
+                      variant="link"
+                      onClick={() => navigate('/addresses')}
+                      className="mt-2"
+                    >
+                      Add Address
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
