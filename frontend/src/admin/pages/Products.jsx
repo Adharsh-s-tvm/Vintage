@@ -88,6 +88,14 @@ const Products = () => {
   });
   const [completedCrop, setCompletedCrop] = useState(null);
   const imgRef = useRef(null);
+  const [formErrors, setFormErrors] = useState({
+    size: '',
+    color: '',
+    stock: '',
+    price: '',
+    mainImage: '',
+    subImages: ''
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -219,85 +227,86 @@ const Products = () => {
     }
   };
 
+  const validateVariantData = () => {
+    const errors = {};
+
+    // Check for empty fields
+    if (!variantData.size.trim()) errors.size = 'Size is required';
+    if (!variantData.color.trim()) errors.color = 'Color is required';
+    if (!variantData.stock || variantData.stock <= 0) errors.stock = 'Valid stock quantity is required';
+    if (!variantData.price || variantData.price <= 0) errors.price = 'Valid price is required';
+    if (!variantData.mainImage) errors.mainImage = 'Main image is required';
+
+    // Check if at least one sub image is uploaded
+    const hasSubImages = Object.values(variantData.subImages).some(img => img !== null);
+    if (!hasSubImages) errors.subImages = 'At least one sub image is required';
+
+    // Check for duplicate size
+    if (selectedProduct && variantData.size) {
+      const isDuplicateSize = selectedProduct.variants.some(
+        variant =>
+          variant.size.toLowerCase() === variantData.size.toLowerCase() &&
+          (!selectedVariant || variant._id !== selectedVariant._id)
+      );
+      if (isDuplicateSize) errors.size = 'This size variant already exists';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleVariantSubmit = async () => {
+    if (!validateVariantData()) {
+      toast.error('Please fill all required fields');
+      return;
+    }
+
     try {
-      // Validate form data
-      if (!variantData.size || !variantData.color || !variantData.stock || !variantData.price) {
-        toast.error('Please fill in all fields');
-        return;
-      }
-
-      // Validate images
-      if (!variantData.mainImage) {
-        toast.error('Main image is required');
-        return;
-      }
-
-      if (Object.keys(variantData.subImages).length === 0) {
-        toast.error('At least one sub image is required');
-        return;
-      }
-
+      setLoading(true);
       const formData = new FormData();
-
-      // Append basic data
-      formData.append('product', selectedProduct._id);
       formData.append('size', variantData.size);
       formData.append('color', variantData.color);
       formData.append('stock', variantData.stock);
       formData.append('price', variantData.price);
-
-      // Append main image
       formData.append('mainImage', variantData.mainImage);
 
       // Append sub images
-      Object.values(variantData.subImages).forEach(file => {
-        formData.append('subImages', file);
+      Object.entries(variantData.subImages).forEach(([key, file]) => {
+        if (file) {
+          formData.append(`subImages`, file);
+        }
       });
 
-      // Log FormData contents for debugging
-      console.log('Submitting FormData:');
-      for (let [key, value] of formData.entries()) {
-        console.log(key, value instanceof File ? `File: ${value.name}` : value);
-      }
-
       const response = await axios.post(
-        `${API_BASE_URL}/products/variant/add`,
+        `${API_BASE_URL}/products/${selectedProduct._id}/variants`,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-          }
+          },
         }
       );
 
-      if (response.data.success) {
-        toast.success('Variant added successfully');
-        setShowVariantModal(false);
-        resetVariantForm();
-        fetchProducts();
-      }
+      setProducts(prevProducts => {
+        return prevProducts.map(product => {
+          if (product._id === selectedProduct._id) {
+            return {
+              ...product,
+              variants: [...product.variants, response.data]
+            };
+          }
+          return product;
+        });
+      });
+
+      toast.success('Variant added successfully');
+      handleCloseVariantModal();
     } catch (error) {
       console.error('Error adding variant:', error);
       toast.error(error.response?.data?.message || 'Failed to add variant');
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const resetVariantForm = () => {
-    setVariantData({
-      size: '',
-      color: '',
-      stock: '',
-      price: '',
-      mainImage: null,
-      subImages: {}
-    });
-    setImagePreview({
-      main: null,
-      sub1: null,
-      sub2: null,
-      sub3: null
-    });
   };
 
   const handleEditProduct = async () => {
@@ -581,6 +590,61 @@ const Products = () => {
       toast.error('Failed to crop image');
     }
   };
+
+  // Function to reset variant form data
+  const resetVariantForm = () => {
+    setVariantData({
+      size: '',
+      color: '',
+      stock: '',
+      price: '',
+      mainImage: null,
+      subImages: {}
+    });
+    setFormErrors({
+      size: '',
+      color: '',
+      stock: '',
+      price: '',
+      mainImage: '',
+      subImages: ''
+    });
+    setImagePreview({
+      main: null,
+      sub1: null,
+      sub2: null,
+      sub3: null
+    });
+    setSelectedVariant(null);
+  };
+
+  // Function to handle modal close
+  const handleCloseVariantModal = () => {
+    resetVariantForm();
+    setShowVariantModal(false);
+    // Cleanup any existing image preview URLs
+    Object.values(imagePreview).forEach(url => {
+      if (url) URL.revokeObjectURL(url);
+    });
+  };
+
+  // Function to handle modal open
+  const handleOpenVariantModal = (product) => {
+    setSelectedProduct(product);
+    setShowVariantModal(true);
+  };
+
+  // Update your existing button/trigger that opens the variant modal
+  const renderAddVariantButton = (product) => (
+    <Button
+      variant="contained"
+      size="small"
+      onClick={() => handleOpenVariantModal(product)}
+      startIcon={<Add />}
+    >
+      Add Variant
+    </Button>
+  );
 
   return (
     <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
@@ -1016,69 +1080,161 @@ const Products = () => {
       </Modal>
 
       {/* Add Variant Modal */}
-      <Modal show={showVariantModal} onHide={() => {
-        setShowVariantModal(false);
-        setImagePreview({ main: null, sub1: null, sub2: null, sub3: null });
-      }} centered size="lg">
+      <Modal
+        show={showVariantModal}
+        onHide={handleCloseVariantModal}
+        centered
+        size="lg"
+        backdrop="static" // Prevents closing by clicking outside
+        keyboard={false} // Prevents closing by pressing Esc key
+      >
         <Modal.Header closeButton>
-          <Modal.Title>Add Variant for {selectedProduct?.name}</Modal.Title>
+          <Modal.Title>Add Product Variant</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            {/* Left side - Form fields */}
-            <Box sx={{ flex: 1 }}>
-              <TextField
-                fullWidth
-                label="Size"
-                name="size"
-                value={variantData.size}
-                onChange={handleVariantChange}
-                required
-                margin="normal"
-              />
-              <TextField
-                fullWidth
-                label="Color"
-                name="color"
-                value={variantData.color}
-                onChange={handleVariantChange}
-                required
-                margin="normal"
-              />
-              <TextField
-                fullWidth
-                label="Stock"
-                name="stock"
-                type="number"
-                value={variantData.stock}
-                onChange={handleVariantChange}
-                required
-                margin="normal"
-              />
-              <TextField
-                fullWidth
-                label="Price"
-                name="price"
-                type="number"
-                value={variantData.price}
-                onChange={handleVariantChange}
-                required
-                margin="normal"
+          <TextField
+            fullWidth
+            label="Size"
+            name="size"
+            value={variantData.size}
+            onChange={(e) => {
+              setVariantData(prev => ({
+                ...prev,
+                size: e.target.value
+              }));
+              setFormErrors(prev => ({ ...prev, size: '' }));
+            }}
+            error={!!formErrors.size}
+            helperText={formErrors.size}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Color"
+            name="color"
+            value={variantData.color}
+            onChange={(e) => {
+              setVariantData(prev => ({
+                ...prev,
+                color: e.target.value
+              }));
+              setFormErrors(prev => ({ ...prev, color: '' }));
+            }}
+            error={!!formErrors.color}
+            helperText={formErrors.color}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Stock"
+            name="stock"
+            type="number"
+            value={variantData.stock}
+            onChange={(e) => {
+              setVariantData(prev => ({
+                ...prev,
+                stock: e.target.value
+              }));
+              setFormErrors(prev => ({ ...prev, stock: '' }));
+            }}
+            error={!!formErrors.stock}
+            helperText={formErrors.stock}
+            margin="normal"
+            required
+          />
+          <TextField
+            fullWidth
+            label="Price"
+            name="price"
+            type="number"
+            value={variantData.price}
+            onChange={(e) => {
+              setVariantData(prev => ({
+                ...prev,
+                price: e.target.value
+              }));
+              setFormErrors(prev => ({ ...prev, price: '' }));
+            }}
+            error={!!formErrors.price}
+            helperText={formErrors.price}
+            margin="normal"
+            required
+          />
+
+          {/* Image upload sections */}
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Main Image <span style={{ color: 'red' }}>*</span>
+            </Typography>
+            <Box
+              sx={{
+                border: '2px dashed #ccc',
+                borderRadius: 2,
+                p: 1,
+                mb: 1,
+                height: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
+                overflow: 'hidden'
+              }}
+            >
+              {imagePreview.main ? (
+                <img
+                  src={imagePreview.main}
+                  alt="Main preview"
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    objectFit: 'contain'
+                  }}
+                />
+              ) : (
+                <Typography color="textSecondary">Drop or click to upload main image</Typography>
+              )}
+              <input
+                type="file"
+                name="mainImage"
+                accept="image/*"
+                onChange={handleImageSelect}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  opacity: 0,
+                  cursor: 'pointer'
+                }}
               />
             </Box>
+            {formErrors.mainImage && (
+              <Typography color="error" variant="caption">
+                {formErrors.mainImage}
+              </Typography>
+            )}
+          </Box>
 
-            {/* Right side - Image uploads */}
-            <Box sx={{ flex: 1 }}>
-              {/* Main Image Upload */}
-              <Box sx={{ mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ mb: 1 }}>Main Image</Typography>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              Sub Images <span style={{ color: 'red' }}>*</span>
+              <Typography variant="caption" color="textSecondary">
+                (At least one sub image required)
+              </Typography>
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              {[1, 2, 3].map((num) => (
                 <Box
+                  key={num}
                   sx={{
                     border: '2px dashed #ccc',
                     borderRadius: 2,
                     p: 1,
-                    mb: 1,
-                    height: '200px',
+                    width: '100px',
+                    height: '100px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -1086,10 +1242,10 @@ const Products = () => {
                     overflow: 'hidden'
                   }}
                 >
-                  {imagePreview.main ? (
+                  {imagePreview[`sub${num}`] ? (
                     <img
-                      src={imagePreview.main}
-                      alt="Main preview"
+                      src={imagePreview[`sub${num}`]}
+                      alt={`Sub ${num} preview`}
                       style={{
                         maxWidth: '100%',
                         maxHeight: '100%',
@@ -1097,11 +1253,11 @@ const Products = () => {
                       }}
                     />
                   ) : (
-                    <Typography color="textSecondary">Drop or click to upload main image</Typography>
+                    <Typography variant="caption" color="textSecondary">Image {num}</Typography>
                   )}
                   <input
                     type="file"
-                    name="mainImage"
+                    name={`subImage${num}`}
                     accept="image/*"
                     onChange={handleImageSelect}
                     style={{
@@ -1115,70 +1271,25 @@ const Products = () => {
                     }}
                   />
                 </Box>
-              </Box>
-
-              {/* Sub Images Upload */}
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Sub Images</Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                {[1, 2, 3].map((num) => (
-                  <Box
-                    key={num}
-                    sx={{
-                      border: '2px dashed #ccc',
-                      borderRadius: 2,
-                      p: 1,
-                      width: '100px',
-                      height: '100px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {imagePreview[`sub${num}`] ? (
-                      <img
-                        src={imagePreview[`sub${num}`]}
-                        alt={`Sub ${num} preview`}
-                        style={{
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain'
-                        }}
-                      />
-                    ) : (
-                      <Typography variant="caption" color="textSecondary">Image {num}</Typography>
-                    )}
-                    <input
-                      type="file"
-                      name={`subImage${num}`}
-                      accept="image/*"
-                      onChange={handleImageSelect}
-                      style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        opacity: 0,
-                        cursor: 'pointer'
-                      }}
-                    />
-                  </Box>
-                ))}
-              </Box>
+              ))}
             </Box>
+            {formErrors.subImages && (
+              <Typography color="error" variant="caption">
+                {formErrors.subImages}
+              </Typography>
+            )}
           </Box>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => {
-            setShowVariantModal(false);
-            setImagePreview({ main: null, sub1: null, sub2: null, sub3: null });
-          }}>
-            Close
+          <Button variant="secondary" onClick={handleCloseVariantModal}>
+            Cancel
           </Button>
-          <Button variant="primary" onClick={handleVariantSubmit}>
-            Save Variant
+          <Button
+            variant="primary"
+            onClick={handleVariantSubmit}
+            disabled={loading}
+          >
+            {loading ? 'Saving...' : 'Save Variant'}
           </Button>
         </Modal.Footer>
       </Modal>
