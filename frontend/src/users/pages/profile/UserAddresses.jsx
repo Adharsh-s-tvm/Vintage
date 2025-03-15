@@ -27,6 +27,8 @@ function UserAddresses() {
         addressId: null,
         addressDetails: null
     });
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [editAddressId, setEditAddressId] = useState(null);
 
     useEffect(() => {
         fetchAddresses();
@@ -43,21 +45,46 @@ function UserAddresses() {
         }
     };
 
+    const handleEdit = (address) => {
+        setFormData({
+            fullName: address.fullName,
+            phone: address.phone,
+            street: address.street,
+            city: address.city,
+            state: address.state,
+            postalCode: address.postalCode,
+            country: address.country,
+            isDefault: address.isDefault
+        });
+        setEditAddressId(address._id);
+        setIsEditMode(true);
+        setShowAddModal(true);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             setLoading(true);
-            await axios.post(`${api}/user/profile/address`, formData, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            });
-            toast.success('Address added successfully');
+            if (isEditMode) {
+                await axios.put(`${api}/user/profile/address/${editAddressId}`, formData, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                toast.success('Address updated successfully');
+            } else {
+                await axios.post(`${api}/user/profile/address`, formData, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+                });
+                toast.success('Address added successfully');
+            }
             setShowAddModal(false);
             resetForm();
             fetchAddresses();
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to add address');
+            toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} address`);
         } finally {
             setLoading(false);
+            setIsEditMode(false);
+            setEditAddressId(null);
         }
     };
 
@@ -175,7 +202,9 @@ function UserAddresses() {
                 {showAddModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                         <div className="bg-white p-6 rounded-lg w-full max-w-md">
-                            <h2 className="text-xl font-bold mb-4">Add New Address</h2>
+                            <h2 className="text-xl font-bold mb-4">
+                                {isEditMode ? 'Edit Address' : 'Add New Address'}
+                            </h2>
                             <form onSubmit={handleSubmit} className="space-y-4">
                                 <div>
                                     <Label htmlFor="fullName">Full Name</Label>
@@ -186,17 +215,84 @@ function UserAddresses() {
                                         required
                                     />
                                 </div>
-                                {/* Add other form fields similarly */}
+                                <div>
+                                    <Label htmlFor="phone">Phone Number</Label>
+                                    <Input
+                                        id="phone"
+                                        value={formData.phone}
+                                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="street">Street Address</Label>
+                                    <Input
+                                        id="street"
+                                        value={formData.street}
+                                        onChange={(e) => setFormData({ ...formData, street: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="city">City</Label>
+                                    <Input
+                                        id="city"
+                                        value={formData.city}
+                                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="state">State</Label>
+                                    <Input
+                                        id="state"
+                                        value={formData.state}
+                                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="postalCode">Postal Code</Label>
+                                    <Input
+                                        id="postalCode"
+                                        value={formData.postalCode}
+                                        onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <Label htmlFor="country">Country</Label>
+                                    <Input
+                                        id="country"
+                                        value={formData.country}
+                                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        id="isDefault"
+                                        checked={formData.isDefault}
+                                        onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+                                    />
+                                    <Label htmlFor="isDefault">Set as default address</Label>
+                                </div>
                                 <div className="flex justify-end space-x-2 mt-6">
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={() => setShowAddModal(false)}
+                                        onClick={() => {
+                                            setShowAddModal(false);
+                                            setIsEditMode(false);
+                                            setEditAddressId(null);
+                                            resetForm();
+                                        }}
                                     >
                                         Cancel
                                     </Button>
                                     <Button type="submit" disabled={loading}>
-                                        {loading ? 'Adding...' : 'Add Address'}
+                                        {loading ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? 'Update Address' : 'Add Address')}
                                     </Button>
                                 </div>
                             </form>
