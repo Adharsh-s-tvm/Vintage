@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Container, Button, Modal } from 'react-bootstrap';
 import {
   Box,
@@ -26,6 +26,8 @@ import { ExpandMore, Search, Add, KeyboardArrowDown, KeyboardArrowUp } from "@mu
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
 import { toast } from 'sonner';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
 
 const API_BASE_URL = 'http://localhost:7000/api/admin';
 
@@ -74,6 +76,18 @@ const Products = () => {
     stock: 0,
     price: 0
   });
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [cropConfig, setCropConfig] = useState({
+    image: null,
+    imageType: '', // 'main' or 'sub1', 'sub2', 'sub3'
+    crop: {
+      unit: '%',
+      width: 90,
+      aspect: undefined // Free aspect ratio
+    }
+  });
+  const [completedCrop, setCompletedCrop] = useState(null);
+  const imgRef = useRef(null);
 
   useEffect(() => {
     fetchCategories();
@@ -473,6 +487,100 @@ const Products = () => {
       </button>
     </div>
   );
+
+  // Function to handle initial image selection
+  const handleImageSelect = (e) => {
+    const { name, files } = e.target;
+    if (files && files[0]) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropConfig({
+          image: reader.result,
+          imageType: name,
+          crop: {
+            unit: '%',
+            width: 90,
+            aspect: undefined
+          }
+        });
+        setShowCropModal(true);
+      };
+      reader.readAsDataURL(files[0]);
+    }
+  };
+
+  // Function to generate cropped image
+  const getCroppedImg = async (image, crop) => {
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    canvas.width = crop.width;
+    canvas.height = crop.height;
+    const ctx = canvas.getContext('2d');
+
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
+
+    return new Promise((resolve) => {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          console.error('Canvas is empty');
+          return;
+        }
+        blob.name = 'cropped.jpeg';
+        const croppedFile = new File([blob], 'cropped.jpeg', { type: 'image/jpeg' });
+        resolve(croppedFile);
+      }, 'image/jpeg', 1);
+    });
+  };
+
+  // Function to handle crop completion
+  const handleCropComplete = async () => {
+    if (!completedCrop || !imgRef.current) return;
+
+    try {
+      const croppedFile = await getCroppedImg(imgRef.current, completedCrop);
+
+      // Update variant data and preview based on image type
+      if (cropConfig.imageType === 'mainImage') {
+        setVariantData(prev => ({
+          ...prev,
+          mainImage: croppedFile
+        }));
+        setImagePreview(prev => ({
+          ...prev,
+          main: URL.createObjectURL(croppedFile)
+        }));
+      } else {
+        const index = cropConfig.imageType.slice(-1);
+        setVariantData(prev => ({
+          ...prev,
+          subImages: {
+            ...prev.subImages,
+            [index]: croppedFile
+          }
+        }));
+        setImagePreview(prev => ({
+          ...prev,
+          [`sub${index}`]: URL.createObjectURL(croppedFile)
+        }));
+      }
+
+      setShowCropModal(false);
+    } catch (error) {
+      console.error('Error cropping image:', error);
+      toast.error('Failed to crop image');
+    }
+  };
 
   return (
     <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
@@ -995,8 +1103,7 @@ const Products = () => {
                     type="file"
                     name="mainImage"
                     accept="image/*"
-                    onChange={handleVariantChange}
-                    required
+                    onChange={handleImageSelect}
                     style={{
                       position: 'absolute',
                       top: 0,
@@ -1046,7 +1153,7 @@ const Products = () => {
                       type="file"
                       name={`subImage${num}`}
                       accept="image/*"
-                      onChange={handleVariantChange}
+                      onChange={handleImageSelect}
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -1143,6 +1250,42 @@ const Products = () => {
           </Button>
           <Button variant="primary" onClick={handleEditVariant}>
             Save Changes
+          </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Crop Modal */}
+      <Modal
+        show={showCropModal}
+        onHide={() => setShowCropModal(false)}
+        centered
+        size="lg"
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Crop Image</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {cropConfig.image && (
+            <ReactCrop
+              crop={cropConfig.crop}
+              onChange={(c) => setCropConfig(prev => ({ ...prev, crop: c }))}
+              onComplete={(c) => setCompletedCrop(c)}
+            >
+              <img
+                ref={imgRef}
+                src={cropConfig.image}
+                style={{ maxWidth: '100%' }}
+                alt="Crop preview"
+              />
+            </ReactCrop>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowCropModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="primary" onClick={handleCropComplete}>
+            Crop & Save
           </Button>
         </Modal.Footer>
       </Modal>
