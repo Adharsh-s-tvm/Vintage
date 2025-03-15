@@ -3,7 +3,7 @@ import { Layout } from '../../layout/Layout';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Label } from '../../../ui/Label';
-import { Camera, Edit, Plus, Trash, User, Package, MapPin, Heart, Ticket } from 'lucide-react';
+import { Camera, Edit, Plus, Trash, User, Package, MapPin, Heart, Ticket, Lock } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
@@ -85,7 +85,7 @@ function UserProfile() {
                 <Package className="h-4 w-4" />
                 <span>My Orders</span>
               </a>
-              <a href="/addresses" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
+              <a href="/profile/addresses" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
                 <MapPin className="h-4 w-4" />
                 <span>Addresses</span>
               </a>
@@ -96,6 +96,10 @@ function UserProfile() {
               <a href="/coupons" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
                 <Ticket className="h-4 w-4" />
                 <span>My Coupons</span>
+              </a>
+              <a href="/profile/change-password" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
+                <Lock className="h-4 w-4" />
+                <span>Change Password</span>
               </a>
             </nav>
           </div>
@@ -163,7 +167,7 @@ function UserProfile() {
             <div className="mt-6">
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-bold">Default Address</h2>
-                <Button variant="link" onClick={() => navigate('/addresses')}>
+                <Button variant="link" onClick={() => navigate('/profile/addresses')}>
                   Manage Addresses
                 </Button>
               </div>

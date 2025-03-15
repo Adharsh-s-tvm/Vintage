@@ -7,7 +7,8 @@ import {
     addUserAddress,
     updateUserAddress,
     deleteUserAddress,
-    uploadProfileImage
+    uploadProfileImage,
+    changePassword
 } from '../controllers/userProfileController.js';
 import { upload } from '../middlewares/multer.js';
 
@@ -25,6 +26,9 @@ router.delete("/address/:id", authenticate, deleteUserAddress);
 
 // Image upload route
 router.post('/upload-image', authenticate, upload.single('image'), uploadProfileImage);
+
+// Add the change password route
+router.put("/change-password", authenticate, changePassword);
 
 export default router;
 

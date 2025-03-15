@@ -14,6 +14,7 @@ import ProtectedRoute from '../../utils/ProtectedRoute'
 import Profile from './profile/UserProfile'
 import EditProfile from './profile/EditProfile'
 import UserAddresses from './profile/UserAddresses'
+import ChangePassword from './profile/ChangePassword'
 
 function UserRoutes() {
   return (
@@ -32,7 +33,8 @@ function UserRoutes() {
           <Route path='/orders' element={<Orders />} />
           <Route path='/profile' element={<Profile />} />
           <Route path="/profile/edit" element={<EditProfile />} />
-          <Route path="/addresses" element={<UserAddresses />} />
+          <Route path="/profile/addresses" element={<UserAddresses />} />
+          <Route path="/profile/change-password" element={<ChangePassword />} />
         </Route>
       </Routes>
     </>
