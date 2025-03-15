@@ -139,24 +139,28 @@ export default function ProductDetail() {
     if (product && selectedSize) {
       const variant = product.variants.find(v => v.size === selectedSize);
       setSelectedVariant(variant);
+      if (variant) {
+        // Reset selected image index when variant changes
+        setSelectedImage(0);
+      }
     }
   }, [selectedSize, product]);
 
-  const getProductImages = (product) => {
+  const getProductImages = (product, variant = null) => {
     if (!product || !product.variants || product.variants.length === 0) return [];
 
-    // Get the first variant that has images
-    const primaryVariant = product.variants[0];
+    // Use the selected variant if provided, otherwise use the first variant
+    const targetVariant = variant || product.variants[0];
     const images = [];
 
     // Add main image
-    if (primaryVariant.mainImage) {
-      images.push(primaryVariant.mainImage);
+    if (targetVariant.mainImage) {
+      images.push(targetVariant.mainImage);
     }
 
-    // Add up to 3 sub images
-    if (primaryVariant.subImages && primaryVariant.subImages.length > 0) {
-      images.push(...primaryVariant.subImages.slice(0, 3));
+    // Add sub images
+    if (targetVariant.subImages && targetVariant.subImages.length > 0) {
+      images.push(...targetVariant.subImages);
     }
 
     return images;
@@ -254,7 +258,9 @@ export default function ProductDetail() {
     );
   }
 
-  const productImages = getProductImages(product);
+  const productImages = selectedVariant
+    ? getProductImages(product, selectedVariant)
+    : getProductImages(product);
   const availableSizes = getAvailableSizes(product);
 
   const handleAddToCart = () => {
@@ -294,12 +300,14 @@ export default function ProductDetail() {
               onMouseLeave={() => setIsHovering(false)}
               onMouseMove={handleMouseMove}
             >
-              <img
-                src={productImages[selectedImage]}
-                alt={product.name}
-                className="h-full w-full object-cover object-center"
-              />
-              {isHovering && (
+              {productImages.length > 0 && (
+                <img
+                  src={productImages[selectedImage]}
+                  alt={`${product.name} - ${selectedVariant?.size || 'Default'}`}
+                  className="h-full w-full object-cover object-center"
+                />
+              )}
+              {isHovering && productImages.length > 0 && (
                 <div
                   className="absolute top-0 left-0 w-full h-full pointer-events-none"
                   style={{
@@ -324,7 +332,7 @@ export default function ProductDetail() {
                   >
                     <img
                       src={image}
-                      alt={`${product.name} ${i + 1}`}
+                      alt={`${product.name} ${selectedVariant?.size || 'Default'} - View ${i + 1}`}
                       className="h-full w-full object-cover object-center"
                     />
                   </button>

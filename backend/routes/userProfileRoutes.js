@@ -6,8 +6,10 @@ import {
     getUserAddresses,
     addUserAddress,
     updateUserAddress,
-    deleteUserAddress
+    deleteUserAddress,
+    uploadProfileImage
 } from '../controllers/userProfileController.js';
+import { upload } from '../middlewares/multer.js';
 
 const router = express.Router();
 
@@ -20,6 +22,9 @@ router.get("/address", authenticate, getUserAddresses);
 router.post("/address", authenticate, addUserAddress);
 router.put("/address/:id", authenticate, updateUserAddress);
 router.delete("/address/:id", authenticate, deleteUserAddress);
+
+// Image upload route
+router.post('/upload-image', authenticate, upload.single('image'), uploadProfileImage);
 
 export default router;
 

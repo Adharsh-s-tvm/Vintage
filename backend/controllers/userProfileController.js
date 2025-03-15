@@ -1,6 +1,7 @@
 import User from '../models/userModel.js';
 import Address from '../models/userAddressModel.js';
 import asyncHandler from '../middlewares/asyncHandler.js';
+import cloudinary from '../config/cloudinary.js';
 
 // @desc    Get user details
 // @route   GET /api/user/profile/details
@@ -183,5 +184,40 @@ export const updateUserDetails = asyncHandler(async (req, res) => {
     } catch (error) {
         console.error('Error updating user details:', error);
         res.status(500).json({ message: 'Failed to update user details' });
+    }
+});
+
+// @desc    Upload profile image
+// @route   POST /api/user/profile/upload-image
+// @access  Private
+export const uploadProfileImage = asyncHandler(async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No image file provided' });
+        }
+
+        // Get the uploaded file URL from Cloudinary (already handled by your multer setup)
+        const imageUrl = req.file.path;
+
+        // Update user's image URL in database
+        const user = await User.findById(req.user._id);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.image = imageUrl;
+        await user.save();
+
+        res.json({
+            imageUrl: imageUrl,
+            message: 'Profile image uploaded successfully'
+        });
+
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        res.status(500).json({
+            message: 'Failed to upload image',
+            error: error.message
+        });
     }
 });

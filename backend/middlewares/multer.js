@@ -12,7 +12,13 @@ console.log("Initializing Cloudinary storage...")
 const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
-        folder: 'jackets',
+        folder: (req, file) => {
+            // Check the route to determine the folder
+            if (file.fieldname === 'image') {
+                return 'profile_images';
+            }
+            return 'jackets'; // your default folder for products
+        },
         allowed_formats: ['jpg', 'png', 'jpeg', 'avif', 'webp'],
     },
 });
@@ -84,4 +90,4 @@ const handleUpload = (req, res, next) => {
     });
 };
 
-export { handleUpload };
+export { handleUpload, upload };
