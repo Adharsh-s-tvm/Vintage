@@ -28,6 +28,8 @@ import {
   PaginationPrevious,
 } from '../../ui/pagination';
 import { toast } from '../../hooks/useToast';
+import { useDispatch } from 'react-redux';
+import { addToWishlist } from '../../redux/slices/wishlistSlice';
 
 
 // Add this constant at the top of your file, outside the component
@@ -77,6 +79,8 @@ const ProductListing = () => {
   // Add this new state for search
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
+
+  const dispatch = useDispatch();
 
   const fetchProducts = async (params) => {
     try {
@@ -593,6 +597,50 @@ const ProductListing = () => {
     }
   };
 
+  // Add this function to handle wishlist
+  const handleAddToWishlist = async (e, product) => {
+    e.stopPropagation(); // Prevent navigation when clicking the heart icon
+
+    // Get the first available variant
+    if (!product.variants || product.variants.length === 0) {
+      toast({
+        title: "Error",
+        description: "No variants available for this product",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+      return;
+    }
+
+    const variantId = product.variants[0]._id;
+
+    try {
+      await axios.post(
+        `${api}/user/wishlist`,
+        {
+          productId: product._id,
+          variantId: variantId
+        },
+        { withCredentials: true }
+      );
+
+      dispatch(addToWishlist(product));
+      toast({
+        title: "Success",
+        description: "Added to wishlist",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add to wishlist",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+    }
+  };
+
   return (
     <Layout showSidebar={true} sidebarContent={sidebarContent}>
       <div className="container mx-auto px-4 py-8">
@@ -736,10 +784,22 @@ const ProductListing = () => {
                   <div className="flex justify-between items-center mt-3">
                     <span className="font-bold text-lg">{formatPrice(lowestPrice)}</span>
                     <div className="flex space-x-2">
-                      <Button size="icon" variant="outline" className="h-8 w-8">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        className="h-8 w-8"
+                        onClick={(e) => handleAddToWishlist(e, product)}
+                      >
                         <Heart className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" className="h-8" onClick={(e) => { e.stopPropagation(); handleAddToCart(product.variants[0]); }}>
+                      <Button
+                        size="sm"
+                        className="h-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product.variants[0]);
+                        }}
+                      >
                         <ShoppingCart className="h-4 w-4 mr-1" />
                         Add
                       </Button>

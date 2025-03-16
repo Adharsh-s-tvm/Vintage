@@ -29,11 +29,13 @@ import {
   AccordionTrigger,
 } from "../../ui/accordion";
 import { ChevronDown } from 'lucide-react';
+import { useDispatch } from 'react-redux';
+import { addToWishlist } from '../../redux/slices/wishlistSlice';
 
 // Mock product data
 
 // Mock related products
-const relatedProducts = [];
+// const relatedProducts = [];
 
 // Add these temporary rating stats (you can replace with real data later)
 const dummyRatingStats = {
@@ -98,6 +100,7 @@ export default function ProductDetail() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [showRatingDetails, setShowRatingDetails] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -305,13 +308,42 @@ export default function ProductDetail() {
     }
   };
 
-  const handleAddToWishlist = () => {
-    toast({
-      title: "Success",
-      description: "Added to wishlist",
-      duration: 2000,
-      className: "bg-white text-black border border-gray-200"
-    });
+  const handleAddToWishlist = async () => {
+    if (!selectedVariant) {
+      toast({
+        title: "Error",
+        description: "Please select a size",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${api}/user/wishlist`,
+        {
+          productId: product._id,
+          variantId: selectedVariant._id
+        },
+        { withCredentials: true }
+      );
+
+      dispatch(addToWishlist({ ...product, selectedVariant }));
+      toast({
+        title: "Success",
+        description: "Added to wishlist",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add to wishlist",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+    }
   };
 
   return (
