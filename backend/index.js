@@ -18,6 +18,7 @@ import userProfileRoutes from './routes/userProfileRoutes.js'
 import userCartRoutes from './routes/userCartRoutes.js'
 import { errorHandler } from "./middlewares/errorHandler.js";
 import userWishlistRoutes from './routes/userWishlistRoutes.js';
+import userOrderRoutes from './routes/userOrderRoutes.js';
 
 
 dotenv.config()
@@ -60,6 +61,8 @@ app.use("/api/user/profile", userProfileRoutes)
 app.use("/api/user/cart", userCartRoutes)
 
 app.use("/api/user/wishlist", userWishlistRoutes);
+
+app.use('/api/user/orders', userOrderRoutes);
 
 app.use(errorHandler)
 app.listen(port, () => console.log(`Server running on port : ${port}`))

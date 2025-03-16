@@ -15,6 +15,7 @@ import Profile from './profile/UserProfile'
 import EditProfile from './profile/EditProfile'
 import UserAddresses from './profile/UserAddresses'
 import ChangePassword from './profile/ChangePassword'
+import Checkout from './profile/Checkout'
 
 function UserRoutes() {
   return (
@@ -35,6 +36,7 @@ function UserRoutes() {
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/profile/addresses" element={<UserAddresses />} />
           <Route path="/profile/change-password" element={<ChangePassword />} />
+          <Route path="/checkout" element={<Checkout />} />
         </Route>
       </Routes>
     </>

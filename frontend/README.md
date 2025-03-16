@@ -2,10 +2,8 @@
 <!-- Search need to done from backend in shop -->
 <!-- Crop image -->
 
-
-
-
 PRODUXT VARIANT ADD BUG...........
+WISHLISTREMOVE BUG...........
 
 WEEK 3
 
