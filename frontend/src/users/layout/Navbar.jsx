@@ -51,7 +51,7 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth.userInfo); // Get user from Redux
+  const  user  = useSelector((state) => state.auth.userInfo); // Get user from Redux
   const [storedUser, setStoredUser] = useState(null);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
 
