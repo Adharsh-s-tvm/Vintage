@@ -24,7 +24,6 @@ export default function Wishlist() {
   const { wishlistItems } = useSelector((state) => state.wishlist);
   const [itemToRemove, setItemToRemove] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isRemoving, setIsRemoving] = useState(false);
 
   useEffect(() => {
     fetchWishlist();
@@ -52,54 +51,35 @@ export default function Wishlist() {
   };
 
   const removeItem = async () => {
-    if (!itemToRemove || isRemoving) return;
+    if (!itemToRemove) return;
 
-    setIsRemoving(true);
     try {
-      if (!itemToRemove.variant || !itemToRemove.variant._id) {
-        throw new Error('Invalid item data');
-      }
-
-      const response = await axios.delete(
-        `${api}/user/wishlist/${itemToRemove.variant._id}`,
-        {
-          withCredentials: true
-        }
-      );
-
-      if (response.data.success) {
-        dispatch(removeFromWishlist(itemToRemove.variant._id));
-        toast({
-          title: "Success",
-          description: "Item removed from wishlist",
-          duration: 2000,
-          className: "bg-white text-black border border-gray-200"
-        });
-        setIsDialogOpen(false);
-        setItemToRemove(null);
-
-        // Update wishlist items with the new data
-        dispatch(setWishlistItems(response.data.items));
-      } else {
-        throw new Error(response.data.message || 'Failed to remove item');
-      }
+      await axios.delete(`${api}/user/wishlist/${itemToRemove.variant._id}`, {
+        withCredentials: true
+      });
+      dispatch(removeFromWishlist(itemToRemove.variant._id));
+      toast({
+        title: "Success",
+        description: "Item removed from wishlist",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
     } catch (error) {
-      console.error('Remove wishlist error:', error);
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to remove item from wishlist",
+        description: "Failed to remove item from wishlist",
         duration: 2000,
         className: "bg-white text-black border border-gray-200"
       });
     } finally {
-      setIsRemoving(false);
       setIsDialogOpen(false);
+      setItemToRemove(null);
     }
   };
 
   const moveToCart = async (item) => {
     try {
-      // Add to cart
+      // Add to cart first
       await axios.post(
         `${api}/user/cart/add`,
         {
@@ -111,8 +91,18 @@ export default function Wishlist() {
         }
       );
 
-      // Remove from wishlist
-      await removeItem();
+      // Then remove from wishlist
+      const response = await axios.delete(`${api}/user/wishlist/${item.variant._id}`, {
+        withCredentials: true
+      });
+
+      // Update Redux store with the updated wishlist items from the response
+      if (response.data.items) {
+        dispatch(setWishlistItems(response.data.items));
+      } else {
+        // Fallback to removing single item if response doesn't include updated items
+        dispatch(removeFromWishlist(item.variant._id));
+      }
 
       toast({
         title: "Success",
@@ -120,6 +110,9 @@ export default function Wishlist() {
         duration: 2000,
         className: "bg-white text-black border border-gray-200"
       });
+
+      // Optionally refresh the wishlist to ensure sync
+      fetchWishlist();
     } catch (error) {
       toast({
         title: "Error",
@@ -196,29 +189,16 @@ export default function Wishlist() {
 
         {/* Confirmation Dialog */}
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogContent className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
+          <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-xl font-semibold text-gray-900">
-                Remove from Wishlist
-              </AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-600 mt-2">
+              <AlertDialogTitle>Remove from Wishlist</AlertDialogTitle>
+              <AlertDialogDescription>
                 Are you sure you want to remove this item from your wishlist?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter className="mt-6 flex gap-3">
-              <AlertDialogCancel
-                className="bg-gray-100 hover:bg-gray-200 text-gray-900 px-4 py-2 rounded"
-                disabled={isRemoving}
-              >
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={removeItem}
-                className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-                disabled={isRemoving}
-              >
-                {isRemoving ? 'Removing...' : 'Remove'}
-              </AlertDialogAction>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={removeItem}>Remove</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
