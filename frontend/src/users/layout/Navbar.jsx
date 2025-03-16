@@ -19,6 +19,8 @@ import {
 } from '../../ui/DropdownMenu';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
+import axios from 'axios';
+import { api } from '../../lib/api';
 
 const LogoutConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
@@ -51,15 +53,37 @@ export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
-  const  user  = useSelector((state) => state.auth.userInfo); // Get user from Redux
+  const user = useSelector((state) => state.auth.userInfo);
   const [storedUser, setStoredUser] = useState(null);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
-  // Check local storage for user info on mount
+  // Fetch cart count when component mounts and when user changes
   useEffect(() => {
-    const storedUserInfo = JSON.parse(localStorage.getItem('userInfo'));
-    setStoredUser(storedUserInfo);
-  }, []);
+    fetchCartCount();
+  }, [user, storedUser]);
+
+  const fetchCartCount = async () => {
+    if (user || storedUser) {
+      try {
+        const response = await axios.get(`${api}/user/cart`, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data && response.data.items) {
+          // Calculate total quantity of all items in cart
+          const totalQuantity = response.data.items.reduce((sum, item) => sum + item.quantity, 0);
+          setCartCount(totalQuantity);
+        }
+      } catch (error) {
+        console.error('Error fetching cart count:', error);
+        setCartCount(0);
+      }
+    }
+  };
 
   const categories = [
     { name: 'All', href: '/products' },
@@ -125,15 +149,17 @@ export function Navbar() {
 
                 <Link to="/cart" className="p-2 text-gray-500 hover:text-primary relative">
                   <ShoppingBag className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    3
-                  </span>
+                  {cartCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                      {cartCount}
+                    </span>
+                  )}
                 </Link>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
-                      <User className="h-5 w-5" /> 
+                      <User className="h-5 w-5" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">

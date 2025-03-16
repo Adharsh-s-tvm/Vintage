@@ -15,6 +15,33 @@ import { api } from '../../lib/api';
 import axios from 'axios';
 import { toast } from '../../hooks/useToast';
 
+const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+        <h2 className="text-xl font-semibold mb-4">Remove Item</h2>
+        <p className="text-gray-600 mb-6">Are you sure you want to remove this item from your cart?</p>
+        <div className="flex justify-end gap-4">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+          >
+            Remove
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Cart() {
   const [cart, setCart] = useState({
     items: [],
@@ -23,6 +50,8 @@ export default function Cart() {
     total: 0
   });
   const [loading, setLoading] = useState(true);
+  const [deleteItemId, setDeleteItemId] = useState(null);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   useEffect(() => {
     fetchCart();
@@ -78,58 +107,88 @@ export default function Cart() {
       );
 
       if (response.data) {
-        const items = response.data.items || [];
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const shipping = subtotal > 500 ? 0 : 10;
-        const total = subtotal + shipping;
-
         setCart({
-          items,
-          subtotal,
-          shipping,
-          total
+          items: response.data.items || [],
+          subtotal: response.data.subtotal || 0,
+          shipping: response.data.shipping || 0,
+          total: response.data.total || 0
+        });
+
+        toast({
+          title: "Success",
+          description: "Cart updated",
+          duration: 2000,
+          className: "bg-white text-black border border-gray-200",
+          style: {
+            "--close-button-color": "black"
+          }
         });
       }
     } catch (error) {
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to update quantity",
-        variant: "destructive"
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200",
+        style: {
+          "--close-button-color": "black"
+        }
       });
     }
   };
 
-  const removeItem = async (variantId) => {
-    try {
-      const response = await axios.delete(
-        `${api}/user/cart/remove/${variantId}`,
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
+  const handleRemoveClick = (variantId) => {
+    setDeleteItemId(variantId);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmRemove = async () => {
+    if (deleteItemId) {
+      try {
+        const response = await axios.delete(
+          `${api}/user/cart/remove/${deleteItemId}`,
+          {
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
+        );
+
+        if (response.data) {
+          setCart({
+            items: response.data.items || [],
+            subtotal: response.data.subtotal || 0,
+            shipping: response.data.shipping || 0,
+            total: response.data.total || 0
+          });
+
+          toast({
+            title: "Success",
+            description: "Item removed from cart",
+            duration: 2000,
+            className: "bg-white text-black border border-gray-200",
+            style: {
+              "--close-button-color": "black"
+            }
+          });
         }
-      );
-
-      if (response.data) {
-        const items = response.data.items || [];
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const shipping = subtotal > 500 ? 0 : 10;
-        const total = subtotal + shipping;
-
-        setCart({
-          items,
-          subtotal,
-          shipping,
-          total
+      } catch (error) {
+        console.error('Remove item error:', error);
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Failed to remove item",
+          duration: 2000,
+          className: "bg-white text-black border border-gray-200",
+          style: {
+            "--close-button-color": "black"
+          }
         });
+      } finally {
+        setShowDeleteConfirmation(false);
+        setDeleteItemId(null);
+        fetchCart();
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to remove item",
-        variant: "destructive"
-      });
     }
   };
 
@@ -212,7 +271,7 @@ export default function Cart() {
                             variant="ghost"
                             size="icon"
                             className="text-gray-500 hover:text-red-500"
-                            onClick={() => removeItem(item.variant._id)}
+                            onClick={() => handleRemoveClick(item.variant._id)}
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
@@ -273,11 +332,20 @@ export default function Cart() {
               Looks like you haven't added any items to your cart yet.
             </p>
             <Button asChild>
-              <Link to="/ecommerce">Start Shopping</Link>
+              <Link to="/products">Start Shopping</Link>
             </Button>
           </div>
         )}
       </div>
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteConfirmation}
+        onClose={() => {
+          setShowDeleteConfirmation(false);
+          setDeleteItemId(null);
+        }}
+        onConfirm={confirmRemove}
+      />
     </Layout>
   );
 }
