@@ -268,7 +268,8 @@ export default function ProductDetail() {
       toast({
         title: "Error",
         description: "Please select a size",
-        variant: "destructive"
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
       });
       return;
     }
@@ -290,23 +291,26 @@ export default function ProductDetail() {
 
       toast({
         title: "Success",
-        description: "Product added to cart"
+        description: "Product added to cart",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
       });
     } catch (error) {
-      console.error('Cart error:', error);
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to add to cart",
-        variant: "destructive"
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
       });
     }
   };
 
   const handleAddToWishlist = () => {
-    // In a real app, this would add the product to wishlist
     toast({
-      title: "Added to wishlist",
-      description: `${product.name} added to wishlist`,
+      title: "Success",
+      description: "Added to wishlist",
+      duration: 2000,
+      className: "bg-white text-black border border-gray-200"
     });
   };
 

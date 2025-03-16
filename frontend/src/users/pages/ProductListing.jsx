@@ -34,7 +34,7 @@ import { toast } from '../../hooks/useToast';
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL'];
 
 // Mock product data with the new structure
-const products = [];
+// const products = [];
 
 
 
@@ -579,13 +579,16 @@ const ProductListing = () => {
 
       toast({
         title: "Success",
-        description: "Product added to cart"
+        description: "Product added to cart",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
       });
     } catch (error) {
       toast({
         title: "Error",
         description: error.response?.data?.message || "Failed to add to cart",
-        variant: "destructive"
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
       });
     }
   };
@@ -736,16 +739,7 @@ const ProductListing = () => {
                       <Button size="icon" variant="outline" className="h-8 w-8">
                         <Heart className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        size="sm" 
-                        className="h-8"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleAddToCart(product.variants[0]);
-                        }}
-                        disabled={!product.variants[0] || product.variants[0].stock === 0}
-                      >
+                      <Button size="sm" className="h-8" onClick={(e) => { e.stopPropagation(); handleAddToCart(product.variants[0]); }}>
                         <ShoppingCart className="h-4 w-4 mr-1" />
                         Add
                       </Button>

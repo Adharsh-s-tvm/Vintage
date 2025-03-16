@@ -78,28 +78,23 @@ export default function Cart() {
       );
 
       if (response.data) {
-        setCart({
-          items: response.data.items || [],
-          subtotal: response.data.subtotal || 0,
-          shipping: response.data.shipping || 0,
-          total: response.data.total || 0
-        });
+        const items = response.data.items || [];
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shipping = subtotal > 500 ? 0 : 10;
+        const total = subtotal + shipping;
 
-        toast({
-          title: "Cart Updated",
-          description: "Item quantity has been updated",
-          variant: "success",
-          duration: 2000, // 2 seconds
-          className: "bg-green-50 border-green-200"
+        setCart({
+          items,
+          subtotal,
+          shipping,
+          total
         });
       }
     } catch (error) {
       toast({
-        title: "Update Failed",
-        description: error.response?.data?.message || "Couldn't update quantity",
-        variant: "destructive",
-        duration: 3000,
-        className: "bg-red-50 border-red-200"
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update quantity",
+        variant: "destructive"
       });
     }
   };
@@ -117,28 +112,23 @@ export default function Cart() {
       );
 
       if (response.data) {
-        setCart({
-          items: response.data.items || [],
-          subtotal: response.data.subtotal || 0,
-          shipping: response.data.shipping || 0,
-          total: response.data.total || 0
-        });
+        const items = response.data.items || [];
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shipping = subtotal > 500 ? 0 : 10;
+        const total = subtotal + shipping;
 
-        toast({
-          title: "Item Removed",
-          description: "Item has been removed from cart",
-          variant: "success",
-          duration: 2000,
-          className: "bg-green-50 border-green-200"
+        setCart({
+          items,
+          subtotal,
+          shipping,
+          total
         });
       }
     } catch (error) {
       toast({
-        title: "Remove Failed",
-        description: error.response?.data?.message || "Couldn't remove item",
-        variant: "destructive",
-        duration: 3000,
-        className: "bg-red-50 border-red-200"
+        title: "Error",
+        description: error.response?.data?.message || "Failed to remove item",
+        variant: "destructive"
       });
     }
   };
@@ -199,7 +189,7 @@ export default function Cart() {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.variant._id, item.quantity - 1)}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
@@ -208,7 +198,7 @@ export default function Cart() {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.variant._id, item.quantity + 1)}
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -222,7 +212,7 @@ export default function Cart() {
                             variant="ghost"
                             size="icon"
                             className="text-gray-500 hover:text-red-500"
-                            onClick={() => removeItem(item.id)}
+                            onClick={() => removeItem(item.variant._id)}
                           >
                             <Trash className="h-4 w-4" />
                           </Button>
@@ -235,7 +225,7 @@ export default function Cart() {
 
               <div className="mt-6 flex flex-wrap gap-4">
                 <Button variant="outline" asChild>
-                  <Link to="/ecommerce">Continue Shopping</Link>
+                  <Link to="/products">Continue Shopping</Link>
                 </Button>
                 <Button variant="outline">Update Cart</Button>
               </div>
