@@ -15,7 +15,7 @@ import signUpOtpRoutes from './routes/signUpOtpRoutes.js'
 import adminProductRoutes from './routes/adminProductRoutes.js'
 import userProductRoutes from './routes/userProductRoutes.js'
 import userProfileRoutes from './routes/userProfileRoutes.js'
-
+import userCartRoutes from './routes/userCartRoutes.js'
 import { errorHandler } from "./middlewares/errorHandler.js";
 
 
@@ -50,11 +50,13 @@ app.use("/api/admin", adminRoutes);
 
 app.use("/api/admin/products", adminProductRoutes)
 
-app.use("/api/products", userProductRoutes) 
+app.use("/api/products", userProductRoutes)
 
 app.use("/api/user/otp", signUpOtpRoutes);
 
-app.use("/api/user/profile", userProfileRoutes )
+app.use("/api/user/profile", userProfileRoutes)
+
+app.use("/api/user/cart", userCartRoutes)
 
 app.use(errorHandler)
 app.listen(port, () => console.log(`Server running on port : ${port}`));
