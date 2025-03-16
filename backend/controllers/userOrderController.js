@@ -1,5 +1,5 @@
 import asyncHandler from '../middlewares/asyncHandler.js';
-import Order from '../models/orderModel.js';
+import Order from '../models/product/orderModel.js';
 import Cart from '../models/product/cartModel.js';
 import Address from '../models/userAddressModel.js';
 import Variant from '../models/product/sizeVariantModel.js';
