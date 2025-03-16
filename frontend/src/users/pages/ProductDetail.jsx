@@ -263,21 +263,43 @@ export default function ProductDetail() {
     : getProductImages(product);
   const availableSizes = getAvailableSizes(product);
 
-  const handleAddToCart = () => {
-    if (!selectedSize) {
+  const handleAddToCart = async () => {
+    if (!selectedVariant) {
       toast({
-        variant: "destructive",
-        title: "Please select a size",
-        description: "You must select a size before adding to cart",
+        title: "Error",
+        description: "Please select a size",
+        variant: "destructive"
       });
       return;
     }
 
-    // In a real app, this would add the product to cart
-    toast({
-      title: "Added to cart",
-      description: `${product.name} (${selectedSize}) added to cart`,
-    });
+    try {
+      await axios.post(
+        `${api}/user/cart/add`,
+        {
+          variantId: selectedVariant._id,
+          quantity: quantity
+        },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      toast({
+        title: "Success",
+        description: "Product added to cart"
+      });
+    } catch (error) {
+      console.error('Cart error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add to cart",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleAddToWishlist = () => {

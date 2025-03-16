@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import {
   Table,
@@ -11,66 +11,148 @@ import {
 import { Button } from '../../ui/Button';
 import { Trash, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-// Mock cart data
-const cartItems = [
-  {
-    id: 1,
-    name: 'Winter Puffer Jacket',
-    price: 129.99,
-    quantity: 1,
-    image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1036&q=80',
-    size: 'M',
-    color: 'Blue'
-  },
-  {
-    id: 2,
-    name: 'Leather Biker Jacket',
-    price: 199.99,
-    quantity: 1,
-    image: 'https://images.unsplash.com/photo-1520975954732-35dd22299614?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80',
-    size: 'L',
-    color: 'Black'
-  },
-  {
-    id: 3,
-    name: 'Denim Jacket with Patches',
-    price: 89.99,
-    quantity: 1,
-    image: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80',
-    size: 'S',
-    color: 'Blue'
-  }
-];
+import { api } from '../../lib/api';
+import axios from 'axios';
+import { toast } from '../../hooks/useToast';
 
 export default function Cart() {
-  const [items, setItems] = useState(cartItems);
+  const [cart, setCart] = useState({
+    items: [],
+    subtotal: 0,
+    shipping: 0,
+    total: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  const updateQuantity = (id, change) => {
-    setItems(prevItems =>
-      prevItems.map(item =>
-        item.id === id
-          ? { ...item, quantity: Math.max(1, item.quantity + change) }
-          : item
-      )
-    );
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  const fetchCart = async () => {
+    try {
+      const response = await axios.get(`${api}/user/cart`, {
+        withCredentials: true,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.data) {
+        const items = response.data.items || [];
+        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const shipping = subtotal > 500 ? 0 : 10; // Free shipping over ₹500
+        const total = subtotal + shipping;
+
+        setCart({
+          items,
+          subtotal,
+          shipping,
+          total
+        });
+      }
+    } catch (error) {
+      console.error('Cart fetch error:', error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to fetch cart",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const removeItem = (id) => {
-    setItems(prevItems => prevItems.filter(item => item.id !== id));
+  const updateQuantity = async (variantId, quantity) => {
+    if (quantity < 1) return;
+
+    try {
+      const response = await axios.put(
+        `${api}/user/cart/update`,
+        { variantId, quantity },
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data) {
+        setCart({
+          items: response.data.items || [],
+          subtotal: response.data.subtotal || 0,
+          shipping: response.data.shipping || 0,
+          total: response.data.total || 0
+        });
+
+        toast({
+          title: "Cart Updated",
+          description: "Item quantity has been updated",
+          variant: "success",
+          duration: 2000, // 2 seconds
+          className: "bg-green-50 border-green-200"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Update Failed",
+        description: error.response?.data?.message || "Couldn't update quantity",
+        variant: "destructive",
+        duration: 3000,
+        className: "bg-red-50 border-red-200"
+      });
+    }
   };
 
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const tax = subtotal * 0.08; // 8% tax
-  const shipping = 10; // $10 shipping fee
-  const total = subtotal + tax + shipping;
+  const removeItem = async (variantId) => {
+    try {
+      const response = await axios.delete(
+        `${api}/user/cart/remove/${variantId}`,
+        {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data) {
+        setCart({
+          items: response.data.items || [],
+          subtotal: response.data.subtotal || 0,
+          shipping: response.data.shipping || 0,
+          total: response.data.total || 0
+        });
+
+        toast({
+          title: "Item Removed",
+          description: "Item has been removed from cart",
+          variant: "success",
+          duration: 2000,
+          className: "bg-green-50 border-green-200"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Remove Failed",
+        description: error.response?.data?.message || "Couldn't remove item",
+        variant: "destructive",
+        duration: 3000,
+        className: "bg-red-50 border-red-200"
+      });
+    }
+  };
+
+  if (loading) {
+    return <Layout>Loading...</Layout>;
+  }
 
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
 
-        {items.length > 0 ? (
+        {cart?.items?.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -85,27 +167,27 @@ export default function Cart() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {items.map((item) => (
-                      <TableRow key={item.id}>
+                    {cart.items.map((item) => (
+                      <TableRow key={item.variant._id}>
                         <TableCell>
                           <div className="flex items-center space-x-4">
                             <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden">
                               <img
-                                src={item.image}
-                                alt={item.name}
+                                src={item.variant.mainImage}
+                                alt={item.variant.product.name}
                                 className="h-full w-full object-cover"
                               />
                             </div>
                             <div>
                               <Link
-                                to={`/ecommerce/product/${item.id}`}
+                                to={`/products/${item.variant.product._id}`}
                                 className="font-medium text-gray-900 hover:text-primary"
                               >
-                                {item.name}
+                                {item.variant.product.name}
                               </Link>
                               <div className="text-sm text-gray-500 space-x-2">
-                                <span>Size: {item.size}</span>
-                                <span>Color: {item.color}</span>
+                                <span>Size: {item.variant.size}</span>
+                                <span>Color: {item.variant.color}</span>
                               </div>
                             </div>
                           </div>
@@ -117,7 +199,7 @@ export default function Cart() {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, -1)}
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
                             >
                               <Minus className="h-3 w-3" />
                             </Button>
@@ -126,7 +208,7 @@ export default function Cart() {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => updateQuantity(item.id, 1)}
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             >
                               <Plus className="h-3 w-3" />
                             </Button>
@@ -166,20 +248,16 @@ export default function Cart() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${subtotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Tax (8%)</span>
-                    <span className="font-medium">${tax.toFixed(2)}</span>
+                    <span className="font-medium">${cart.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">${shipping.toFixed(2)}</span>
+                    <span className="font-medium">${cart.shipping.toFixed(2)}</span>
                   </div>
                   <div className="border-t pt-3 mt-3">
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
-                      <span>${total.toFixed(2)}</span>
+                      <span>${cart.total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>

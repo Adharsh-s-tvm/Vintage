@@ -4,6 +4,8 @@ import Variant from "../models/product/sizeVariantModel.js";
 
 // Add to cart
 export const addToCart = async (req, res) => {
+    console.log("Cart add called");
+
     try {
         const { variantId, quantity } = req.body;
         const userId = req.user._id;
@@ -137,13 +139,22 @@ export const updateCartItem = async (req, res) => {
             return res.status(400).json({ message: "Invalid quantity" });
         }
 
-        const cart = await Cart.findOne({ user: userId });
+        // First find the cart and populate variant details
+        const cart = await Cart.findOne({ user: userId })
+            .populate({
+                path: 'items.variant',
+                populate: {
+                    path: 'product',
+                    populate: ['category', 'brand']
+                }
+            });
+
         if (!cart) {
             return res.status(404).json({ message: "Cart not found" });
         }
 
         const cartItem = cart.items.find(item =>
-            item.variant.toString() === variantId
+            item.variant._id.toString() === variantId
         );
 
         if (!cartItem) {
@@ -151,8 +162,7 @@ export const updateCartItem = async (req, res) => {
         }
 
         // Check stock
-        const variant = await Variant.findById(variantId);
-        if (variant.stock < quantity) {
+        if (cartItem.variant.stock < quantity) {
             return res.status(400).json({ message: "Insufficient stock" });
         }
 

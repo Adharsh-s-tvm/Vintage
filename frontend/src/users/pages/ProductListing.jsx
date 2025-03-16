@@ -27,6 +27,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '../../ui/pagination';
+import { toast } from '../../hooks/useToast';
 
 
 // Add this constant at the top of your file, outside the component
@@ -565,6 +566,30 @@ const ProductListing = () => {
     return stars;
   };
 
+  const handleAddToCart = async (variant) => {
+    try {
+      const response = await axios.post(
+        `${api}/user/cart/add`,
+        {
+          variantId: variant._id,
+          quantity: 1
+        },
+        { withCredentials: true }
+      );
+
+      toast({
+        title: "Success",
+        description: "Product added to cart"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to add to cart",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <Layout showSidebar={true} sidebarContent={sidebarContent}>
       <div className="container mx-auto px-4 py-8">
@@ -711,7 +736,16 @@ const ProductListing = () => {
                       <Button size="icon" variant="outline" className="h-8 w-8">
                         <Heart className="h-4 w-4" />
                       </Button>
-                      <Button size="sm" className="h-8">
+                      <Button 
+                        size="sm" 
+                        className="h-8"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleAddToCart(product.variants[0]);
+                        }}
+                        disabled={!product.variants[0] || product.variants[0].stock === 0}
+                      >
                         <ShoppingCart className="h-4 w-4 mr-1" />
                         Add
                       </Button>
