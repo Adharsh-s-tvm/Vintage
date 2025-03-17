@@ -116,6 +116,7 @@ function Checkout() {
   const [cart, setCart] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -159,9 +160,15 @@ function Checkout() {
       return;
     }
 
+    if (!selectedPaymentMethod) {
+      toast.error('Please select a payment method');
+      return;
+    }
+
     try {
       const response = await axios.post(`${api}/user/orders`, {
         addressId: selectedAddress,
+        paymentMethod: selectedPaymentMethod,
       }, {
         withCredentials: true
       });
@@ -329,6 +336,40 @@ function Checkout() {
 
           {/* Right Column - Payment Summary and Policies */}
           <div>
+            {/* Payment Method Selection */}
+            <Card className="mb-6">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-lg">
+                  <CreditCard className="h-5 w-5 mr-2" />
+                  Payment Method
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={selectedPaymentMethod}
+                  onValueChange={setSelectedPaymentMethod}
+                  className="grid grid-cols-2 gap-3"
+                >
+                  <div className="flex items-center space-x-2 border rounded-lg p-3">
+                    <RadioGroupItem value="cod" id="cod" />
+                    <Label htmlFor="cod" className="text-sm">Cash on Delivery</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-lg p-3">
+                    <RadioGroupItem value="online" id="online" />
+                    <Label htmlFor="online" className="text-sm">UPI/Net Banking</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-lg p-3">
+                    <RadioGroupItem value="card" id="card" />
+                    <Label htmlFor="card" className="text-sm">Credit/Debit Card</Label>
+                  </div>
+                  <div className="flex items-center space-x-2 border rounded-lg p-3">
+                    <RadioGroupItem value="wallet" id="wallet" />
+                    <Label htmlFor="wallet" className="text-sm">Wallet</Label>
+                  </div>
+                </RadioGroup>
+              </CardContent>
+            </Card>
+
             {/* Payment Summary Card */}
             <Card>
               <CardHeader>
@@ -355,7 +396,7 @@ function Checkout() {
                 <Button
                   className="w-full"
                   onClick={handlePlaceOrder}
-                  disabled={!selectedAddress}
+                  disabled={!selectedAddress || !selectedPaymentMethod}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Place Order
