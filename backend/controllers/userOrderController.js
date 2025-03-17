@@ -30,6 +30,16 @@ export const createOrder = asyncHandler(async (req, res) => {
         throw new Error('Delivery address not found');
     }
 
+    // Generate unique order ID
+    const generateOrderId = () => {
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const random = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+        return `ORD-${year}${month}${day}-${random}`;
+    };
+
     // 3. Create order items and verify stock
     const orderItems = [];
     let subtotal = 0;
@@ -60,15 +70,13 @@ export const createOrder = asyncHandler(async (req, res) => {
             finalPrice: itemTotal,
             status: 'pending'
         });
-
-        // Update stock
-        variant.stock -= item.quantity;
-        await variant.save();
     }
 
     // 4. Calculate totals
-    const shippingCost = subtotal > 500 ? 0 : 50; // Free shipping over $500
+    const shippingCost = subtotal > 500 ? 0 : 50;
     const total = subtotal + shippingCost;
+
+    const orderId = generateOrderId();
 
     // 5. Create order
     const order = new Order({
@@ -77,7 +85,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         items: orderItems,
         shipping: {
             address: addressId,
-            shippingMethod: "Standard", // Changed from "Standard Delivery" to match enum
+            shippingMethod: "Standard",
             deliveryCharge: shippingCost
         },
         payment: {
@@ -92,19 +100,38 @@ export const createOrder = asyncHandler(async (req, res) => {
         shippingCost,
         total,
         totalAmount: total,
-        orderId: `ORD${Date.now()}${Math.floor(Math.random() * 1000)}`
+        orderId: orderId
     });
 
-    await order.save();
+    try {
+        // Save the order first
+        await order.save();
 
-    // 6. Clear cart
-    cart.items = [];
-    await cart.save();
+        // Update stock for each item after order is saved
+        for (const item of orderItems) {
+            await Variant.findByIdAndUpdate(
+                item.sizeVariant,
+                { $inc: { stock: -item.quantity } },
+                { new: true }
+            );
+        }
 
-    res.status(201).json({
-        message: 'Order created successfully',
-        orderId: order.orderId
-    });
+        // Clear cart
+        cart.items = [];
+        await cart.save();
+
+        return res.status(201).json({
+            message: 'Order placed successfully',
+            orderId: orderId
+        });
+
+    } catch (error) {
+        // Rollback order if something fails
+        if (order._id) {
+            await Order.findByIdAndDelete(order._id);
+        }
+        throw error;
+    }
 });
 
 // Get all orders for a user
