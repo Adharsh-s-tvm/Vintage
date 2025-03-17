@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Layout } from '../../layout/Layout';
-import { Button } from '../../../ui/Button';
-import { api } from '../../../lib/api';
+import { Layout } from '../layout/Layout';
+import { Button } from '../../ui/Button';
+import { api } from '../../lib/api';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
@@ -12,13 +12,13 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '../../../ui/Card';
-import { Input } from '../../../ui/Input';
-import { RadioGroup, RadioGroupItem } from '../../../ui/RadioGroup';
-import { Label } from '../../../ui/Label';
-import { Separator } from '../../../ui/Separator';
+} from '../../ui/Card';
+import { Input } from '../../ui/Input';
+import { RadioGroup, RadioGroupItem } from '../../ui/RadioGroup';
+import { Label } from '../../ui/Label';
+import { Separator } from '../../ui/Separator';
 import { MapPin, CreditCard, Shield, RefreshCw, Truck, Plus } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../ui/Dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/Dialog';
 
 function AddressForm({ onAddressAdded, onClose }) {
   const [formData, setFormData] = useState({
@@ -168,14 +168,17 @@ function Checkout() {
     try {
       const response = await axios.post(`${api}/user/orders`, {
         addressId: selectedAddress,
-        paymentMethod: selectedPaymentMethod,
+        paymentMethod: selectedPaymentMethod
       }, {
-        withCredentials: true
+        headers: { 
+          Authorization: `Bearer ${localStorage.getItem('jwt')}`
+        }
       });
 
       if (response.data) {
         toast.success('Order placed successfully!');
-        navigate(`/orders/${response.data.orderId}`);
+        // Navigate to success page with orderId
+        navigate(`/success/${response.data.orderId}`);
       }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to place order');
