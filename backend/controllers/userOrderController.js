@@ -3,6 +3,7 @@ import Order from '../models/product/orderModel.js';
 import Cart from '../models/product/cartModel.js';
 import Address from '../models/userAddressModel.js';
 import Variant from '../models/product/sizeVariantModel.js';
+import mongoose from 'mongoose';
 
 export const createOrder = asyncHandler(async (req, res) => {
     const { addressId, paymentMethod } = req.body;
@@ -157,7 +158,7 @@ export const getOrders = asyncHandler(async (req, res) => {
             })
             .populate({
                 path: 'shipping.address',
-                select: 'fullName street city state country postalCode phone'
+                select: 'fullName phone street city state country postalCode'
             })
             .populate('user', 'firstname lastname email phone')
             .sort({ createdAt: -1 })
@@ -202,12 +203,12 @@ export const getOrderById = asyncHandler(async (req, res) => {
 export const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id; // From auth middleware
+    const userId = req.user._id;
 
     const order = await Order.findOne({ 
       orderId: id,
       user: userId 
-    });
+    }).populate('items.sizeVariant'); // Populate sizeVariant to access stock
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -221,24 +222,44 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    // Update order status
-    order.orderStatus = 'Cancelled';
-    
-    // Update all items status to cancelled
-    order.items = order.items.map(item => ({
-      ...item,
-      status: 'Cancelled'
-    }));
+    try {
+      // Start a session for transaction
+      const session = await mongoose.startSession();
+      await session.withTransaction(async () => {
+        // Update order status
+        order.orderStatus = 'Cancelled';
+        
+        // Update all items status to cancelled and restore stock
+        for (const item of order.items) {
+          item.status = 'Cancelled';
+          
+          // Restore stock for the variant
+          await Variant.findByIdAndUpdate(
+            item.sizeVariant._id,
+            { $inc: { stock: item.quantity } }, // Increment stock by cancelled quantity
+            { session }
+          );
+        }
 
-    await order.save();
+        await order.save({ session });
+      });
 
-    res.json({ 
-      message: 'Order cancelled successfully',
-      order 
-    });
+      await session.endSession();
+
+      res.json({ 
+        message: 'Order cancelled successfully and stock restored',
+        order 
+      });
+    } catch (error) {
+      console.error('Transaction error:', error);
+      throw new Error('Failed to cancel order and restore stock');
+    }
+
   } catch (error) {
+    console.error('Cancel order error:', error);
     res.status(500).json({ 
-      message: 'Error cancelling order' 
+      message: 'Error cancelling order',
+      error: error.message 
     });
   }
 };

@@ -208,20 +208,22 @@ export default function Orders() {
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                           <h3 className="font-medium mb-3">Shipping Address</h3>
                           <div className="space-y-2 text-sm">
-                            <p className="font-medium">{order.shippingAddress?.fullName}</p>
-                            <p>{order.shippingAddress?.street}</p>
+                            <p className="font-medium">{order.shipping?.address?.fullName}</p>
+                            <p>{order.shipping?.address?.street}</p>
                             <p>
-                              {order.shippingAddress?.city}, {order.shippingAddress?.state}
+                              {order.shipping?.address?.city}, {order.shipping?.address?.state}
                             </p>
-                            <p>PIN: {order.shippingAddress?.pinCode}</p>
-                            <p>Phone: {order.shippingAddress?.phone}</p>
+                            <p>{order.shipping?.address?.country}</p>
+                            <p>PIN: {order.shipping?.address?.postalCode}</p>
+                            <p>Phone: {order.shipping?.address?.phone}</p>
                           </div>
-                          {order.shippingMethod && (
-                            <div className="mt-4 pt-4 border-t border-gray-200">
-                              <h4 className="font-medium mb-2">Shipping Method</h4>
-                              <p className="text-sm">{order.shippingMethod}</p>
-                            </div>
-                          )}
+                          <div className="mt-4 pt-4 border-t border-gray-200">
+                            <h4 className="font-medium mb-2">Shipping Method</h4>
+                            <p className="text-sm">{order.shipping?.shippingMethod}</p>
+                            <p className="text-sm mt-1">
+                              Delivery Charge: ₹{order.shipping?.deliveryCharge.toFixed(2)}
+                            </p>
+                          </div>
                         </div>
                       </TabsContent>
 
