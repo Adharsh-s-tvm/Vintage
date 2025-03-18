@@ -145,21 +145,25 @@ export const getOrders = asyncHandler(async (req, res) => {
         const orders = await Order.find({ user: userId })
             .populate({
                 path: 'items.product',
-                select: 'name images'
+                select: 'name images brand category',
+                populate: [
+                    { path: 'brand', select: 'name' },
+                    { path: 'category', select: 'name' }
+                ]
             })
             .populate({
                 path: 'items.sizeVariant',
-                select: 'size price'
+                select: 'size color price stock mainImage subImages',
             })
             .populate({
                 path: 'shipping.address',
-                select: 'fullName street city state postalCode'
+                select: 'fullName street city state country postalCode phone'
             })
+            .populate('user', 'firstname lastname email phone')
             .sort({ createdAt: -1 })
             .skip((page - 1) * limit)
             .limit(limit);
-          
-            
+
         const total = await Order.countDocuments({ user: userId });
 
         res.json({
@@ -169,8 +173,6 @@ export const getOrders = asyncHandler(async (req, res) => {
             totalOrders: total
         });
     } catch (error) {
-        console.log("error" , error);
-        
         res.status(500).json({ 
             message: "Failed to fetch orders",
             error: error.message 
@@ -197,56 +199,49 @@ export const getOrderById = asyncHandler(async (req, res) => {
 });
 
 // Cancel order
-export const cancelOrder = asyncHandler(async (req, res) => {
-    const order = await Order.findOne({
-        orderId: req.params.id,
-        user: req.user._id
+export const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id; // From auth middleware
+
+    const order = await Order.findOne({ 
+      orderId: id,
+      user: userId 
     });
 
     if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
+      return res.status(404).json({ message: 'Order not found' });
     }
 
-    // Check if order is already cancelled
-    if (order.items.every(item => item.status === 'Cancelled')) {
-        res.status(400);
-        throw new Error('Order is already cancelled');
+    // Check if order can be cancelled
+    const allowedStatuses = ['pending', 'Processing'];
+    if (!allowedStatuses.includes(order.orderStatus)) {
+      return res.status(400).json({ 
+        message: 'Order cannot be cancelled at this stage' 
+      });
     }
 
-    // Check if order can be cancelled (only pending or processing orders)
-    const nonCancellableItems = order.items.filter(item => 
-        !['pending', 'Processing'].includes(item.status)
-    );
-
-    if (nonCancellableItems.length > 0) {
-        res.status(400);
-        throw new Error('Some items cannot be cancelled at this stage');
-    }
-
-    // Update order items status and restore stock
-    for (const item of order.items) {
-        // Restore stock
-        const variant = await Variant.findById(item.sizeVariant);
-        if (variant) {
-            variant.stock += item.quantity;
-            await variant.save();
-        }
-
-        // Update item status
-        item.status = 'Cancelled';
-        if (req.body.cancellationReason) {
-            item.cancellationReason = req.body.cancellationReason;
-        }
-    }
+    // Update order status
+    order.orderStatus = 'Cancelled';
+    
+    // Update all items status to cancelled
+    order.items = order.items.map(item => ({
+      ...item,
+      status: 'Cancelled'
+    }));
 
     await order.save();
 
-    res.json({
-        message: 'Order cancelled successfully',
-        order
+    res.json({ 
+      message: 'Order cancelled successfully',
+      order 
     });
-});
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error cancelling order' 
+    });
+  }
+};
 
 // Return order
 export const returnOrder = asyncHandler(async (req, res) => {

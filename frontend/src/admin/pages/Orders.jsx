@@ -165,6 +165,7 @@ function Orders() {
                           <Select
                             defaultValue={order.orderStatus}
                             onValueChange={(value) => handleStatusChange(order._id, value)}
+                            disabled={order.orderStatus === 'Cancelled'}
                           >
                             <SelectTrigger className="w-[180px]">
                               <SelectValue>{order.orderStatus}</SelectValue>
@@ -174,7 +175,6 @@ function Orders() {
                               <SelectItem value="Processing">Processing</SelectItem>
                               <SelectItem value="Shipped">Shipped</SelectItem>
                               <SelectItem value="Delivered">Delivered</SelectItem>
-                              <SelectItem value="Cancelled">Cancelled</SelectItem>
                             </SelectContent>
                           </Select>
                           {expandedOrders.has(order._id) ? 

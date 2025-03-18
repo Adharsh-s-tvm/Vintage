@@ -19,6 +19,7 @@ import {
   TabsList,
   TabsTrigger,
 } from '../../ui/Tabs';
+import { ChevronDown } from 'lucide-react';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -98,140 +99,174 @@ export default function Orders() {
 
   return (
     <Layout>
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Your Orders</h1>
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Your Orders</h1>
+          <Button asChild variant="outline" className="flex items-center gap-2">
+            <Link to="/products">
+              Continue Shopping <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
 
         {loading ? (
-          <div className="text-center py-8">Loading orders...</div>
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+          </div>
         ) : orders.length > 0 ? (
-          <div className="space-y-6">
-            {orders.map((order) => {
-              return (
-                <div
-                  key={order._id}
-                  className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+          <div className="space-y-4">
+            {orders.map((order) => (
+              <div
+                key={order._id}
+                className="bg-white rounded-lg shadow-sm overflow-hidden"
+              >
+                <div 
+                  className="p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between"
+                  onClick={() => setSelectedOrder(selectedOrder?._id === order._id ? null : order)}
                 >
-                  <div className="border-b border-gray-100 p-4 md:p-6">
-                    <div className="flex flex-wrap justify-between items-center gap-2">
-                      <div>
-                        <div className="text-sm text-gray-500">Order #{order.orderId}</div>
-                        <div className="text-sm">
-                          Placed on {new Date(order.createdAt).toLocaleDateString()}
-                        </div>
+                  <div className="grid grid-cols-4 gap-4 flex-1">
+                    <div>
+                      <div className="text-sm font-medium">Order #{order.orderId}</div>
+                      <div className="text-xs text-gray-500">
+                        {new Date(order.createdAt).toLocaleDateString()}
                       </div>
-                      <div className="flex items-center space-x-2">
-                        {order.items?.length > 0 && getStatusIcon(order.items[0].status)}
-                        <span className="font-medium">{order.items?.[0]?.status || 'Unknown Status'}</span>
-                      </div>
+                    </div>
+                    <div className="text-sm">
+                      {order.items?.length} items
+                    </div>
+                    <div className="text-sm font-medium">
+                      ₹{order.totalAmount.toFixed(2)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(order.items?.[0]?.status)}
+                      <span className="text-sm">{order.items?.[0]?.status}</span>
                     </div>
                   </div>
+                  <ChevronDown 
+                    className={`h-5 w-5 transition-transform ${
+                      selectedOrder?._id === order._id ? 'transform rotate-180' : ''
+                    }`}
+                  />
+                </div>
 
-                  <div className="p-4 md:p-6">
-                    <div className="flex flex-wrap gap-4">
-                      {order.items?.length > 0 ? (
-                        order.items.map((item) => (
-                          <div key={item._id} className="flex items-center space-x-4">
-                            <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden">
-                              {/* <img src={item.product.images[0]} alt={item.product.name} className="h-full w-full object-cover" /> */}
+                {selectedOrder?._id === order._id && (
+                  <div className="border-t border-gray-100 p-4">
+                    <Tabs defaultValue="items" className="w-full">
+                      <TabsList className="w-full">
+                        <TabsTrigger value="items">Items</TabsTrigger>
+                        <TabsTrigger value="shipping">Shipping</TabsTrigger>
+                        <TabsTrigger value="payment">Payment</TabsTrigger>
+                      </TabsList>
+                      
+                      
+                      
+                      <TabsContent value="items">
+                        <div className="space-y-4 mt-4">
+                          {order.items?.map((item) => (
+                            <div key={item._id} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                              <div className="h-20 w-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                {item.sizeVariant?.mainImage ? (
+                                  <img
+                                    src={item.sizeVariant.mainImage}
+                                    alt={item.product.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : item.product.images?.[0] ? (
+                                  <img
+                                    src={item.product.images[0]}
+                                    alt={item.product.name}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : null}
+                              </div>
+                              <div className="flex-1">
+                                <div className="font-medium text-gray-900">{item.product.name}</div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  {item.product.brand?.name} • {item.product.category?.name}
+                                </div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                  Size: {item.sizeVariant?.size} • Color: {item.sizeVariant?.color}
+                                </div>
+                                <div className="text-sm text-gray-600">Quantity: {item.quantity}</div>
+                                <div className="text-sm font-medium text-gray-900 mt-2">
+                                  ₹{item.price.toFixed(2)} × {item.quantity} = ₹{item.finalPrice.toFixed(2)}
+                                </div>
+                              </div>
+                              <div className="text-sm font-medium">
+                                Status: <span className="text-blue-600">{item.status}</span>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="flex justify-between pt-4 border-t border-gray-200">
+                            <span className="font-medium">Total Amount:</span>
+                            <span className="font-bold">₹{order.totalAmount.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="shipping">
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <h3 className="font-medium mb-3">Shipping Address</h3>
+                          <div className="space-y-2 text-sm">
+                            <p className="font-medium">{order.shippingAddress?.fullName}</p>
+                            <p>{order.shippingAddress?.street}</p>
+                            <p>
+                              {order.shippingAddress?.city}, {order.shippingAddress?.state}
+                            </p>
+                            <p>PIN: {order.shippingAddress?.pinCode}</p>
+                            <p>Phone: {order.shippingAddress?.phone}</p>
+                          </div>
+                          {order.shippingMethod && (
+                            <div className="mt-4 pt-4 border-t border-gray-200">
+                              <h4 className="font-medium mb-2">Shipping Method</h4>
+                              <p className="text-sm">{order.shippingMethod}</p>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+
+                      <TabsContent value="payment">
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                          <h3 className="font-medium mb-3">Payment Details</h3>
+                          <div className="grid gap-4 text-sm">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <p className="text-gray-600">Method</p>
+                                <p className="font-medium capitalize">{order.payment?.method}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Status</p>
+                                <p className="font-medium capitalize">{order.payment?.status}</p>
+                              </div>
                             </div>
                             <div>
-                              <div className="font-medium">{item.product.name}</div>
-                              <div className="text-sm text-gray-500">₹{item.price.toFixed(2)} × {item.quantity}</div>
+                              <p className="text-gray-600">Transaction ID</p>
+                              <p className="font-medium">{order.payment?.transactionId}</p>
+                            </div>
+                            <div>
+                              <p className="text-gray-600">Payment Date</p>
+                              <p className="font-medium">
+                                {new Date(order.payment?.paymentDate).toLocaleDateString('en-US', {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                            </div>
+                            <div className="pt-4 border-t border-gray-200">
+                              <div className="flex justify-between items-center">
+                                <span>Amount Paid</span>
+                                <span className="font-bold">₹{order.payment?.amount.toFixed(2)}</span>
+                              </div>
                             </div>
                           </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500">No items in this order</p>
-                      )}
+                        </div>
+                      </TabsContent>
+                    </Tabs>
 
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap justify-between items-center">
-                      <div className="font-medium text-lg">
-                        Total: ₹{order.totalAmount.toFixed(2)}
-                      </div>
-                      <div className="flex space-x-3 mt-4 sm:mt-0">
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedOrder(order)}
-                            >
-                              Order Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="sm:max-w-[550px]">
-                            <DialogHeader>
-                              <DialogTitle>Order #{selectedOrder?.orderId}</DialogTitle>
-                            </DialogHeader>
-                            <div className="mt-6">
-                              <Tabs defaultValue="items">
-                                <TabsList className="w-full">
-                                  <TabsTrigger value="items" className="flex-1">
-                                    Items
-                                  </TabsTrigger>
-                                  <TabsTrigger value="shipping" className="flex-1">
-                                    Shipping
-                                  </TabsTrigger>
-                                  <TabsTrigger value="payment" className="flex-1">
-                                    Payment
-                                  </TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="items">
-                                  <div className="space-y-4 mt-4">
-                                    {order.items?.length > 0 &&
-                                      order.items.map((item) => (
-                                        <div key={item._id} className="flex items-center space-x-4">
-                                          <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden">
-                                            {/* <img src={item.product.images[0]} alt={item.product.name} className="h-full w-full object-cover" /> */}
-                                          </div>
-                                          <div>
-                                            <div className="font-medium">{item.product.name}</div>
-                                            <div className="text-sm text-gray-500">
-                                              ₹{item.price.toFixed(2)} × {item.quantity}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      ))
-                                    }
-
-                                    <div className="flex justify-between pt-2">
-                                      <span className="font-bold">Total:</span>
-                                      <span className="font-bold">₹{order.totalAmount.toFixed(2)}</span>
-                                    </div>
-                                  </div>
-                                </TabsContent>
-                                <TabsContent value="shipping">
-                                  <div className="mt-4">
-                                    <h3 className="font-medium mb-2">Shipping Address</h3>
-                                    <div className="text-sm space-y-1">
-                                      <p>{order.shippingAddress?.fullName || "N/A"}</p>
-                                      <p>{order.shippingAddress?.street || "N/A"}</p>
-                                      <p>{order.shippingAddress?.city}, {order.shippingAddress?.state}</p>
-                                      <p>{order.shippingAddress?.pinCode || "N/A"}</p>
-                                      <p>{order.shippingAddress?.phone || "N/A"}</p>
-
-                                    </div>
-                                  </div>
-                                </TabsContent>
-                                <TabsContent value="payment">
-                                  <div className="mt-4">
-                                    <h3 className="font-medium mb-2">Payment Details</h3>
-                                    <div className="text-sm space-y-2">
-                                      <p>Method: {order.payment?.method || "N/A"}</p>
-                                      <p>Status: {order.payment?.status || "N/A"}</p>
-                                      <p>Transaction ID: {order.payment?.transactionId || "N/A"}</p>
-
-                                    </div>
-                                  </div>
-                                </TabsContent>
-                              </Tabs>
-                            </div>
-                          </DialogContent>
-                        </Dialog>
-
-                        {['pending', 'Processing'].includes(order.items[0].status) && (
+                    <div className="flex justify-end gap-3 mt-4">
+                      {['pending', 'Processing'].includes(order.items[0]?.status) && 
+                        !order.items[0]?.status.includes('Cancelled') && (
                           <Button
                             variant="destructive"
                             size="sm"
@@ -241,33 +276,33 @@ export default function Orders() {
                           </Button>
                         )}
 
-                        {order.items[0].status === 'Delivered' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setReturnDialog({ open: true, order })}
-                          >
-                            Return Order
-                          </Button>
-                        )}
-                      </div>
+                      {order.items[0]?.status === 'Delivered' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReturnDialog({ open: true, order })}
+                        >
+                          Return Order
+                        </Button>
+                      )}
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>)
-          : (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-              <h2 className="text-2xl font-medium mb-4">No orders yet</h2>
-              <p className="text-gray-600 mb-6">
-                When you place an order, it will appear here for you to track.
-              </p>
-              <Button asChild>
-                <Link to="/products">Start Shopping</Link>
-              </Button>
-            </div>
-          )}
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl shadow-sm p-12 text-center max-w-lg mx-auto">
+            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-semibold text-gray-900 mb-3">No orders yet</h2>
+            <p className="text-gray-600 mb-8">
+              When you place an order, it will appear here for you to track and manage.
+            </p>
+            <Button asChild size="lg" className="w-full sm:w-auto">
+              <Link to="/products">Start Shopping</Link>
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );
