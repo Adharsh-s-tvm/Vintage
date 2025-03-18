@@ -100,10 +100,10 @@ export function Footer() {
             &copy; {new Date().getFullYear()} JacketHub. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6">
-            <img src="https://via.placeholder.com/40x25" alt="Visa" className="h-6" />
+            {/* <img src="https://via.placeholder.com/40x25" alt="Visa" className="h-6" />
             <img src="https://via.placeholder.com/40x25" alt="Mastercard" className="h-6" />
             <img src="https://via.placeholder.com/40x25" alt="PayPal" className="h-6" />
-            <img src="https://via.placeholder.com/40x25" alt="ApplePay" className="h-6" />
+            <img src="https://via.placeholder.com/40x25" alt="ApplePay" className="h-6" /> */}
           </div>
         </div>
       </div>

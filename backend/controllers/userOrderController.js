@@ -134,15 +134,48 @@ export const createOrder = asyncHandler(async (req, res) => {
     }
 });
 
-// Get all orders for a user
+// Get all orders for a user with pagination and sorting
+// Get user orders with efficient pagination and sorting
 export const getOrders = asyncHandler(async (req, res) => {
-    const orders = await Order.find({ user: req.user._id })
-        .populate('items.product')
-        .populate('items.sizeVariant')
-        .populate('shippingAddress')
-        .sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const userId = req.user._id;
 
-    res.json(orders);
+    try {
+        const orders = await Order.find({ user: userId })
+            .populate({
+                path: 'items.product',
+                select: 'name images'
+            })
+            .populate({
+                path: 'items.sizeVariant',
+                select: 'size price'
+            })
+            .populate({
+                path: 'shipping.address',
+                select: 'fullName street city state postalCode'
+            })
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+          
+            
+        const total = await Order.countDocuments({ user: userId });
+
+        res.json({
+            orders,
+            currentPage: page,
+            totalPages: Math.ceil(total / limit),
+            totalOrders: total
+        });
+    } catch (error) {
+        console.log("error" , error);
+        
+        res.status(500).json({ 
+            message: "Failed to fetch orders",
+            error: error.message 
+        });
+    }
 });
 
 // Get single order
@@ -211,6 +244,48 @@ export const cancelOrder = asyncHandler(async (req, res) => {
 
     res.json({
         message: 'Order cancelled successfully',
+        order
+    });
+});
+
+// Return order
+export const returnOrder = asyncHandler(async (req, res) => {
+    const { reason, additionalDetails } = req.body;
+    
+    const order = await Order.findOne({
+        orderId: req.params.id,
+        user: req.user._id
+    });
+
+    if (!order) {
+        res.status(404);
+        throw new Error('Order not found');
+    }
+
+    // Check if order is delivered
+    if (!order.items.every(item => item.status === 'Delivered')) {
+        res.status(400);
+        throw new Error('Order must be delivered before requesting return');
+    }
+
+    // Check if return is already requested
+    if (order.items.some(item => item.returnRequested)) {
+        res.status(400);
+        throw new Error('Return already requested for this order');
+    }
+
+    // Update order items status
+    for (const item of order.items) {
+        item.returnRequested = true;
+        item.returnReason = reason;
+        item.additionalDetails = additionalDetails;
+        item.returnStatus = 'Return Pending';
+    }
+
+    await order.save();
+
+    res.json({
+        message: 'Return request submitted successfully',
         order
     });
 });

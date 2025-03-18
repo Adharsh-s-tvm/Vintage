@@ -26,7 +26,7 @@ const orderSchema = new mongoose.Schema(
                 },
                 sizeVariant: {
                     type: mongoose.Schema.Types.ObjectId,
-                    ref: "SizeVariant",
+                    ref: "Variant",
                     required: true,
                 },
                 quantity: {

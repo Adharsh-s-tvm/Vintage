@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { ArrowRight, Download, Package, Truck, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { api } from '../../lib/api';
+import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
@@ -17,91 +20,69 @@ import {
   TabsTrigger,
 } from '../../ui/Tabs';
 
-// Mock orders data
-const orders = [
-  {
-    id: 'ORD123456',
-    date: '2023-07-15',
-    status: 'Delivered',
-    total: 259.98,
-    items: [
-      {
-        id: 1,
-        name: 'Winter Puffer Jacket',
-        price: 129.99,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1036&q=80',
-      },
-      {
-        id: 2,
-        name: 'Leather Biker Jacket',
-        price: 199.99,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1520975954732-35dd22299614?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80',
-      }
-    ],
-    shippingAddress: {
-      name: 'John Doe',
-      street: '123 Main St',
-      city: 'New York',
-      state: 'NY',
-      zip: '10001',
-      country: 'USA'
-    },
-    trackingNumber: 'TRK987654321'
-  },
-  {
-    id: 'ORD789101',
-    date: '2023-08-22',
-    status: 'Processing',
-    total: 89.99,
-    items: [
-      {
-        id: 3,
-        name: 'Denim Jacket with Patches',
-        price: 89.99,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1576871337622-98d48d1cf531?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80',
-      }
-    ],
-    shippingAddress: {
-      name: 'John Doe',
-      street: '123 Main St',
-      city: 'New York',
-      state: 'NY',
-      zip: '10001',
-      country: 'USA'
-    },
-    trackingNumber: null
-  },
-  {
-    id: 'ORD111213',
-    date: '2023-09-05',
-    status: 'Shipped',
-    total: 99.99,
-    items: [
-      {
-        id: 4,
-        name: 'Waterproof Rain Jacket',
-        price: 99.99,
-        quantity: 1,
-        image: 'https://images.unsplash.com/photo-1620330389433-b9bb261344ba?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=774&q=80',
-      }
-    ],
-    shippingAddress: {
-      name: 'John Doe',
-      street: '123 Main St',
-      city: 'New York',
-      state: 'NY',
-      zip: '10001',
-      country: 'USA'
-    },
-    trackingNumber: 'TRK555666777'
-  }
-];
-
 export default function Orders() {
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [returnDialog, setReturnDialog] = useState({ open: false, order: null });
+  const [returnForm, setReturnForm] = useState({
+    reason: '',
+    additionalDetails: ''
+  });
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(`${api}/user/orders`, {
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('jwt')}`, // Fixed token name
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      setOrders(response.data || []); // Simplified response handling
+      console.log("orders :",response.data);
+      
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error(error.response?.data?.message || 'Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = async (orderId) => {
+    try {
+      await axios.put(
+        `${api}/user/orders/${orderId}/cancel`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
+      );
+      toast.success('Order cancelled successfully');
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to cancel order');
+    }
+  };
+
+  const handleReturn = async (orderId) => {
+    try {
+      await axios.post(
+        `${api}/user/orders/${orderId}/return`,
+        returnForm,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
+      );
+      toast.success('Return request submitted successfully');
+      setReturnDialog({ open: false, order: null });
+      setReturnForm({ reason: '', additionalDetails: '' });
+      fetchOrders();
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to submit return request');
+    }
+  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -116,31 +97,31 @@ export default function Orders() {
     }
   };
 
-  const openOrderDetails = (order) => {
-    setSelectedOrder(order);
-  };
-
   return (
     <Layout>
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Your Orders</h1>
 
-        {orders.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8">Loading orders...</div>
+        ) : orders.length > 0 ? (
           <div className="space-y-6">
-            {orders.map((order) => (
+            {orders.map((orders) => (
               <div
-                key={order.id}
+                key={orders._id}
                 className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="border-b border-gray-100 p-4 md:p-6">
                   <div className="flex flex-wrap justify-between items-center gap-2">
                     <div>
-                      <div className="text-sm text-gray-500">Order #{order.id}</div>
-                      <div className="text-sm">Placed on {new Date(order.date).toLocaleDateString()}</div>
+                      <div className="text-sm text-gray-500">Order #{orders.orderId}</div>
+                      <div className="text-sm">
+                        Placed on {new Date(orders.createdAt).toLocaleDateString()}
+                      </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {getStatusIcon(order.status)}
-                      <span className="font-medium">{order.status}</span>
+                      {getStatusIcon(orders.items[0].status)}
+                      <span className="font-medium">{orders.items[0].status}</span>
                     </div>
                   </div>
                 </div>
@@ -148,18 +129,18 @@ export default function Orders() {
                 <div className="p-4 md:p-6">
                   <div className="flex flex-wrap gap-4">
                     {order.items.map((item) => (
-                      <div key={item.id} className="flex items-center space-x-4">
+                      <div key={item._id} className="flex items-center space-x-4">
                         <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden">
                           <img
-                            src={item.image}
-                            alt={item.name}
+                            src={item.product.images[0]}
+                            alt={item.product.name}
                             className="h-full w-full object-cover"
                           />
                         </div>
                         <div>
-                          <div className="font-medium">{item.name}</div>
+                          <div className="font-medium">{item.product.name}</div>
                           <div className="text-sm text-gray-500">
-                            ${item.price.toFixed(2)} × {item.quantity}
+                            ₹{item.price.toFixed(2)} × {item.quantity}
                           </div>
                         </div>
                       </div>
@@ -168,7 +149,7 @@ export default function Orders() {
 
                   <div className="mt-4 flex flex-wrap justify-between items-center">
                     <div className="font-medium text-lg">
-                      Total: ${order.total.toFixed(2)}
+                      Total: ₹{orders.totalAmount.toFixed(2)}
                     </div>
                     <div className="flex space-x-3 mt-4 sm:mt-0">
                       <Dialog>
@@ -176,47 +157,53 @@ export default function Orders() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => openOrderDetails(order)}
+                            onClick={() => setSelectedOrder(order)}
                           >
                             Order Details
                           </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-[550px]">
                           <DialogHeader>
-                            <DialogTitle>Order #{order.id}</DialogTitle>
+                            <DialogTitle>Order #{orders.orderId}</DialogTitle>
                           </DialogHeader>
                           <div className="mt-6">
                             <Tabs defaultValue="items">
                               <TabsList className="w-full">
-                                <TabsTrigger value="items" className="flex-1">Items</TabsTrigger>
-                                <TabsTrigger value="shipping" className="flex-1">Shipping</TabsTrigger>
-                                <TabsTrigger value="tracking" className="flex-1">Tracking</TabsTrigger>
+                                <TabsTrigger value="items" className="flex-1">
+                                  Items
+                                </TabsTrigger>
+                                <TabsTrigger value="shipping" className="flex-1">
+                                  Shipping
+                                </TabsTrigger>
+                                <TabsTrigger value="payment" className="flex-1">
+                                  Payment
+                                </TabsTrigger>
                               </TabsList>
                               <TabsContent value="items">
                                 <div className="space-y-4 mt-4">
                                   {order.items.map((item) => (
-                                    <div key={item.id} className="flex space-x-4 border-b pb-4">
+                                    <div key={item._id} className="flex space-x-4 border-b pb-4">
                                       <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden">
                                         <img
-                                          src={item.image}
-                                          alt={item.name}
+                                          src={item.product.images[0]}
+                                          alt={item.product.name}
                                           className="h-full w-full object-cover"
                                         />
                                       </div>
                                       <div className="flex-1">
-                                        <div className="font-medium">{item.name}</div>
+                                        <div className="font-medium">{item.product.name}</div>
                                         <div className="text-sm text-gray-500">
                                           Qty: {item.quantity}
                                         </div>
                                       </div>
                                       <div className="font-medium">
-                                        ${(item.price * item.quantity).toFixed(2)}
+                                        ₹{(item.price * item.quantity).toFixed(2)}
                                       </div>
                                     </div>
                                   ))}
                                   <div className="flex justify-between pt-2">
                                     <span className="font-bold">Total:</span>
-                                    <span className="font-bold">${order.total.toFixed(2)}</span>
+                                    <span className="font-bold">₹{order.totalAmount.toFixed(2)}</span>
                                   </div>
                                 </div>
                               </TabsContent>
@@ -224,66 +211,48 @@ export default function Orders() {
                                 <div className="mt-4">
                                   <h3 className="font-medium mb-2">Shipping Address</h3>
                                   <div className="text-sm space-y-1">
-                                    <p>{order.shippingAddress.name}</p>
+                                    <p>{order.shippingAddress.fullName}</p>
                                     <p>{order.shippingAddress.street}</p>
-                                    <p>
-                                      {order.shippingAddress.city}, {order.shippingAddress.state} {order.shippingAddress.zip}
-                                    </p>
-                                    <p>{order.shippingAddress.country}</p>
+                                    <p>{order.shippingAddress.city}, {order.shippingAddress.state}</p>
+                                    <p>{order.shippingAddress.pinCode}</p>
+                                    <p>{order.shippingAddress.phone}</p>
                                   </div>
                                 </div>
                               </TabsContent>
-                              <TabsContent value="tracking">
+                              <TabsContent value="payment">
                                 <div className="mt-4">
-                                  {order.trackingNumber ? (
-                                    <>
-                                      <h3 className="font-medium mb-2">Tracking Number</h3>
-                                      <p className="text-sm">{order.trackingNumber}</p>
-                                      <div className="mt-4 flex justify-between">
-                                        <div className="flex items-center space-x-1 text-sm">
-                                          <span>Status:</span>
-                                          <div className="flex items-center">
-                                            {getStatusIcon(order.status)}
-                                            <span className="ml-1">{order.status}</span>
-                                          </div>
-                                        </div>
-                                        <Button variant="link" size="sm" className="text-sm">
-                                          Track Package
-                                        </Button>
-                                      </div>
-                                    </>
-                                  ) : (
-                                    <p className="text-sm">
-                                      Tracking information will be available once your order ships.
-                                    </p>
-                                  )}
+                                  <h3 className="font-medium mb-2">Payment Details</h3>
+                                  <div className="text-sm space-y-2">
+                                    <p>Method: {order.payment.method}</p>
+                                    <p>Status: {order.payment.status}</p>
+                                    <p>Transaction ID: {order.payment.transactionId}</p>
+                                  </div>
                                 </div>
                               </TabsContent>
                             </Tabs>
                           </div>
-                          <div className="flex justify-between mt-6">
-                            <Button variant="outline" size="sm">
-                              <Download className="mr-2 h-4 w-4" />
-                              Download Invoice
-                            </Button>
-
-                            <Button size="sm">
-                              Buy Again
-                            </Button>
-                          </div>
                         </DialogContent>
                       </Dialog>
 
-                      <Button
-                        variant="default"
-                        size="sm"
-                        asChild
-                      >
-                        <Link to="#">
-                          <span>Track Order</span>
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
+                      {['pending', 'Processing'].includes(order.items[0].status) && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleCancel(order.orderId)}
+                        >
+                          Cancel Order
+                        </Button>
+                      )}
+
+                      {order.items[0].status === 'Delivered' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setReturnDialog({ open: true, order })}
+                        >
+                          Return Order
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -297,7 +266,7 @@ export default function Orders() {
               When you place an order, it will appear here for you to track.
             </p>
             <Button asChild>
-              <Link to="/ecommerce">Start Shopping</Link>
+              <Link to="/products">Start Shopping</Link>
             </Button>
           </div>
         )}
