@@ -12,6 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '../../ui/Dialog';
 import {
   Tabs,
@@ -20,6 +21,18 @@ import {
   TabsTrigger,
 } from '../../ui/Tabs';
 import { ChevronDown } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../ui/AlertDialog";
+import { Label } from "../../ui/Label";
+import { Textarea } from "../../ui/Textarea";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -30,6 +43,15 @@ export default function Orders() {
     reason: '',
     additionalDetails: ''
   });
+  const [confirmDialog, setConfirmDialog] = useState({ 
+    open: false, 
+    orderId: null 
+  });
+  const [cancelDialog, setCancelDialog] = useState({ 
+    open: false, 
+    orderId: null 
+  });
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     fetchOrders();
@@ -39,14 +61,11 @@ export default function Orders() {
     try {
       const response = await axios.get(`${api}/user/orders`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('jwt')}`, // Fixed token name
+          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
           'Content-Type': 'application/json'
         }
       });
-
-      setOrders(response.data.orders || []); // Simplified response handling
-
-
+      setOrders(response.data.orders || []);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to fetch orders');
     } finally {
@@ -54,14 +73,30 @@ export default function Orders() {
     }
   };
 
-  const handleCancel = async (orderId) => {
+  const handleCancelClick = (orderId) => {
+    setConfirmDialog({ open: true, orderId });
+  };
+
+  const handleConfirmCancellation = () => {
+    setCancelDialog({ open: true, orderId: confirmDialog.orderId });
+    setConfirmDialog({ open: false, orderId: null });
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!cancelReason.trim()) {
+      toast.error('Please provide a reason for cancellation');
+      return;
+    }
+
     try {
       await axios.put(
-        `${api}/user/orders/${orderId}/cancel`,
-        {},
+        `${api}/user/orders/${cancelDialog.orderId}/cancel`,
+        { reason: cancelReason },
         { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
       );
       toast.success('Order cancelled successfully');
+      setCancelDialog({ open: false, orderId: null });
+      setCancelReason('');
       fetchOrders();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to cancel order');
@@ -157,50 +192,41 @@ export default function Orders() {
                         <TabsTrigger value="shipping">Shipping</TabsTrigger>
                         <TabsTrigger value="payment">Payment</TabsTrigger>
                       </TabsList>
-                      
-                      
-                      
+
                       <TabsContent value="items">
                         <div className="space-y-4 mt-4">
                           {order.items?.map((item) => (
                             <div key={item._id} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
                               <div className="h-20 w-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                {item.sizeVariant?.mainImage ? (
+                                {item.sizeVariant?.mainImage && (
                                   <img
                                     src={item.sizeVariant.mainImage}
-                                    alt={item.product.name}
+                                    alt={item.product?.name}
                                     className="h-full w-full object-cover"
                                   />
-                                ) : item.product.images?.[0] ? (
-                                  <img
-                                    src={item.product.images[0]}
-                                    alt={item.product.name}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : null}
+                                )}
                               </div>
                               <div className="flex-1">
-                                <div className="font-medium text-gray-900">{item.product.name}</div>
+                                <div className="font-medium text-gray-900">{item.product?.name}</div>
                                 <div className="text-sm text-gray-600 mt-1">
-                                  {item.product.brand?.name} • {item.product.category?.name}
+                                  Size: {item.sizeVariant?.size} • Quantity: {item.quantity}
                                 </div>
-                                <div className="text-sm text-gray-600 mt-1">
-                                  Size: {item.sizeVariant?.size} • Color: {item.sizeVariant?.color}
-                                </div>
-                                <div className="text-sm text-gray-600">Quantity: {item.quantity}</div>
                                 <div className="text-sm font-medium text-gray-900 mt-2">
                                   ₹{item.price.toFixed(2)} × {item.quantity} = ₹{item.finalPrice.toFixed(2)}
                                 </div>
                               </div>
-                              <div className="text-sm font-medium">
-                                Status: <span className="text-blue-600">{item.status}</span>
-                              </div>
+                              {['pending', 'Processing'].includes(item.status) && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleCancelClick(order.orderId)}
+                                  className="ml-4"
+                                >
+                                  Cancel
+                                </Button>
+                              )}
                             </div>
                           ))}
-                          <div className="flex justify-between pt-4 border-t border-gray-200">
-                            <span className="font-medium">Total Amount:</span>
-                            <span className="font-bold">₹{order.totalAmount.toFixed(2)}</span>
-                          </div>
                         </div>
                       </TabsContent>
 
@@ -217,94 +243,121 @@ export default function Orders() {
                             <p>PIN: {order.shipping?.address?.postalCode}</p>
                             <p>Phone: {order.shipping?.address?.phone}</p>
                           </div>
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <h4 className="font-medium mb-2">Shipping Method</h4>
-                            <p className="text-sm">{order.shipping?.shippingMethod}</p>
-                            <p className="text-sm mt-1">
-                              Delivery Charge: ₹{order.shipping?.deliveryCharge.toFixed(2)}
-                            </p>
-                          </div>
                         </div>
                       </TabsContent>
 
                       <TabsContent value="payment">
                         <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                           <h3 className="font-medium mb-3">Payment Details</h3>
-                          <div className="grid gap-4 text-sm">
-                            <div className="grid grid-cols-2 gap-4">
-                              <div>
-                                <p className="text-gray-600">Method</p>
-                                <p className="font-medium capitalize">{order.payment?.method}</p>
-                              </div>
-                              <div>
-                                <p className="text-gray-600">Status</p>
-                                <p className="font-medium capitalize">{order.payment?.status}</p>
-                              </div>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Transaction ID</p>
-                              <p className="font-medium">{order.payment?.transactionId}</p>
-                            </div>
-                            <div>
-                              <p className="text-gray-600">Payment Date</p>
-                              <p className="font-medium">
-                                {new Date(order.payment?.paymentDate).toLocaleDateString('en-US', {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric',
-                                })}
-                              </p>
-                            </div>
-                            <div className="pt-4 border-t border-gray-200">
-                              <div className="flex justify-between items-center">
-                                <span>Amount Paid</span>
-                                <span className="font-bold">₹{order.payment?.amount.toFixed(2)}</span>
-                              </div>
-                            </div>
+                          <div className="space-y-2 text-sm">
+                            <p>Method: {order.payment?.method}</p>
+                            <p>Status: {order.payment?.status}</p>
+                            <p>Transaction ID: {order.payment?.transactionId}</p>
+                            <p>Amount: ₹{order.payment?.amount.toFixed(2)}</p>
                           </div>
                         </div>
                       </TabsContent>
                     </Tabs>
-
-                    <div className="flex justify-end gap-3 mt-4">
-                      {['pending', 'Processing'].includes(order.items[0]?.status) && 
-                        !order.items[0]?.status.includes('Cancelled') && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleCancel(order.orderId)}
-                          >
-                            Cancel Order
-                          </Button>
-                        )}
-
-                      {order.items[0]?.status === 'Delivered' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setReturnDialog({ open: true, order })}
-                        >
-                          Return Order
-                        </Button>
-                      )}
-                    </div>
                   </div>
                 )}
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm p-12 text-center max-w-lg mx-auto">
-            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-3">No orders yet</h2>
-            <p className="text-gray-600 mb-8">
-              When you place an order, it will appear here for you to track and manage.
-            </p>
-            <Button asChild size="lg" className="w-full sm:w-auto">
-              <Link to="/products">Start Shopping</Link>
-            </Button>
+          <div className="text-center py-12">
+            <p className="text-gray-500">No orders found</p>
           </div>
         )}
+
+        {/* Confirmation Dialog */}
+        <AlertDialog 
+          open={confirmDialog.open}
+          onOpenChange={(open) => {
+            if (!open) setConfirmDialog({ open: false, orderId: null });
+          }}
+        >
+          <AlertDialogContent className="bg-white rounded-lg shadow-lg sm:max-w-[425px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-semibold text-gray-900">
+                Cancel Order
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-500">
+                Are you sure you want to cancel this order? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex justify-end gap-3 mt-6">
+              <AlertDialogCancel
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                onClick={() => setConfirmDialog({ open: false, orderId: null })}
+              >
+                No, keep order
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                onClick={handleConfirmCancellation}
+              >
+                Yes, cancel order
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Reason Input Dialog */}
+        <Dialog 
+          open={cancelDialog.open} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setCancelDialog({ open: false, orderId: null });
+              setCancelReason('');
+            }
+          }}
+        >
+          <DialogContent className="bg-white rounded-lg shadow-lg sm:max-w-[425px] p-6">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                Cancellation Reason
+              </DialogTitle>
+              <p className="text-sm text-gray-500 mt-2">
+                Please tell us why you're cancelling this order.
+              </p>
+            </DialogHeader>
+            <div className="mt-4">
+              <Label 
+                htmlFor="reason" 
+                className="text-sm font-medium text-gray-700"
+              >
+                Reason for Cancellation
+              </Label>
+              <Textarea
+                id="reason"
+                placeholder="Please provide details about why you're cancelling..."
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="mt-2 min-h-[100px] w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <DialogFooter className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCancelDialog({ open: false, orderId: null });
+                  setCancelReason('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Back
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={handleCancelConfirm}
+                disabled={!cancelReason.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Submit & Cancel Order
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

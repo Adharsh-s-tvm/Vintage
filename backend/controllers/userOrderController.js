@@ -203,12 +203,13 @@ export const getOrderById = asyncHandler(async (req, res) => {
 export const cancelOrder = async (req, res) => {
   try {
     const { id } = req.params;
+    const { reason } = req.body; // Get reason from request body
     const userId = req.user._id;
 
     const order = await Order.findOne({ 
       orderId: id,
       user: userId 
-    }).populate('items.sizeVariant'); // Populate sizeVariant to access stock
+    }).populate('items.sizeVariant');
 
     if (!order) {
       return res.status(404).json({ message: 'Order not found' });
@@ -226,17 +227,22 @@ export const cancelOrder = async (req, res) => {
       // Start a session for transaction
       const session = await mongoose.startSession();
       await session.withTransaction(async () => {
-        // Update order status
+        // Update order status and reason
         order.orderStatus = 'Cancelled';
+        order.reason = reason; // Save cancellation reason
         
         // Update all items status to cancelled and restore stock
+        order.items = order.items.map(item => ({
+          ...item,
+          status: 'Cancelled',
+          cancellationReason: reason // Save reason for each item
+        }));
+
+        // Restore stock for each variant
         for (const item of order.items) {
-          item.status = 'Cancelled';
-          
-          // Restore stock for the variant
           await Variant.findByIdAndUpdate(
             item.sizeVariant._id,
-            { $inc: { stock: item.quantity } }, // Increment stock by cancelled quantity
+            { $inc: { stock: item.quantity } },
             { session }
           );
         }
@@ -247,7 +253,7 @@ export const cancelOrder = async (req, res) => {
       await session.endSession();
 
       res.json({ 
-        message: 'Order cancelled successfully and stock restored',
+        message: 'Order cancelled successfully',
         order 
       });
     } catch (error) {
