@@ -19,6 +19,7 @@ import userCartRoutes from './routes/userCartRoutes.js'
 import { errorHandler } from "./middlewares/errorHandler.js";
 import userWishlistRoutes from './routes/userWishlistRoutes.js';
 import userOrderRoutes from './routes/userOrderRoutes.js';
+import adminOrderRoutes from './routes/admin/adminOrderRoutes.js';
 
 
 dotenv.config()
@@ -51,6 +52,8 @@ app.use("/api/admin", adminRoutes);
 
 
 app.use("/api/admin/products", adminProductRoutes)
+
+app.use("/api/admin/orders", adminOrderRoutes)
 
 app.use("/api/products", userProductRoutes)
 

@@ -67,11 +67,11 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
                 color: 'badge-info'
             }
         },
-        // {
-        //     icon: FileText,
-        //     label: 'Blog',
-        //     path: '/admin/blog'
-        // },
+        {
+            icon: FileText,
+            label: 'Orders',
+            path: '/admin/orders'
+        },
         // {
         //     icon: LogIn,
         //     label: 'Sign In',

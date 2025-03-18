@@ -10,6 +10,7 @@ import Blog from './Blog'
 import { AdminLayout } from '../layout/AdminLayout'
 import Brand from './Brand'
 import Category from './Category'
+import Orders from './Orders'
 
 function AdminRoutes() {
   return (
@@ -21,6 +22,7 @@ function AdminRoutes() {
         <Route path='users' element={<Users />} />
         <Route path='brand' element={<Brand/>} />
         <Route path='category' element={<Category/>} />
+        <Route path='orders' element={<Orders />} />
       </Route>
       <Route path='/*' element={<NotFound redirectPageType={'admin'} />} />
       {/* <Route path='/signup' element={<AdminSignUp/>} /> */}
