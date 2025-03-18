@@ -36,12 +36,26 @@ function UserAddresses() {
 
     const fetchAddresses = async () => {
         try {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                toast.error('Please login to view addresses');
+                return;
+            }
+
             const response = await axios.get(`${api}/user/profile/address`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
             });
-            setAddresses(response.data);
+            setAddresses(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
-            toast.error('Failed to fetch addresses');
+            console.error('Error fetching addresses:', error);
+            if (error.response?.status === 401) {
+                toast.error('Session expired. Please login again');
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to fetch addresses');
+            }
         }
     };
 
@@ -64,23 +78,48 @@ function UserAddresses() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
+            const token = localStorage.getItem('jwt');
+            if (!token) {
+                toast.error('Please login to add address');
+                return;
+            }
+
             setLoading(true);
             if (isEditMode) {
-                await axios.put(`${api}/user/profile/address/${editAddressId}`, formData, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-                });
+                await axios.put(
+                    `${api}/user/profile/address/${editAddressId}`, 
+                    formData,
+                    {
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
                 toast.success('Address updated successfully');
             } else {
-                await axios.post(`${api}/user/profile/address`, formData, {
-                    headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-                });
+                await axios.post(
+                    `${api}/user/profile/address`, 
+                    formData,
+                    {
+                        headers: { 
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    }
+                );
                 toast.success('Address added successfully');
             }
             setShowAddModal(false);
             resetForm();
             fetchAddresses();
         } catch (error) {
-            toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} address`);
+            console.error('Error submitting address:', error);
+            if (error.response?.status === 401) {
+                toast.error('Session expired. Please login again');
+            } else {
+                toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} address`);
+            }
         } finally {
             setLoading(false);
             setIsEditMode(false);

@@ -19,8 +19,11 @@ router.get("/details", authenticate, getUserDetails);
 router.put("/details", authenticate, updateUserDetails);
 
 // Address routes
-router.get("/address", authenticate, getUserAddresses);
-router.post("/address", authenticate, addUserAddress);
+// Ensure authenticate middleware is applied to all routes
+router.use(authenticate);
+
+router.get("/address", getUserAddresses);
+router.post("/address", addUserAddress);
 router.put("/address/:id", authenticate, updateUserAddress);
 router.delete("/address/:id", authenticate, deleteUserAddress);
 

@@ -36,6 +36,11 @@ export const getUserDetails = asyncHandler(async (req, res) => {
 // @access  Private
 export const getUserAddresses = asyncHandler(async (req, res) => {
     try {
+        // Verify user exists in request
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
         const addresses = await Address.find({ user: req.user._id });
         res.json(addresses);
     } catch (error) {
@@ -49,6 +54,11 @@ export const getUserAddresses = asyncHandler(async (req, res) => {
 // @access  Private
 export const addUserAddress = asyncHandler(async (req, res) => {
     try {
+        // Verify user exists in request
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({ message: 'Not authorized' });
+        }
+
         const {
             fullName,
             phone,
@@ -59,6 +69,11 @@ export const addUserAddress = asyncHandler(async (req, res) => {
             postalCode,
             isDefault
         } = req.body;
+
+        // Validate required fields
+        if (!fullName || !phone || !street || !city || !state || !postalCode) {
+            return res.status(400).json({ message: 'Please fill all required fields' });
+        }
 
         // If this address is set as default, unset any existing default address
         if (isDefault) {
@@ -75,7 +90,7 @@ export const addUserAddress = asyncHandler(async (req, res) => {
             street,
             city,
             state,
-            country,
+            country: country || 'India', // Set default country if not provided
             postalCode,
             isDefault
         });
