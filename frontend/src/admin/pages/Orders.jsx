@@ -145,11 +145,11 @@ function Orders() {
                 orders.map((order) => (
                   <React.Fragment key={order._id}>
                     <TableRow className="cursor-pointer" onClick={() => toggleOrderDetails(order._id)}>
-                      <TableCell className="font-medium">{order._id}</TableCell>
+                      <TableCell className="font-medium">{order.orderId}</TableCell>
                       <TableCell>
                         {new Date(order.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell>{order.user?.name || 'N/A'}</TableCell>
+                      <TableCell>{order.user?.fullname || 'N/A'}</TableCell>
                       <TableCell>${order.totalAmount?.toFixed(2)}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${

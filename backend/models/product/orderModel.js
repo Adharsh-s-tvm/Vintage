@@ -12,6 +12,11 @@ const orderSchema = new mongoose.Schema(
             ref: "Cart",
             required: true,
         },
+        orderId: {
+            type: String,
+            required: true,
+            unique: true,
+        },
         items: [
             {
                 product: {

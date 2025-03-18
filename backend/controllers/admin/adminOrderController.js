@@ -29,7 +29,7 @@ export const getAllOrders = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit)
-      .select('_id createdAt user totalAmount orderStatus')
+      .select('orderId createdAt user totalAmount orderStatus')  // Include orderId in selection
       .lean(); // Convert to plain JavaScript objects
 
     // Ensure we always send an array
