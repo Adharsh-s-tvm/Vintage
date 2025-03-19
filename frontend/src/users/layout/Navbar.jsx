@@ -159,6 +159,12 @@ export function Navbar() {
     }
   };
 
+  // Get profile image URL
+  const getProfileImage = () => {
+    if (!currentUser) return null;
+    return currentUser.profileImage || currentUser.image || null;
+  };
+
   return (
     <>
       <header className="bg-white border-b border-gray-100 sticky top-0 z-50">
@@ -215,10 +221,10 @@ export function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 px-2">
-                      {currentUser?.image ? (
+                      {getProfileImage() ? (
                         <img 
-                          src={currentUser.image} 
-                          alt="Profile" 
+                          src={getProfileImage()}
+                          alt="Profile"
                           className="h-8 w-8 rounded-full object-cover"
                         />
                       ) : (

@@ -359,22 +359,33 @@ export default function ProductDetail() {
               onMouseMove={handleMouseMove}
             >
               {productImages.length > 0 && (
-                <img
-                  src={productImages[selectedImage]}
-                  alt={`${product.name} - ${selectedVariant?.size || 'Default'}`}
-                  className="h-full w-full object-cover object-center"
-                />
-              )}
-              {isHovering && productImages.length > 0 && (
-                <div
-                  className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                  style={{
-                    background: `url(${productImages[selectedImage]}) no-repeat`,
-                    backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
-                    backgroundSize: '200%',
-                    zIndex: 10
-                  }}
-                />
+                <>
+                  <img
+                    src={productImages[selectedImage]}
+                    alt={`${product.name} - ${selectedVariant?.size || 'Default'}`}
+                    className="h-full w-full object-cover object-center"
+                  />
+                  {/* Out of Stock Overlay */}
+                  {selectedVariant && selectedVariant.stock === 0 && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <span className="bg-white px-4 py-2 rounded-full text-sm font-medium">
+                        Out of Stock
+                      </span>
+                    </div>
+                  )}
+                  {/* Zoom Overlay */}
+                  {isHovering && productImages.length > 0 && (
+                    <div
+                      className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                      style={{
+                        background: `url(${productImages[selectedImage]}) no-repeat`,
+                        backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
+                        backgroundSize: '200%',
+                        zIndex: 10
+                      }}
+                    />
+                  )}
+                </>
               )}
             </div>
 
@@ -384,7 +395,7 @@ export default function ProductDetail() {
                 {productImages.map((image, i) => (
                   <button
                     key={i}
-                    className={`aspect-square rounded-md overflow-hidden bg-gray-100 
+                    className={`aspect-square rounded-md overflow-hidden bg-gray-100 relative
                       ${i === selectedImage ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => setSelectedImage(i)}
                   >
@@ -393,6 +404,14 @@ export default function ProductDetail() {
                       alt={`${product.name} ${selectedVariant?.size || 'Default'} - View ${i + 1}`}
                       className="h-full w-full object-cover object-center"
                     />
+                    {/* Out of Stock Overlay for thumbnails */}
+                    {selectedVariant && selectedVariant.stock === 0 && i === selectedImage && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="bg-white px-2 py-1 rounded-full text-xs font-medium">
+                          Out of Stock
+                        </span>
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
