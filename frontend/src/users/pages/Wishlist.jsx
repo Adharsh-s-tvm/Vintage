@@ -79,29 +79,25 @@ export default function Wishlist() {
 
   const moveToCart = async (item) => {
     try {
-      // Add to cart first
-      await axios.post(
+      // Add to cart with removeFromWishlist flag
+      const response = await axios.post(
         `${api}/user/cart/add`,
         {
           variantId: item.variant._id,
-          quantity: 1
+          quantity: 1,
+          removeFromWishlist: true
         },
         {
           withCredentials: true
         }
       );
 
-      // Then remove from wishlist
-      const response = await axios.delete(`${api}/user/wishlist/${item.variant._id}`, {
-        withCredentials: true
-      });
-
-      // Update Redux store with the updated wishlist items from the response
-      if (response.data.items) {
-        dispatch(setWishlistItems(response.data.items));
-      } else {
-        // Fallback to removing single item if response doesn't include updated items
-        dispatch(removeFromWishlist(item.variant._id));
+      // Update both cart and wishlist states
+      if (response.data.wishlist) {
+        dispatch(setWishlistItems(response.data.wishlist));
+      }
+      if (response.data.cart) {
+        dispatch(setCartItems(response.data.cart));
       }
 
       toast({
@@ -110,13 +106,10 @@ export default function Wishlist() {
         duration: 2000,
         className: "bg-white text-black border border-gray-200"
       });
-
-      // Optionally refresh the wishlist to ensure sync
-      fetchWishlist();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to move item to cart",
+        description: error.response?.data?.message || "Failed to move item to cart",
         duration: 2000,
         className: "bg-white text-black border border-gray-200"
       });

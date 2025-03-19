@@ -1,13 +1,12 @@
 import Cart from "../models/product/cartModel.js";
 import Product from "../models/product/productModel.js";
 import Variant from "../models/product/sizeVariantModel.js";
+import Wishlist from "../models/product/wishlistModel.js"; // Add this import
 
 // Add to cart
 export const addToCart = async (req, res) => {
-    console.log("Cart add called");
-
     try {
-        const { variantId, quantity } = req.body;
+        const { variantId, quantity, removeFromWishlist } = req.body; // Add removeFromWishlist parameter
         const userId = req.user._id;
 
         // Check if variant exists and is not blocked
@@ -67,6 +66,14 @@ export const addToCart = async (req, res) => {
 
         await cart.save();
 
+        // Remove from wishlist if requested
+        if (removeFromWishlist) {
+            await Wishlist.updateOne(
+                { user: userId },
+                { $pull: { items: { variant: variantId } } }
+            );
+        }
+
         // Populate cart details
         const populatedCart = await Cart.findById(cart._id)
             .populate({
@@ -77,7 +84,24 @@ export const addToCart = async (req, res) => {
                 }
             });
 
-        res.status(200).json(populatedCart);
+        // Get updated wishlist if it was modified
+        let updatedWishlist = null;
+        if (removeFromWishlist) {
+            updatedWishlist = await Wishlist.findOne({ user: userId })
+                .populate({
+                    path: 'items.product',
+                    populate: [
+                        { path: 'brand', select: 'name' },
+                        { path: 'category', select: 'name' }
+                    ]
+                })
+                .populate('items.variant');
+        }
+
+        res.status(200).json({
+            cart: populatedCart,
+            wishlist: removeFromWishlist ? updatedWishlist?.items || [] : undefined
+        });
     } catch (error) {
         console.error('Error adding to cart:', error);
         res.status(500).json({ message: "Error adding to cart" });
