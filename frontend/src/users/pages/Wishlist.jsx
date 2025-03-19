@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom';
 import { toast } from '../../hooks/useToast';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeFromWishlist, setWishlistItems } from '../../redux/slices/wishlistSlice';
+import { setCartItems } from '../../redux/slices/cartSlice'; // Add this import
 import axios from 'axios';
 import { api } from '../../lib/api';
 import {
@@ -79,7 +80,6 @@ export default function Wishlist() {
 
   const moveToCart = async (item) => {
     try {
-      // Add to cart with removeFromWishlist flag
       const response = await axios.post(
         `${api}/user/cart/add`,
         {
@@ -88,17 +88,20 @@ export default function Wishlist() {
           removeFromWishlist: true
         },
         {
-          withCredentials: true
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
       );
 
-      // Update both cart and wishlist states
-      if (response.data.wishlist) {
-        dispatch(setWishlistItems(response.data.wishlist));
-      }
+      // Update cart state with cart data
       if (response.data.cart) {
         dispatch(setCartItems(response.data.cart));
       }
+
+      // Remove item from wishlist state
+      dispatch(removeFromWishlist(item.variant._id));
 
       toast({
         title: "Success",
