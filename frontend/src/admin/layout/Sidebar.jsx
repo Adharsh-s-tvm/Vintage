@@ -9,10 +9,12 @@ import {
     LogIn,
     AlertCircle,
     Crown,
-    Menu
+    Menu,
+    Car
 } from 'lucide-react';
 import { cn } from '../../lib/util';
 import { Button } from '../../ui/Button';
+import { BrandingWatermark, Category } from '@mui/icons-material';
 
 export function Sidebar({ className, mobileOpen, onMobileClose }) {
     const [collapsed, setCollapsed] = useState(false);
@@ -50,7 +52,7 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             }
         },
         {
-            icon: ShoppingBag,
+            icon: Category,
             label: 'Category',
             path: '/admin/category',
             badge: {
@@ -59,7 +61,7 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             }
         },
         {
-            icon: ShoppingBag,
+            icon: BrandingWatermark,
             label: 'Brand',
             path: '/admin/brand',
             badge: {
@@ -72,11 +74,11 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             label: 'Orders',
             path: '/admin/orders'
         },
-        // {
-        //     icon: LogIn,
-        //     label: 'Sign In',
-        //     path: '/admin/signin'
-        // },
+        {
+            icon: Car,
+            label: 'Returns',
+            path: '/admin/returns'
+        },
         // {
         //     icon: AlertCircle,
         //     label: '404',

@@ -11,6 +11,7 @@ import { AdminLayout } from '../layout/AdminLayout'
 import Brand from './Brand'
 import Category from './Category'
 import Orders from './Orders'
+import Returns from './Returns'
 
 function AdminRoutes() {
   return (
@@ -23,6 +24,7 @@ function AdminRoutes() {
         <Route path='brand' element={<Brand/>} />
         <Route path='category' element={<Category/>} />
         <Route path='orders' element={<Orders />} />
+        <Route path='returns' element={<Returns />} />
       </Route>
       <Route path='/*' element={<NotFound redirectPageType={'admin'} />} />
       {/* <Route path='/signup' element={<AdminSignUp/>} /> */}
