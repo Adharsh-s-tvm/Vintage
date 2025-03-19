@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux'; // Add this import
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { api } from '../../lib/api';
@@ -113,30 +114,19 @@ function AddressForm({ onAddressAdded, onClose }) {
 
 function Checkout() {
   const navigate = useNavigate();
-  const [cart, setCart] = useState(null);
+  const dispatch = useDispatch();
+  // Replace cart state with Redux selector
+  const { cartItems, subtotal, shipping, total, loading } = useSelector((state) => state.cart);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCart();
+    // Remove fetchCart since cart data is managed by Redux
     fetchAddresses();
   }, []);
 
-  const fetchCart = async () => {
-    try {
-      const response = await axios.get(`${api}/user/cart`, {
-        withCredentials: true
-      });
-      setCart(response.data);
-    } catch (error) {
-      toast.error('Failed to fetch cart');
-      navigate('/cart');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Remove fetchCart function as it's handled in Cart.jsx
 
   const fetchAddresses = async () => {
     try {
@@ -194,7 +184,7 @@ function Checkout() {
     return <Layout>Loading...</Layout>;
   }
 
-  if (!cart?.items?.length) {
+  if (!cartItems?.length) {
     return (
       <Layout>
         <div className="max-w-3xl mx-auto p-4">
@@ -235,12 +225,12 @@ function Checkout() {
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
                 <CardDescription>
-                  {cart.items.length} items in your cart
+                  {cartItems.length} items in your cart
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {cart.items.map((item) => (
+                  {cartItems.map((item) => (
                     <div key={item.variant._id} className="flex space-x-4">
                       <div className="h-20 w-20 bg-gray-100 rounded-md overflow-hidden">
                         <img
@@ -382,16 +372,16 @@ function Checkout() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${cart.subtotal.toFixed(2)}</span>
+                    <span>${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>${cart.shipping.toFixed(2)}</span>
+                    <span>${shipping.toFixed(2)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>${cart.total.toFixed(2)}</span>
+                    <span>${total.toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>

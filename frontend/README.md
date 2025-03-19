@@ -4,8 +4,9 @@
 
 PRODUXT VARIANT ADD BUG...........
 WISHLIST REMOVE BUG...........
-EDIT EMAIL VERIFY.........
+CHECK HOW CHECKOUT WORKS ..........
 LOADERS.............
+
 
 WEEK 3
 
@@ -14,14 +15,11 @@ User side :
 
 
 
-Note : When editing email need to verify the emails via OTP or Token.
 
 
 Address Management
-Implement Add,Edit and Delete.
 
-Cart management (Add to cart, list products in cart, remove products from cart)
-
+ 
 
 
 If a product is added to the cart, ensure it is removed from the wishlist if it exists there.

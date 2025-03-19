@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setCartItems, setLoading, setError } from '../../redux/slices/cartSlice';
 import { Layout } from '../layout/Layout';
 import {
   Table,
@@ -43,51 +45,29 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
 };
 
 export default function Cart() {
-  const [cart, setCart] = useState({
-    items: [],
-    subtotal: 0,
-    shipping: 0,
-    total: 0
-  });
-  const [loading, setLoading] = useState(true);
-  const [deleteItemId, setDeleteItemId] = useState(null);
-  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const dispatch = useDispatch();
+  const { cartItems, subtotal, shipping, total, loading } = useSelector((state) => state.cart);
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, itemId: null });
 
   useEffect(() => {
     fetchCart();
-  }, []);
+  }, [dispatch]);
 
   const fetchCart = async () => {
+    dispatch(setLoading(true));
     try {
       const response = await axios.get(`${api}/user/cart`, {
-        withCredentials: true,
         headers: {
+          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
           'Content-Type': 'application/json'
         }
       });
-
-      if (response.data) {
-        const items = response.data.items || [];
-        const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const shipping = subtotal > 500 ? 0 : 10; // Free shipping over ₹500
-        const total = subtotal + shipping;
-
-        setCart({
-          items,
-          subtotal,
-          shipping,
-          total
-        });
-      }
+      dispatch(setCartItems(response.data));
     } catch (error) {
-      console.error('Cart fetch error:', error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to fetch cart",
-        variant: "destructive"
-      });
+      dispatch(setError(error.response?.data?.message || 'Failed to fetch cart'));
+      toast.error(error.response?.data?.message || 'Failed to fetch cart');
     } finally {
-      setLoading(false);
+      dispatch(setLoading(false));
     }
   };
 
@@ -107,21 +87,12 @@ export default function Cart() {
       );
 
       if (response.data) {
-        setCart({
-          items: response.data.items || [],
-          subtotal: response.data.subtotal || 0,
-          shipping: response.data.shipping || 0,
-          total: response.data.total || 0
-        });
-
+        dispatch(setCartItems(response.data));
         toast({
           title: "Success",
           description: "Cart updated",
           duration: 2000,
-          className: "bg-white text-black border border-gray-200",
-          style: {
-            "--close-button-color": "black"
-          }
+          className: "bg-white text-black border border-gray-200"
         });
       }
     } catch (error) {
@@ -129,24 +100,16 @@ export default function Cart() {
         title: "Error",
         description: error.response?.data?.message || "Failed to update quantity",
         duration: 2000,
-        className: "bg-white text-black border border-gray-200",
-        style: {
-          "--close-button-color": "black"
-        }
+        className: "bg-white text-black border border-gray-200"
       });
     }
   };
 
-  const handleRemoveClick = (variantId) => {
-    setDeleteItemId(variantId);
-    setShowDeleteConfirmation(true);
-  };
-
   const confirmRemove = async () => {
-    if (deleteItemId) {
+    if (deleteModal.itemId) {
       try {
         const response = await axios.delete(
-          `${api}/user/cart/remove/${deleteItemId}`,
+          `${api}/user/cart/remove/${deleteModal.itemId}`,
           {
             withCredentials: true,
             headers: {
@@ -156,52 +119,38 @@ export default function Cart() {
         );
 
         if (response.data) {
-          setCart({
-            items: response.data.items || [],
-            subtotal: response.data.subtotal || 0,
-            shipping: response.data.shipping || 0,
-            total: response.data.total || 0
-          });
-
+          dispatch(setCartItems(response.data));
           toast({
             title: "Success",
             description: "Item removed from cart",
             duration: 2000,
-            className: "bg-white text-black border border-gray-200",
-            style: {
-              "--close-button-color": "black"
-            }
+            className: "bg-white text-black border border-gray-200"
           });
         }
       } catch (error) {
-        console.error('Remove item error:', error);
         toast({
           title: "Error",
           description: error.response?.data?.message || "Failed to remove item",
           duration: 2000,
-          className: "bg-white text-black border border-gray-200",
-          style: {
-            "--close-button-color": "black"
-          }
+          className: "bg-white text-black border border-gray-200"
         });
       } finally {
-        setShowDeleteConfirmation(false);
-        setDeleteItemId(null);
-        fetchCart();
+        setDeleteModal({ isOpen: false, itemId: null });
       }
     }
   };
 
-  if (loading) {
-    return <Layout>Loading...</Layout>;
-  }
+  const handleRemoveClick = (variantId) => {
+    setDeleteModal({ isOpen: true, itemId: variantId });
+  };
 
+  // Remove the duplicate confirmRemove function and update the DeleteConfirmationModal usage
   return (
     <Layout>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
 
-        {cart?.items?.length > 0 ? (
+        {cartItems?.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">
@@ -216,7 +165,7 @@ export default function Cart() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {cart.items.map((item) => (
+                    {cartItems.map((item) => (
                       <TableRow key={item.variant._id}>
                         <TableCell>
                           <div className="flex items-center space-x-4">
@@ -297,16 +246,16 @@ export default function Cart() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Subtotal</span>
-                    <span className="font-medium">${cart.subtotal.toFixed(2)}</span>
+                    <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Shipping</span>
-                    <span className="font-medium">${cart.shipping.toFixed(2)}</span>
+                    <span className="font-medium">${shipping.toFixed(2)}</span>
                   </div>
                   <div className="border-t pt-3 mt-3">
                     <div className="flex justify-between font-bold">
                       <span>Total</span>
-                      <span>${cart.total.toFixed(2)}</span>
+                      <span>${total.toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
@@ -341,11 +290,8 @@ export default function Cart() {
       </div>
 
       <DeleteConfirmationModal
-        isOpen={showDeleteConfirmation}
-        onClose={() => {
-          setShowDeleteConfirmation(false);
-          setDeleteItemId(null);
-        }}
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, itemId: null })}
         onConfirm={confirmRemove}
       />
     </Layout>
