@@ -41,51 +41,29 @@ const uploadFields = upload.fields([
 
 const handleUpload = (req, res, next) => {
     console.log("Starting file upload...");
-
-    // Create timeout that can be cleared
-    let uploadTimeout = setTimeout(() => {
-        console.error("Upload timeout after 30 seconds");
-        if (!res.headersSent) {
-            res.status(500).json({
-                message: "Upload timeout - check Cloudinary configuration"
-            });
-        }
-    }, 30000);
+    console.log("Request body:", req.body);
+    console.log("Request files:", req.files);
 
     uploadFields(req, res, (err) => {
-        // Clear the timeout since upload completed (either success or error)
-        clearTimeout(uploadTimeout);
-
         if (err) {
             console.error("Upload error:", err);
             return res.status(400).json({
+                success: false,
                 message: "File upload error",
                 error: err.message
             });
         }
 
-        console.log("Upload successful");
-        console.log("Files received:", req.files);
-
-        // Validate files
-        if (!req.files) {
+        // Check if files exist
+        if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).json({
+                success: false,
                 message: "No files were uploaded"
             });
         }
 
-        if (!req.files.mainImage || !req.files.mainImage[0]) {
-            return res.status(400).json({
-                message: "Main image is required"
-            });
-        }
-
-        if (!req.files.subImages || req.files.subImages.length === 0) {
-            return res.status(400).json({
-                message: "At least one sub image is required"
-            });
-        }
-
+        // Log successful upload
+        console.log("Files uploaded successfully:", req.files);
         next();
     });
 };

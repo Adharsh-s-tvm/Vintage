@@ -43,6 +43,8 @@ export const getAllProducts = async (req, res) => {
 export const addVariant = async (req, res) => {
   try {
     const { size, color, stock, price, product } = req.body;
+    console.log('Request body:', req.body);
+    console.log('Request files:', req.files);
 
     // Validate required fields
     if (!product || !size || !color || !stock || !price) {
@@ -52,20 +54,18 @@ export const addVariant = async (req, res) => {
       });
     }
 
-    // Debug log the received files
-    console.log('Received files:', req.files);
+    // Get image URLs with fallback
+    let mainImageUrl = '';
+    let subImageUrls = [];
 
-    // Validate files
-    if (!req.files || !req.files.mainImage || !req.files.subImages) {
-      return res.status(400).json({
-        success: false,
-        message: "Both main image and sub images are required"
-      });
+    if (req.files) {
+      if (req.files.mainImage && req.files.mainImage[0]) {
+        mainImageUrl = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
+      }
+      if (req.files.subImages) {
+        subImageUrls = req.files.subImages.map(file => file.path || file.secure_url);
+      }
     }
-
-    // Get image URLs
-    const mainImageUrl = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
-    const subImageUrls = req.files.subImages.map(file => file.path || file.secure_url);
 
     // Create new variant
     const newVariant = new Variant({
@@ -78,16 +78,12 @@ export const addVariant = async (req, res) => {
       subImages: subImageUrls
     });
 
-    // Save variant
     const savedVariant = await newVariant.save();
-
-    // Update product's variants array
     await Product.findByIdAndUpdate(
       product,
       { $push: { variants: savedVariant._id } }
     );
 
-    // Populate and return response
     const populatedVariant = await Variant.findById(savedVariant._id)
       .populate('product', 'name');
 

@@ -21,7 +21,6 @@ Address Management
 If a product is added to the cart, ensure it is removed from the wishlist if it exists there.
 
 Handle the maximum quantity a person can add to the cart for a single product
-Out-of-stock products should be displayed as disabled and ensure they cannot be moved to checkout upon proceeding.
 
 Checkout page
 

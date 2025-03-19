@@ -264,21 +264,33 @@ const Products = () => {
     try {
       setLoading(true);
       const formData = new FormData();
+      
+      // Append basic data
+      formData.append('product', selectedProduct._id);
       formData.append('size', variantData.size);
       formData.append('color', variantData.color);
       formData.append('stock', variantData.stock);
       formData.append('price', variantData.price);
-      formData.append('mainImage', variantData.mainImage);
+
+      // Append main image
+      if (variantData.mainImage) {
+        formData.append('mainImage', variantData.mainImage);
+      }
 
       // Append sub images
-      Object.entries(variantData.subImages).forEach(([key, file]) => {
+      Object.values(variantData.subImages).forEach((file) => {
         if (file) {
-          formData.append(`subImages`, file);
+          formData.append('subImages', file);
         }
       });
 
+      // Log FormData contents
+      for (let pair of formData.entries()) {
+        console.log(pair[0], pair[1]);
+      }
+
       const response = await axios.post(
-        `${API_BASE_URL}/products/${selectedProduct._id}/variants`,
+        `${API_BASE_URL}/products/variant/add`,
         formData,
         {
           headers: {
@@ -287,20 +299,23 @@ const Products = () => {
         }
       );
 
-      setProducts(prevProducts => {
-        return prevProducts.map(product => {
-          if (product._id === selectedProduct._id) {
-            return {
-              ...product,
-              variants: [...product.variants, response.data]
-            };
-          }
-          return product;
+      if (response.data.success) {
+        // Update products state
+        setProducts(prevProducts => {
+          return prevProducts.map(product => {
+            if (product._id === selectedProduct._id) {
+              return {
+                ...product,
+                variants: [...product.variants, response.data.variant]
+              };
+            }
+            return product;
+          });
         });
-      });
 
-      toast.success('Variant added successfully');
-      handleCloseVariantModal();
+        toast.success('Variant added successfully');
+        handleCloseVariantModal();
+      }
     } catch (error) {
       console.error('Error adding variant:', error);
       toast.error(error.response?.data?.message || 'Failed to add variant');
