@@ -157,6 +157,16 @@ export default function Wishlist() {
 
         <div className="flex items-center space-x-2 mt-2">
           <Button
+            variant="outline"
+            className="flex-1"
+            size="sm"
+            asChild
+          >
+            <Link to={`/products/${item.product._id}`}>
+              View Details
+            </Link>
+          </Button>
+          <Button
             size="sm"
             className="flex-1"
             disabled={item.variant.stock === 0}
