@@ -57,10 +57,22 @@ export function Navbar() {
   const [storedUser, setStoredUser] = useState(null);
   const [showLogoutConfirmation, setShowLogoutConfirmation] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState(0);
 
-  // Fetch cart count when component mounts and when user changes
+  // Fetch user info from localStorage on component mount
   useEffect(() => {
-    fetchCartCount();
+    const userFromStorage = localStorage.getItem('userInfo');
+    if (userFromStorage) {
+      setStoredUser(JSON.parse(userFromStorage));
+    }
+  }, []);
+
+  // Fetch cart count and wishlist count when component mounts and when user changes
+  useEffect(() => {
+    if (user || storedUser) {
+      fetchCartCount();
+      fetchWishlistCount();
+    }
   }, [user, storedUser]);
 
   const fetchCartCount = async () => {
@@ -85,6 +97,27 @@ export function Navbar() {
     }
   };
 
+  const fetchWishlistCount = async () => {
+    if (user || storedUser) {
+      try {
+        const response = await axios.get(`${api}/user/wishlist`, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.data) {
+          // Set the count of wishlist items
+          setWishlistCount(response.data.length || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching wishlist count:', error);
+        setWishlistCount(0);
+      }
+    }
+  };
+
   const categories = [
     { name: 'All', href: '/products' },
     { name: 'Winter', href: '#' },
@@ -103,6 +136,27 @@ export function Navbar() {
     navigate('/login');
     window.location.reload();
     setShowLogoutConfirmation(false);
+  };
+
+  // Get current user data (either from Redux or localStorage)
+  const currentUser = user || storedUser;
+  
+  // Create full name from first name and last name
+  const getFullName = () => {
+    if (!currentUser) return '';
+    
+    const firstName = currentUser.firstname || '';
+    const lastName = currentUser.lastname || '';
+    
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    } else if (firstName) {
+      return firstName;
+    } else if (currentUser.email) {
+      return currentUser.email.split('@')[0];
+    } else {
+      return 'User';
+    }
   };
 
   return (
@@ -142,9 +196,11 @@ export function Navbar() {
 
                 <Link to="/wishlist" className="p-2 text-gray-500 hover:text-primary relative">
                   <Heart className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                    2
-                  </span>
+                  {wishlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                      {wishlistCount}
+                    </span>
+                  )}
                 </Link>
 
                 <Link to="/cart" className="p-2 text-gray-500 hover:text-primary relative">
@@ -158,8 +214,21 @@ export function Navbar() {
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon">
-                      <User className="h-5 w-5" />
+                    <Button variant="ghost" className="flex items-center gap-2 px-2">
+                      {currentUser?.image ? (
+                        <img 
+                          src={currentUser.image} 
+                          alt="Profile" 
+                          className="h-8 w-8 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                          {getFullName().charAt(0)}
+                        </div>
+                      )}
+                      <span className="text-sm font-medium">
+                        {getFullName()}
+                      </span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
