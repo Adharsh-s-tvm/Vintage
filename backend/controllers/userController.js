@@ -1,5 +1,5 @@
 import User from "../models/userModel.js";
-import Otp from "../models/otp/signUpOtpModel.js";
+import Otp from "../models/signUpOtpModel.js";
 import asyncHandler from "../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import createToken from "../utils/createToken.js";
@@ -261,6 +261,108 @@ const resetPassword = asyncHandler(async (req, res) => {
 
     res.json({ message: "Password reset successful" });
 });
+
+export const sendEmailChangeOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const userId = req.user._id;
+
+        // Check if email already exists for another user
+        const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email already in use by another account' });
+        }
+
+        // Generate a 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Store OTP in database with expiry (10 minutes)
+        await User.findByIdAndUpdate(userId, {
+            emailChangeOtp: otp,
+            emailChangeOtpExpiry: Date.now() + 10 * 60 * 1000, // 10 minutes
+            newEmail: email
+        });
+
+        // Send OTP to the new email address
+        // Implement your email sending logic here
+        // For example:
+        // await sendEmail({
+        //     to: email,
+        //     subject: 'Email Change Verification',
+        //     text: `Your OTP for email change is: ${otp}. It will expire in 10 minutes.`
+        // });
+
+        // For development, you can console log the OTP
+        console.log(`OTP for email change: ${otp}`);
+
+        res.status(200).json({ message: 'OTP sent to your new email address' });
+    } catch (error) {
+        console.error('Error sending email change OTP:', error);
+        res.status(500).json({ message: 'Failed to send OTP' });
+    }
+};
+
+export const verifyEmailChangeOtp = async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const userId = req.user._id;
+
+        const user = await User.findById(userId);
+        
+        // Check if OTP matches and is not expired
+        if (!user || user.emailChangeOtp !== otp || user.newEmail !== email) {
+            return res.status(400).json({ message: 'Invalid OTP' });
+        }
+        
+        if (Date.now() > user.emailChangeOtpExpiry) {
+            return res.status(400).json({ message: 'OTP has expired' });
+        }
+
+        // Update user's email
+        user.email = email;
+        user.emailChangeOtp = undefined;
+        user.emailChangeOtpExpiry = undefined;
+        user.newEmail = undefined;
+        
+        await user.save();
+
+        res.status(200).json({ 
+            message: 'Email updated successfully',
+            email: user.email
+        });
+    } catch (error) {
+        console.error('Error verifying email change OTP:', error);
+        res.status(500).json({ message: 'Failed to verify OTP' });
+    }
+};
+
+export const resendEmailChangeOtp = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const userId = req.user._id;
+
+        // Generate a new 6-digit OTP
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        
+        // Update OTP in database with new expiry (10 minutes)
+        await User.findByIdAndUpdate(userId, {
+            emailChangeOtp: otp,
+            emailChangeOtpExpiry: Date.now() + 10 * 60 * 1000, // 10 minutes
+            newEmail: email
+        });
+
+        // Send OTP to the new email address
+        // Implement your email sending logic here
+        
+        // For development, you can console log the OTP
+        console.log(`New OTP for email change: ${otp}`);
+
+        res.status(200).json({ message: 'OTP resent to your new email address' });
+    } catch (error) {
+        console.error('Error resending email change OTP:', error);
+        res.status(500).json({ message: 'Failed to resend OTP' });
+    }
+};
 
 export {
     createUser,

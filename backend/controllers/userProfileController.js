@@ -285,3 +285,48 @@ export const changePassword = asyncHandler(async (req, res) => {
         res.status(500).json({ message: 'Failed to change password' });
     }
 });
+
+
+// Add this function to your existing userController.js file
+
+export const updateUserEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const userId = req.user._id;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        // Check if email already exists for another user
+        const existingUser = await User.findOne({ email, _id: { $ne: userId } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Email already in use by another account' });
+        }
+
+        // Update user's email
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { email },
+            { new: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.status(200).json({
+            _id: updatedUser._id,
+            firstname: updatedUser.firstname,
+            lastname: updatedUser.lastname,
+            email: updatedUser.email,
+            username: updatedUser.username,
+            phone: updatedUser.phone,
+            image: updatedUser.image,
+            isAdmin: updatedUser.isAdmin
+        });
+    } catch (error) {
+        console.error('Error updating email:', error);
+        res.status(500).json({ message: 'Failed to update email' });
+    }
+};
