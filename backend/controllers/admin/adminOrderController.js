@@ -1,4 +1,6 @@
 import Order from "../../models/product/orderModel.js";
+import mongoose from "mongoose";
+import Variant from "../../models/product/sizeVariantModel.js";
 
 export const getAllOrders = async (req, res) => {
   try {
@@ -67,5 +69,58 @@ export const updateOrderStatus = async (req, res) => {
     res.status(200).json(order);
   } catch (error) {
     res.status(500).json({ message: "Failed to update order status", error: error.message });
+  }
+};
+
+export const updateReturnStatus = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { approved } = req.body;
+
+    const order = await Order.findById(orderId).populate('items.sizeVariant');
+    
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (approved) {
+      // Start a session for transaction
+      const session = await mongoose.startSession();
+      await session.withTransaction(async () => {
+        // Update order status
+        order.orderStatus = 'Returned';
+        
+        // Update all items status and restore stock
+        for (const item of order.items) {
+          item.status = 'Returned';
+          item.returnStatus = 'Return Approved';
+          
+          // Restore stock
+          await Variant.findByIdAndUpdate(
+            item.sizeVariant._id,
+            { $inc: { stock: item.quantity } },
+            { session }
+          );
+        }
+
+        await order.save({ session });
+      });
+
+      await session.endSession();
+    } else {
+      // Reject return request
+      order.items = order.items.map(item => ({
+        ...item,
+        returnStatus: 'Return Rejected'
+      }));
+      await order.save();
+    }
+
+    res.status(200).json(order);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Failed to update return status", 
+      error: error.message 
+    });
   }
 };

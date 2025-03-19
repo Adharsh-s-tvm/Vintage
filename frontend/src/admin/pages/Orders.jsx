@@ -54,7 +54,7 @@ function Orders() {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
       
-      // Update this line to access the orders array from the response
+      // Ensure orders are properly populated
       setOrders(response.data.orders || []);
       setTotalPages(response.data.totalPages || 1);
     } catch (error) {

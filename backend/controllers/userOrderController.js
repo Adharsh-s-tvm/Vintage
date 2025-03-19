@@ -284,8 +284,8 @@ export const returnOrder = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
-    // Check if order is delivered
-    if (!order.items.every(item => item.status === 'Delivered')) {
+    // Check if order status is Delivered
+    if (order.orderStatus !== 'Delivered') {
         res.status(400);
         throw new Error('Order must be delivered before requesting return');
     }

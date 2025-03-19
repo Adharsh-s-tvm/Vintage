@@ -252,7 +252,7 @@ export default function Orders() {
                                   Cancel
                                 </Button>
                               )}
-                              {item.status === 'Delivered' && !item.returnRequested && (
+                              {order.orderStatus === 'Delivered' && !order.returnRequested && (
                                 <Button
                                   variant="outline"
                                   size="sm"
