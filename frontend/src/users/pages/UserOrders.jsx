@@ -38,7 +38,14 @@ export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [returnDialog, setReturnDialog] = useState({ open: false, order: null });
+  const [returnConfirmDialog, setReturnConfirmDialog] = useState({ 
+    open: false, 
+    orderId: null 
+  });
+  const [returnDialog, setReturnDialog] = useState({ 
+    open: false, 
+    orderId: null 
+  });
   const [returnForm, setReturnForm] = useState({
     reason: '',
     additionalDetails: ''
@@ -65,7 +72,13 @@ export default function Orders() {
           'Content-Type': 'application/json'
         }
       });
-      setOrders(response.data.orders || []);
+      
+      // Ensure orders are properly sorted by date
+      const sortedOrders = (response.data.orders || []).sort((a, b) => 
+        new Date(b.createdAt) - new Date(a.createdAt)
+      );
+      
+      setOrders(sortedOrders);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to fetch orders');
     } finally {
@@ -103,15 +116,29 @@ export default function Orders() {
     }
   };
 
-  const handleReturn = async (orderId) => {
+  const handleReturnClick = (orderId) => {
+    setReturnConfirmDialog({ open: true, orderId });
+  };
+
+  const handleReturnConfirmation = () => {
+    setReturnDialog({ open: true, orderId: returnConfirmDialog.orderId });
+    setReturnConfirmDialog({ open: false, orderId: null });
+  };
+
+  const handleReturnSubmit = async () => {
+    if (!returnForm.reason.trim()) {
+      toast.error('Please provide a reason for return');
+      return;
+    }
+
     try {
       await axios.post(
-        `${api}/user/orders/${orderId}/return`,
+        `${api}/user/orders/${returnDialog.orderId}/return`,
         returnForm,
         { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
       );
       toast.success('Return request submitted successfully');
-      setReturnDialog({ open: false, order: null });
+      setReturnDialog({ open: false, orderId: null });
       setReturnForm({ reason: '', additionalDetails: '' });
       fetchOrders();
     } catch (error) {
@@ -121,11 +148,11 @@ export default function Orders() {
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'Processing':
+      case 'processing':
         return <Package className="h-5 w-5 text-blue-500" />;
-      case 'Shipped':
+      case 'shipped':
         return <Truck className="h-5 w-5 text-orange-500" />;
-      case 'Delivered':
+      case 'delivered':
         return <Check className="h-5 w-5 text-green-500" />;
       default:
         return null;
@@ -173,8 +200,8 @@ export default function Orders() {
                       ₹{order.totalAmount.toFixed(2)}
                     </div>
                     <div className="flex items-center gap-2">
-                      {getStatusIcon(order.items?.[0]?.status)}
-                      <span className="text-sm">{order.items?.[0]?.status}</span>
+                      {getStatusIcon(order.orderStatus)}
+                      <span className="text-sm">{order.orderStatus}</span>
                     </div>
                   </div>
                   <ChevronDown 
@@ -223,6 +250,16 @@ export default function Orders() {
                                   className="ml-4"
                                 >
                                   Cancel
+                                </Button>
+                              )}
+                              {item.status === 'Delivered' && !item.returnRequested && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleReturnClick(order.orderId)}
+                                  className="ml-4"
+                                >
+                                  Return
                                 </Button>
                               )}
                             </div>
@@ -354,6 +391,96 @@ export default function Orders() {
                 className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Submit & Cancel Order
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Return Confirmation Dialog */}
+        <AlertDialog 
+          open={returnConfirmDialog.open}
+          onOpenChange={(open) => {
+            if (!open) setReturnConfirmDialog({ open: false, orderId: null });
+          }}
+        >
+          <AlertDialogContent className="bg-white rounded-lg shadow-lg sm:max-w-[425px]">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-xl font-semibold text-gray-900">
+                Return Order
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-500">
+                Are you sure you want to return this order? This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="flex justify-end gap-3 mt-6">
+              <AlertDialogCancel
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                No, keep order
+              </AlertDialogCancel>
+              <AlertDialogAction
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700"
+                onClick={handleReturnConfirmation}
+              >
+                Yes, return order
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Return Details Dialog */}
+        <Dialog 
+          open={returnDialog.open} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setReturnDialog({ open: false, orderId: null });
+              setReturnForm({ reason: '', additionalDetails: '' });
+            }
+          }}
+        >
+          <DialogContent className="bg-white rounded-lg shadow-lg sm:max-w-[425px] p-6">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                Return Details
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4 space-y-4">
+              <div>
+                <Label htmlFor="reason">Reason for Return *</Label>
+                <Textarea
+                  id="reason"
+                  value={returnForm.reason}
+                  onChange={(e) => setReturnForm(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Why are you returning this order?"
+                  className="mt-2"
+                />
+              </div>
+              <div>
+                <Label htmlFor="additionalDetails">Additional Details</Label>
+                <Textarea
+                  id="additionalDetails"
+                  value={returnForm.additionalDetails}
+                  onChange={(e) => setReturnForm(prev => ({ ...prev, additionalDetails: e.target.value }))}
+                  placeholder="Any additional information about the return..."
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReturnDialog({ open: false, orderId: null });
+                  setReturnForm({ reason: '', additionalDetails: '' });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleReturnSubmit}
+                disabled={!returnForm.reason.trim()}
+              >
+                Submit Return Request
               </Button>
             </DialogFooter>
           </DialogContent>
