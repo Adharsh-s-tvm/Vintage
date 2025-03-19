@@ -33,11 +33,22 @@ import {
 } from "../../ui/AlertDialog";
 import { Label } from "../../ui/Label";
 import { Textarea } from "../../ui/Textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/Select";
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  
+  // Add returnReasons constant here
+  const returnReasons = [
+    "Defective",
+    "Not as described",
+    "Wrong size/fit",
+    "Changed my mind",
+    "Other"
+  ];
+
   const [returnConfirmDialog, setReturnConfirmDialog] = useState({ 
     open: false, 
     orderId: null 
@@ -444,16 +455,25 @@ export default function Orders() {
                 Return Details
               </DialogTitle>
             </DialogHeader>
+            // In the Return Details Dialog, remove the array declaration and keep only the Select component:
             <div className="mt-4 space-y-4">
               <div>
                 <Label htmlFor="reason">Reason for Return *</Label>
-                <Textarea
-                  id="reason"
+                <Select
                   value={returnForm.reason}
-                  onChange={(e) => setReturnForm(prev => ({ ...prev, reason: e.target.value }))}
-                  placeholder="Why are you returning this order?"
-                  className="mt-2"
-                />
+                  onValueChange={(value) => setReturnForm(prev => ({ ...prev, reason: value }))}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {returnReasons.map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="additionalDetails">Additional Details</Label>

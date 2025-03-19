@@ -124,3 +124,92 @@ export const updateReturnStatus = async (req, res) => {
     });
   }
 };
+
+// Add this new controller function
+// Add this function to get return requests
+export const getReturnRequests = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+
+    let query = {
+      'items': {
+        $elemMatch: {
+          'returnRequest': { $exists: true }
+        }
+      }
+    };
+
+    if (search) {
+      query.$or = [
+        { orderId: { $regex: search, $options: 'i' } },
+        { 'user.fullname': { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    const total = await Order.countDocuments(query);
+
+    const returns = await Order.find(query)
+      .populate('user', 'fullname email')
+      .populate({
+        path: 'items.product',
+        select: 'name images'
+      })
+      .populate('items.sizeVariant')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      returns,
+      total,
+      currentPage: page,
+      totalPages: Math.ceil(total / limit)
+    });
+  } catch (error) {
+    console.error('Error in getReturnRequests:', error);
+    res.status(500).json({
+      message: "Failed to fetch return requests",
+      error: error.message
+    });
+  }
+};
+
+// Add this controller function for handling return requests
+export const handleReturnRequest = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.params;
+    const { action } = req.body;
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    const item = order.items.id(itemId);
+    if (!item) {
+      return res.status(404).json({ message: "Order item not found" });
+    }
+
+    if (action === 'accept') {
+      item.status = 'Return Accepted';
+      // Update inventory if needed
+      const variant = await Variant.findById(item.sizeVariant);
+      if (variant) {
+        variant.stock += item.quantity;
+        await variant.save();
+      }
+    } else if (action === 'reject') {
+      item.status = 'Return Rejected';
+    }
+
+    await order.save();
+    res.status(200).json({ message: `Return request ${action}ed successfully` });
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Failed to handle return request",
+      error: error.message 
+    });
+  }
+};
