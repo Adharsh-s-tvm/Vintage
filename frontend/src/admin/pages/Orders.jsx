@@ -268,7 +268,7 @@ function Orders() {
                           <Select
                             defaultValue={order.orderStatus}
                             onValueChange={(value) => handleStatusChange(order._id, value)}
-                            disabled={order.orderStatus === 'Cancelled'}
+                            disabled={order.orderStatus === 'Cancelled' || order.orderStatus === 'Delivered'}
                           >
                             <SelectTrigger className="w-[180px]">
                               <SelectValue>{order.orderStatus}</SelectValue>
