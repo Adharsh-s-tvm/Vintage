@@ -23,14 +23,12 @@ If a product is added to the cart, ensure it is removed from the wishlist if it 
 Handle the maximum quantity a person can add to the cart for a single product
 
 Checkout page
-
+    
 Display products moved to checkout with:
 Applicable discount
 
 Order Management
 Provide an option to return order when the order is delivered,should ask for reason for return (mandatory).
-Include a detail page for each respective order.
-Implement search to find specific order
 
 Admin side :
 Order Management
