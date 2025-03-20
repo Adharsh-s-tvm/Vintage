@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
-import { ArrowRight, Download, Package, Truck, Check } from 'lucide-react';
+import { ArrowRight, Download, Package, Truck, Check, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { api } from '../../lib/api';
@@ -34,11 +34,13 @@ import {
 import { Label } from "../../ui/Label";
 import { Textarea } from "../../ui/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/Select";
+import { Input } from '../../ui/Input';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   
   // Add returnReasons constant here
   const returnReasons = [
@@ -170,6 +172,16 @@ export default function Orders() {
     }
   };
 
+  const filteredOrders = orders.filter((order) => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      order.orderId.toLowerCase().includes(searchLower) ||
+      order.orderStatus.toLowerCase().includes(searchLower) ||
+      order.totalAmount.toString().includes(searchQuery) ||
+      new Date(order.createdAt).toLocaleDateString().includes(searchQuery)
+    );
+  });
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -182,13 +194,25 @@ export default function Orders() {
           </Button>
         </div>
 
+        <div className="mb-6">
+          <div className="relative">
+            <Input
+              type="text"
+              placeholder="Search orders by ID, status, amount, or date..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 w-full md:w-96"
+            />
+          </div>
+        </div>
+
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
-        ) : orders.length > 0 ? (
+        ) : filteredOrders.length > 0 ? (
           <div className="space-y-4">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <div
                 key={order._id}
                 className="bg-white rounded-lg shadow-sm overflow-hidden p-4"
@@ -245,6 +269,17 @@ export default function Orders() {
                 </div>
               </div>
             ))}
+          </div>
+        ) : searchQuery ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">No orders found matching your search</p>
+            <Button 
+              variant="link" 
+              className="mt-2"
+              onClick={() => setSearchQuery('')}
+            >
+              Clear search
+            </Button>
           </div>
         ) : (
           <div className="text-center py-12">

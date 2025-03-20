@@ -30,7 +30,6 @@ Applicable discount
 Order Management
 Provide an option to return order when the order is delivered,should ask for reason for return (mandatory).
 Include a detail page for each respective order.
-Provide the option to download the invoice for each order.(pdf)
 Implement search to find specific order
 
 Admin side :
