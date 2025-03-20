@@ -52,6 +52,14 @@ function Orders() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterStatus, setFilterStatus] = useState('all');
 
+  // Add this function here
+  const getFilteredOrders = () => {
+    if (!orders) return [];
+    return orders.filter(order => 
+      filterStatus === 'all' ? true : order.orderStatus === filterStatus
+    );
+  };
+
   // Modify fetchOrders to include sort and filter
   const fetchOrders = async () => {
     try {
@@ -219,19 +227,25 @@ function Orders() {
                   </Button>
                 </form>
 
-                <Select value={filterStatus} onValueChange={setFilterStatus}>
-                  <SelectTrigger className="w-[150px]">
-                    <SelectValue placeholder="Filter by Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                    <SelectItem value="Processing">Processing</SelectItem>
-                    <SelectItem value="Shipped">Shipped</SelectItem>
-                    <SelectItem value="Delivered">Delivered</SelectItem>
-                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Select 
+                    value={filterStatus} 
+                    onValueChange={(value) => {
+                      setFilterStatus(value);
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                  >
+                    <SelectTrigger className="w-[150px]">
+                      <SelectValue placeholder="Filter by Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Processing">Processing</SelectItem>
+                      <SelectItem value="Shipped">Shipped</SelectItem>
+                      <SelectItem value="Delivered">Delivered</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
 
                 <Select value={sortField} onValueChange={setSortField}>
                   <SelectTrigger className="w-[150px]">
@@ -272,8 +286,8 @@ function Orders() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {orders.length > 0 ? (
-                  orders.map((order) => (
+                {getFilteredOrders().length > 0 ? (
+                  getFilteredOrders().map((order) => (
                     <React.Fragment key={order._id}>
                       <TableRow className="cursor-pointer" onClick={() => toggleOrderDetails(order._id)}>
                         <TableCell className="font-medium">{order.orderId}</TableCell>
