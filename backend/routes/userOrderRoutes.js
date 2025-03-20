@@ -5,7 +5,8 @@ import {
     getOrders,
     getOrderById,
     cancelOrder,
-    returnOrder
+    returnOrder,
+    pdfDownloader
 } from '../controllers/userOrderController.js';
 
 const router = express.Router();
@@ -27,5 +28,7 @@ router.put('/:id/cancel', cancelOrder);
 
 // Return order
 router.post('/:id/return', returnOrder);
+
+router.get('/:orderId/invoice', pdfDownloader);
 
 export default router;

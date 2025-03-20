@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
-import { Package, Truck, Check, ArrowLeft } from 'lucide-react';
+import { Package, Truck, Check, ArrowLeft, Download } from 'lucide-react';
 import axios from 'axios';
 import { api } from '../../lib/api';
-import { toast } from '../../hooks/useToast';
+import { toast } from 'sonner';
 
 export default function OrderDetails() {
   const { orderId } = useParams();
@@ -66,6 +66,49 @@ export default function OrderDetails() {
     }
   };
 
+  const handleDownloadInvoice = async () => {
+    try {
+      const response = await axios({
+        url: `${api}/user/orders/${orderId}/invoice`,
+        method: 'GET',
+        responseType: 'blob',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+        }
+      });
+
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `invoice-${orderId}.pdf`);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Show toast after a brief delay to ensure download has started
+      setTimeout(() => {
+        toast('Invoice downloaded successfully', {
+          description: 'Your invoice has been downloaded to your device.',
+        });
+      }, 2000); // 2 seconds delay
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      }, 2500);
+      
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      toast('Failed to download invoice', {
+        description: 'There was an error downloading your invoice. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -92,16 +135,27 @@ export default function OrderDetails() {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto px-4 py-8">
-        <Button
-          variant="ghost"
-          className="mb-6 flex items-center gap-2"
-          asChild
-        >
-          <Link to="/orders">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Orders
-          </Link>
-        </Button>
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            className="flex items-center gap-2"
+            asChild
+          >
+            <Link to="/orders">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Orders
+            </Link>
+          </Button>
+
+          <Button
+            variant="outline"
+            className="flex items-center gap-2"
+            onClick={handleDownloadInvoice}
+          >
+            <Download className="h-4 w-4" />
+            Download Invoice
+          </Button>
+        </div>
 
         <div className="bg-white rounded-lg shadow-sm overflow-hidden">
           {/* Order Header */}

@@ -4,6 +4,13 @@ import Cart from '../models/product/cartModel.js';
 import Address from '../models/userAddressModel.js';
 import Variant from '../models/product/sizeVariantModel.js';
 import mongoose from 'mongoose';
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export const createOrder = asyncHandler(async (req, res) => {
     const { addressId, paymentMethod } = req.body;
@@ -323,5 +330,82 @@ export const returnOrder = asyncHandler(async (req, res) => {
     res.json({
         message: 'Return request submitted successfully',
         order
+    });
+});
+
+export const pdfDownloader = asyncHandler(async (req, res) => {
+    const { orderId } = req.params;
+
+    // Fetch order details with populated fields
+    const order = await Order.findOne({ orderId })
+        .populate('user', 'firstname lastname email')
+        .populate('items.product', 'name')
+        .populate('items.sizeVariant', 'size color price')
+        .populate('shipping.address');
+
+    if (!order) {
+        return res.status(404).json({ message: "Order not found" });
+    }
+
+    // Create a new PDF document
+    const doc = new PDFDocument();
+    const filePath = path.join(__dirname, `../invoices/invoice-${orderId}.pdf`);
+
+    // Ensure the invoices directory exists
+    if (!fs.existsSync(path.join(__dirname, '../invoices'))) {
+        fs.mkdirSync(path.join(__dirname, '../invoices'));
+    }
+
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
+
+    // Add invoice details
+    doc.fontSize(20).text("Invoice", { align: "center" });
+    doc.moveDown();
+    doc.fontSize(14).text(`Order ID: ${order.orderId}`);
+    doc.text(`Customer: ${order.user.firstname} ${order.user.lastname}`);
+    doc.text(`Email: ${order.user.email}`);
+    doc.moveDown();
+
+    // Add shipping address
+    doc.fontSize(14).text("Shipping Address:");
+    doc.fontSize(12)
+        .text(order.shipping.address.fullName)
+        .text(order.shipping.address.street)
+        .text(`${order.shipping.address.city}, ${order.shipping.address.state} ${order.shipping.address.postalCode}`)
+        .text(`Phone: ${order.shipping.address.phone}`);
+    doc.moveDown();
+
+    // Add order items
+    doc.fontSize(14).text("Order Items:");
+    order.items.forEach((item, index) => {
+        doc.fontSize(12).text(
+            `${index + 1}. ${item.product.name} - ${item.sizeVariant.size}/${item.sizeVariant.color}`,
+            { continued: true }
+        );
+        doc.text(
+            `   Qty: ${item.quantity} x ₹${item.price} = ₹${item.finalPrice}`,
+            { align: 'right' }
+        );
+    });
+
+    doc.moveDown();
+    // Add totals
+    doc.fontSize(14)
+        .text(`Subtotal: ₹${order.totalAmount - order.shipping.deliveryCharge}`, { align: 'right' })
+        .text(`Shipping: ₹${order.shipping.deliveryCharge}`, { align: 'right' })
+        .text(`Total: ₹${order.totalAmount}`, { align: 'right' });
+
+    doc.end();
+
+    stream.on("finish", () => {
+        res.download(filePath, `invoice-${order.orderId}.pdf`, (err) => {
+            if (err) {
+                console.error("Download error:", err);
+                res.status(500).json({ message: "Error downloading invoice" });
+            }
+            // Delete file after download
+            fs.unlinkSync(filePath);
+        });
     });
 });
