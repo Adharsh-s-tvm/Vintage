@@ -148,8 +148,14 @@ export default function Orders() {
       await axios.post(
         `${api}/user/orders/${returnDialog.orderId}/return`,
         returnForm,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
+        { 
+          withCredentials: true,
+          headers: { 
+            'Content-Type': 'application/json'
+          } 
+        }
       );
+      
       toast.success('Return request submitted successfully');
       setReturnDialog({ open: false, orderId: null });
       setReturnForm({ reason: '', additionalDetails: '' });
@@ -247,7 +253,8 @@ export default function Orders() {
                         Cancel
                       </Button>
                     )}
-                    {order.orderStatus === 'Delivered' && !order.returnRequested && (
+                    {console.log('Order Status:', order.orderStatus)}
+                    {order.orderStatus === 'Delivered' && (
                       <Button
                         variant="outline"
                         size="sm"

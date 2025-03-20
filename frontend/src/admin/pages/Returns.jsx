@@ -19,13 +19,6 @@ import {
   CardHeader,
   CardTitle,
 } from "../../ui/Card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "../../ui/Dialog";
 
 function Returns() {
   const [returns, setReturns] = useState([]);
@@ -36,7 +29,7 @@ function Returns() {
 
   const fetchReturns = async () => {
     try {
-      const response = await axios.get(`${api}/admin/returns`, {
+      const response = await axios.get(`${api}/admin/orders/returns`, {
         params: {
           page: currentPage,
           search: searchQuery,
@@ -44,10 +37,15 @@ function Returns() {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
       
-      setReturns(response.data.returns || []);
+      const returnOrders = response.data.returns.filter(order => 
+        order.items.some(item => item.returnRequested)
+      );
+      
+      setReturns(returnOrders);
       setTotalPages(response.data.totalPages || 1);
       setLoading(false);
     } catch (error) {
+      console.error('Fetch error:', error);
       toast.error('Failed to fetch return requests');
       setLoading(false);
     }
@@ -60,13 +58,17 @@ function Returns() {
   const handleReturnAction = async (orderId, itemId, action) => {
     try {
       await axios.patch(
-        `${api}/admin/orders/${orderId}/return`,
-        { approved: action === 'accept' },
+        `${api}/admin/orders/${orderId}/return/${itemId}`,
+        { 
+          approved: action === 'accept',
+          status: action === 'accept' ? 'Return Approved' : 'Return Rejected'
+        },
         { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
       );
       toast.success(`Return request ${action}ed successfully`);
       fetchReturns();
     } catch (error) {
+      console.error('Action error:', error);
       toast.error(`Failed to ${action} return request`);
     }
   };
@@ -108,15 +110,19 @@ function Returns() {
                   <TableHead>Date</TableHead>
                   <TableHead>Customer</TableHead>
                   <TableHead>Product</TableHead>
+                  <TableHead>Quantity</TableHead>
                   <TableHead>Return Reason</TableHead>
+                  <TableHead>Additional Details</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {returns.length > 0 ? (
-                  returns.map((order) => (
-                    order.items.map((item) => (
-                      item.returnRequest && (
+                  returns.flatMap((order) => 
+                    order.items
+                      .filter(item => item.returnRequested)
+                      .map((item) => (
                         <TableRow key={`${order._id}-${item._id}`}>
                           <TableCell>{order.orderId}</TableCell>
                           <TableCell>
@@ -135,31 +141,46 @@ function Returns() {
                               <span>{item.product?.name}</span>
                             </div>
                           </TableCell>
-                          <TableCell>{item.returnRequest?.reason}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.returnReason}</TableCell>
+                          <TableCell>{item.additionalDetails}</TableCell>
                           <TableCell>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() => handleReturnAction(order._id, item._id, 'accept')}
-                              >
-                                Accept
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleReturnAction(order._id, item._id, 'reject')}
-                              >
-                                Reject
-                              </Button>
-                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              item.returnStatus === 'Return Pending' ? 'bg-yellow-100 text-yellow-800' :
+                              item.returnStatus === 'Return Approved' ? 'bg-green-100 text-green-800' :
+                              'bg-red-100 text-red-800'
+                            }`}>
+                              {item.returnStatus}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            {item.returnStatus === 'Return Pending' && (
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-green-50 text-green-600 hover:bg-green-100"
+                                  onClick={() => handleReturnAction(order._id, item._id, 'accept')}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="bg-red-50 text-red-600 hover:bg-red-100"
+                                  onClick={() => handleReturnAction(order._id, item._id, 'reject')}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            )}
                           </TableCell>
                         </TableRow>
-                      )
-                    ))
-                  ))
+                      ))
+                  )
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-4">
+                    <TableCell colSpan={9} className="text-center py-4">
                       No return requests found
                     </TableCell>
                   </TableRow>

@@ -128,6 +128,8 @@ export const updateReturnStatus = async (req, res) => {
 // Add this new controller function
 // Add this function to get return requests
 export const getReturnRequests = async (req, res) => {
+  console.log("Return called");
+  
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
@@ -136,7 +138,7 @@ export const getReturnRequests = async (req, res) => {
     let query = {
       'items': {
         $elemMatch: {
-          'returnRequest': { $exists: true }
+          'returnRequested': { $exists: true }
         }
       }
     };
