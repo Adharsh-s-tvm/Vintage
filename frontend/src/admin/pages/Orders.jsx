@@ -52,11 +52,22 @@ function Orders() {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Add this function here
+  // Add this function next to getFilteredOrders
   const getFilteredOrders = () => {
     if (!orders) return [];
     return orders.filter(order => 
       filterStatus === 'all' ? true : order.orderStatus === filterStatus
+    );
+  };
+
+  const getSearchedAndFilteredOrders = () => {
+    const filtered = getFilteredOrders();
+    if (!searchQuery) return filtered;
+    
+    const query = searchQuery.toLowerCase();
+    return filtered.filter(order => 
+      order.orderId?.toLowerCase().includes(query) ||
+      order.user?.fullname?.toLowerCase().includes(query)
     );
   };
 
@@ -286,8 +297,8 @@ function Orders() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {getFilteredOrders().length > 0 ? (
-                  getFilteredOrders().map((order) => (
+                {getSearchedAndFilteredOrders().length > 0 ? (
+                  getSearchedAndFilteredOrders().map((order) => (
                     <React.Fragment key={order._id}>
                       <TableRow className="cursor-pointer" onClick={() => toggleOrderDetails(order._id)}>
                         <TableCell className="font-medium">{order.orderId}</TableCell>
