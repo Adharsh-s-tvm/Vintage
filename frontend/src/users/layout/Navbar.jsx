@@ -161,6 +161,9 @@ export function Navbar() {
 
   // Get profile image URL
   const getProfileImage = () => {
+
+    console.log(currentUser);
+    
     if (!currentUser) return null;
     return currentUser.profileImage || currentUser.image || null;
   };
@@ -221,7 +224,7 @@ export function Navbar() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 px-2">
-                      {getProfileImage() ? (
+                      {/* {getProfileImage() ? (
                         <img 
                           src={getProfileImage()}
                           alt="Profile"
@@ -231,7 +234,7 @@ export function Navbar() {
                         <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                           {getFullName().charAt(0)}
                         </div>
-                      )}
+                      )} */}
                       <span className="text-sm font-medium">
                         {getFullName()}
                       </span>
