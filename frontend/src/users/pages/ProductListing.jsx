@@ -244,14 +244,21 @@ const ProductListing = () => {
 
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {
-    // First check if product is blocked
-    if (product.isBlocked) return false;
+    if (product.isBlocked) {
+        console.log(`Product ${product._id} filtered out - blocked product`);
+        return false;
+    }
 
-    // Price filter - only consider prices from active variants
     const activeVariants = product.variants.filter(variant => !variant.isBlocked);
+    if (activeVariants.length === 0) {
+        console.log(`Product ${product._id} filtered out - no active variants`);
+        return false;
+    }
+
     const productLowestPrice = Math.min(...activeVariants.map(variant => variant.price));
     if (productLowestPrice < priceRange[0] || productLowestPrice > priceRange[1]) {
-      return false;
+        console.log(`Product ${product._id} filtered out - price range`);
+        return false;
     }
 
     // Category filter
@@ -779,6 +786,21 @@ const ProductListing = () => {
                         {size}
                       </span>
                     ))}
+                  </div>
+
+                  {/* Add this new color section */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xs text-gray-500">Colors:</span>
+                    <div className="flex gap-1">
+                      {[...new Set(product.variants.map(v => v.color))].map(color => (
+                        <span 
+                          key={color} 
+                          className="text-xs bg-gray-100 px-2 py-1 rounded"
+                        >
+                          {color}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
                   <div className="flex justify-between items-center mt-3">

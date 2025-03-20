@@ -31,6 +31,7 @@ import {
 import { ChevronDown } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { addToWishlist } from '../../redux/slices/wishlistSlice';
+import { cn } from '../../lib/util';
 
 // Mock product data
 
@@ -140,10 +141,13 @@ export default function ProductDetail() {
   // Update selected variant when size changes
   useEffect(() => {
     if (product && selectedSize) {
-      const variant = product.variants.find(v => v.size === selectedSize);
+      // Find first available variant with selected size
+      const variant = product.variants.find(v => 
+        v.size === selectedSize && 
+        v.stock > 0
+      );
       setSelectedVariant(variant);
       if (variant) {
-        // Reset selected image index when variant changes
         setSelectedImage(0);
       }
     }
@@ -359,33 +363,22 @@ export default function ProductDetail() {
               onMouseMove={handleMouseMove}
             >
               {productImages.length > 0 && (
-                <>
-                  <img
-                    src={productImages[selectedImage]}
-                    alt={`${product.name} - ${selectedVariant?.size || 'Default'}`}
-                    className="h-full w-full object-cover object-center"
-                  />
-                  {/* Out of Stock Overlay */}
-                  {selectedVariant && selectedVariant.stock === 0 && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                      <span className="bg-white px-4 py-2 rounded-full text-sm font-medium">
-                        Out of Stock
-                      </span>
-                    </div>
-                  )}
-                  {/* Zoom Overlay */}
-                  {isHovering && productImages.length > 0 && (
-                    <div
-                      className="absolute top-0 left-0 w-full h-full pointer-events-none"
-                      style={{
-                        background: `url(${productImages[selectedImage]}) no-repeat`,
-                        backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
-                        backgroundSize: '200%',
-                        zIndex: 10
-                      }}
-                    />
-                  )}
-                </>
+                <img
+                  src={productImages[selectedImage]}
+                  alt={`${product.name} - ${selectedVariant?.size || 'Default'}`}
+                  className="h-full w-full object-cover object-center"
+                />
+              )}
+              {isHovering && productImages.length > 0 && (
+                <div
+                  className="absolute top-0 left-0 w-full h-full pointer-events-none"
+                  style={{
+                    background: `url(${productImages[selectedImage]}) no-repeat`,
+                    backgroundPosition: `${mousePosition.x}% ${mousePosition.y}%`,
+                    backgroundSize: '200%',
+                    zIndex: 10
+                  }}
+                />
               )}
             </div>
 
@@ -395,7 +388,7 @@ export default function ProductDetail() {
                 {productImages.map((image, i) => (
                   <button
                     key={i}
-                    className={`aspect-square rounded-md overflow-hidden bg-gray-100 relative
+                    className={`aspect-square rounded-md overflow-hidden bg-gray-100 
                       ${i === selectedImage ? 'ring-2 ring-primary' : ''}`}
                     onClick={() => setSelectedImage(i)}
                   >
@@ -404,14 +397,6 @@ export default function ProductDetail() {
                       alt={`${product.name} ${selectedVariant?.size || 'Default'} - View ${i + 1}`}
                       className="h-full w-full object-cover object-center"
                     />
-                    {/* Out of Stock Overlay for thumbnails */}
-                    {selectedVariant && selectedVariant.stock === 0 && i === selectedImage && (
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="bg-white px-2 py-1 rounded-full text-xs font-medium">
-                          Out of Stock
-                        </span>
-                      </div>
-                    )}
                   </button>
                 ))}
               </div>
@@ -507,30 +492,73 @@ export default function ProductDetail() {
             {/* Size selector */}
             <div className="mt-6">
               <h3 className="text-sm font-medium text-gray-900">Size</h3>
-              <RadioGroup
-                value={selectedSize}
-                onValueChange={setSelectedSize}
-                className="mt-2 grid grid-cols-6 gap-2"
-              >
-                {getAvailableSizes(product).map((size) => (
-                  <div key={size}>
-                    <RadioGroupItem
-                      value={size}
-                      id={`size-${size}`}
-                      className="sr-only"
-                    />
-                    <label
-                      htmlFor={`size-${size}`}
-                      className={`flex h-10 items-center justify-center rounded-md border text-sm font-medium 
-                        ${selectedSize === size
-                          ? 'border-primary bg-primary/10 text-primary'
-                          : 'border-gray-200 text-gray-900 hover:bg-gray-50'}`}
-                    >
-                      {size}
-                    </label>
-                  </div>
-                ))}
-              </RadioGroup>
+              <div className="mt-2">
+                <div className="flex flex-wrap gap-2">
+                  {[...new Set(product.variants.map(v => v.size))].map(size => {
+                    const hasStock = product.variants.some(v => 
+                      v.size === size && v.stock > 0
+                    );
+                    return (
+                      <button
+                        key={size}
+                        onClick={() => {
+                          setSelectedSize(size);
+                          // Find first available variant with this size
+                          const variant = product.variants.find(v => 
+                            v.size === size && v.stock > 0
+                          );
+                          setSelectedVariant(variant);
+                        }}
+                        className={cn(
+                          "px-3 py-1 text-sm rounded-md border",
+                          selectedSize === size
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-gray-200 hover:border-gray-300",
+                          !hasStock && "opacity-50 cursor-not-allowed"
+                        )}
+                        disabled={!hasStock}
+                      >
+                        {size}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* After the size selector section and before the quantity selector */}
+            <div className="mt-6">
+              <h3 className="text-sm font-medium text-gray-900">Color</h3>
+              <div className="mt-2">
+                <div className="flex flex-wrap gap-2">
+                  {[...new Set(product.variants
+                    .filter(v => v.size === selectedSize && v.stock > 0)
+                    .map(v => v.color))]
+                    .map(color => {
+                      const variant = product.variants.find(v => 
+                        v.size === selectedSize && 
+                        v.color === color && 
+                        v.stock > 0
+                      );
+                      return (
+                        <button
+                          key={color}
+                          onClick={() => setSelectedVariant(variant)}
+                          className={cn(
+                            "px-3 py-1 text-sm rounded-md border",
+                            selectedVariant?.color === color
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-gray-200 hover:border-gray-300",
+                            !variant && "opacity-50 cursor-not-allowed"
+                          )}
+                          disabled={!variant}
+                        >
+                          {color}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
             </div>
 
             {/* Add to cart section */}

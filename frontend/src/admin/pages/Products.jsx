@@ -83,7 +83,10 @@ const Products = () => {
     crop: {
       unit: '%',
       width: 90,
-      aspect: undefined // Free aspect ratio
+      height: 90,
+      x: 5,
+      y: 5,
+      aspect: undefined // Remove forced aspect ratio
     }
   });
   const [completedCrop, setCompletedCrop] = useState(null);
@@ -524,7 +527,10 @@ const Products = () => {
           crop: {
             unit: '%',
             width: 90,
-            aspect: undefined
+            height: 90,
+            x: 5,
+            y: 5,
+            aspect: undefined // Remove forced aspect ratio
           }
         });
         setShowCropModal(true);
@@ -1383,27 +1389,41 @@ const Products = () => {
       {/* Crop Modal */}
       <Modal
         show={showCropModal}
-        onHide={() => setShowCropModal(false)}
+        onHide={(e) => {
+          if (e && e.target.classList.contains('modal')) {
+            return;
+          }
+          setShowCropModal(false);
+        }}
         centered
-        size="lg"
+        size="md"
+        backdrop="static" // Prevents closing when clicking outside
+        keyboard={false}  // Prevents closing with keyboard
       >
         <Modal.Header closeButton>
           <Modal.Title>Crop Image</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {cropConfig.image && (
-            <ReactCrop
-              crop={cropConfig.crop}
-              onChange={(c) => setCropConfig(prev => ({ ...prev, crop: c }))}
-              onComplete={(c) => setCompletedCrop(c)}
-            >
-              <img
-                ref={imgRef}
-                src={cropConfig.image}
-                style={{ maxWidth: '100%' }}
-                alt="Crop preview"
-              />
-            </ReactCrop>
+            <div>
+              <ReactCrop
+                crop={cropConfig.crop}
+                onChange={(c) => setCropConfig(prev => ({ ...prev, crop: c }))}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={undefined} // Remove forced aspect ratio
+                circularCrop={false}
+              >
+                <img
+                  ref={imgRef}
+                  src={cropConfig.image}
+                  style={{ maxWidth: '100%', maxHeight: '60vh' }}
+                  alt="Crop preview"
+                />
+              </ReactCrop>
+              <Typography variant="caption" sx={{ display: 'block', mt: 1, textAlign: 'center' }}>
+                Drag to crop the image. You can freely adjust the crop area.
+              </Typography>
+            </div>
           )}
         </Modal.Body>
         <Modal.Footer>
@@ -1411,7 +1431,7 @@ const Products = () => {
             Cancel
           </Button>
           <Button variant="primary" onClick={handleCropComplete}>
-            Crop & Save
+            Apply Crop
           </Button>
         </Modal.Footer>
       </Modal>

@@ -120,6 +120,14 @@ export const getAllShopProducts = async (req, res) => {
             });
         }
 
+        // Add to your aggregation pipeline
+        aggregationPipeline.push({
+            $match: {
+                isBlocked: { $ne: true },
+                'variants.isBlocked': { $ne: true }
+            }
+        });
+
         // Add base query conditions
         if (Object.keys(baseQuery).length > 0) {
             aggregationPipeline.unshift({ $match: baseQuery });
