@@ -35,8 +35,7 @@ function Returns() {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  // Change itemsPerPage from 10 to 6
-  const [itemsPerPage] = useState(6);
+  const [itemsPerPage] = useState(5);
 
   const fetchReturns = async () => {
     try {

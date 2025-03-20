@@ -52,23 +52,32 @@ export default function Wishlist() {
   };
 
   const removeItem = async () => {
+
     if (!itemToRemove) return;
+console.log(" itemToRem", itemToRemove.variant._id);
 
     try {
-      await axios.delete(`${api}/user/wishlist/${itemToRemove.variant._id}`, {
+      const response = await axios.delete(`${api}/user/wishlist/${itemToRemove.variant._id}`, {
         withCredentials: true
       });
-      dispatch(removeFromWishlist(itemToRemove.variant._id));
-      toast({
-        title: "Success",
-        description: "Item removed from wishlist",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
+      
+      // Check if the response is successful before updating the state
+      if (response.data.success) {
+        dispatch(removeFromWishlist(itemToRemove.variant._id));
+        toast({
+          title: "Success",
+          description: "Item removed from wishlist",
+          duration: 2000,
+          className: "bg-white text-black border border-gray-200"
+        });
+      } else {
+        throw new Error(response.data.message || "Failed to remove item");
+      }
     } catch (error) {
+      console.error("Remove error:", error);
       toast({
         title: "Error",
-        description: "Failed to remove item from wishlist",
+        description: error.response?.data?.message || "Failed to remove item from wishlist",
         duration: 2000,
         className: "bg-white text-black border border-gray-200"
       });
@@ -195,16 +204,21 @@ export default function Wishlist() {
 
         {/* Confirmation Dialog */}
         <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogContent>
+          <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
             <AlertDialogHeader>
-              <AlertDialogTitle>Remove from Wishlist</AlertDialogTitle>
-              <AlertDialogDescription>
+              <AlertDialogTitle className="text-xl font-semibold text-gray-900">Remove from Wishlist</AlertDialogTitle>
+              <AlertDialogDescription className="text-gray-600">
                 Are you sure you want to remove this item from your wishlist?
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={removeItem}>Remove</AlertDialogAction>
+            <AlertDialogFooter className="flex space-x-2">
+              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={removeItem} 
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Remove
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

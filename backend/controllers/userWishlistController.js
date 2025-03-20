@@ -102,10 +102,19 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
         throw new Error('Wishlist not found');
     }
 
+    // Check if the item exists in the wishlist - using a safer approach
+    const initialLength = wishlist.items.length;
+    
     // Remove the item
     wishlist.items = wishlist.items.filter(
-        item => item.variant.toString() !== variantId
+        item => item.variant && item.variant.toString() !== variantId
     );
+    
+    // Check if any item was removed
+    if (wishlist.items.length === initialLength) {
+        res.status(404);
+        throw new Error('Item not found in wishlist');
+    }
 
     // Save the updated wishlist
     await wishlist.save();
