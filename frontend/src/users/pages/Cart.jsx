@@ -71,39 +71,49 @@ export default function Cart() {
     }
   };
 
-  const updateQuantity = async (variantId, quantity) => {
-    if (quantity < 1) return;
+  const MAX_QUANTITY_PER_ITEM = 5; // Add this constant at the top of the component
 
-    try {
-      const response = await axios.put(
-        `${api}/user/cart/update`,
-        { variantId, quantity },
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (response.data) {
-        dispatch(setCartItems(response.data));
+    const updateQuantity = async (variantId, quantity) => {
+      if (quantity < 1 || quantity > MAX_QUANTITY_PER_ITEM) {
         toast({
-          title: "Success",
-          description: "Cart updated",
+          title: "Error",
+          description: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ITEM}`,
+          duration: 2000,
+          className: "bg-white text-black border border-gray-200"
+        });
+        return;
+      }
+
+      try {
+        const response = await axios.put(
+          `${api}/user/cart/update`,
+          { variantId, quantity },
+          {
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+
+        if (response.data) {
+          dispatch(setCartItems(response.data));
+          toast({
+            title: "Success",
+            description: "Cart updated",
+            duration: 2000,
+            className: "bg-white text-black border border-gray-200"
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error.response?.data?.message || "Failed to update quantity",
           duration: 2000,
           className: "bg-white text-black border border-gray-200"
         });
       }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to update quantity",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
-    }
-  };
+    };
 
   const confirmRemove = async () => {
     if (deleteModal.itemId) {

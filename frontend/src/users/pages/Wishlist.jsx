@@ -52,18 +52,15 @@ export default function Wishlist() {
   };
 
   const removeItem = async () => {
-
     if (!itemToRemove) return;
-console.log(" itemToRem", itemToRemove.variant._id);
 
     try {
       const response = await axios.delete(`${api}/user/wishlist/${itemToRemove.variant._id}`, {
         withCredentials: true
       });
       
-      // Check if the response is successful before updating the state
       if (response.data.success) {
-        dispatch(removeFromWishlist(itemToRemove.variant._id));
+        dispatch(setWishlistItems(response.data.items));
         toast({
           title: "Success",
           description: "Item removed from wishlist",
@@ -128,74 +125,80 @@ console.log(" itemToRem", itemToRemove.variant._id);
     }
   };
 
-  const renderWishlistItem = (item) => (
-    <div
-      key={item.variant._id}
-      className="bg-white rounded-lg shadow-sm overflow-hidden flex"
-    >
-      <div className="relative h-32 w-32 flex-shrink-0">
-        <img
-          src={item.variant.mainImage}
-          alt={item.product.name}
-          className="h-full w-full object-cover"
-        />
-        {item.variant.stock === 0 && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <span className="bg-white px-3 py-1 rounded-full text-xs font-medium">
-              Out of Stock
-            </span>
-          </div>
-        )}
-      </div>
+  const renderWishlistItem = (item) => {
+    if (!item?.variant || !item?.product) {
+        return null;
+    }
 
-      <div className="flex-1 p-4 flex flex-col justify-between">
-        <div>
-          <Link
-            to={`/products/${item.product._id}`}
-            className="text-base font-medium text-gray-900 hover:text-primary"
-          >
-            {item.product.name}
-          </Link>
-          <div className="mt-1 text-sm text-gray-500">
-            Size: {item.variant.size}, Color: {item.variant.color}
-          </div>
-          <div className="mt-1 text-base font-semibold">
-            ₹{item.variant.price.toFixed(2)}
-          </div>
-        </div>
+    return (
+        <div
+            key={item.variant._id}
+            className="bg-white rounded-lg shadow-sm overflow-hidden flex"
+        >
+            <div className="relative h-32 w-32 flex-shrink-0">
+                <img
+                    src={item.variant.mainImage || '/placeholder-image.jpg'}
+                    alt={item.product.name || 'Product'}
+                    className="h-full w-full object-cover"
+                />
+                {item.variant.stock === 0 && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="bg-white px-3 py-1 rounded-full text-xs font-medium">
+                            Out of Stock
+                        </span>
+                    </div>
+                )}
+            </div>
 
-        <div className="flex items-center space-x-2 mt-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            size="sm"
-            asChild
-          >
-            <Link to={`/products/${item.product._id}`}>
-              View Details
-            </Link>
-          </Button>
-          <Button
-            size="sm"
-            className="flex-1"
-            disabled={item.variant.stock === 0}
-            onClick={() => moveToCart(item)}
-          >
-            <ShoppingBag className="mr-2 h-4 w-4" />
-            Move to Cart
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="text-gray-500 hover:text-red-500 h-8 w-8"
-            onClick={() => handleRemoveClick(item)}
-          >
-            <Trash className="h-4 w-4" />
-          </Button>
+            <div className="flex-1 p-4 flex flex-col justify-between">
+                <div>
+                    <Link
+                        to={`/products/${item.product._id}`}
+                        className="text-base font-medium text-gray-900 hover:text-primary"
+                    >
+                        {item.product.name}
+                    </Link>
+                    <div className="mt-1 text-sm text-gray-500">
+                        Size: {item.variant.size}, Color: {item.variant.color}
+                    </div>
+                    <div className="mt-1 text-base font-semibold">
+                        ₹{item.variant.price.toFixed(2)}
+                    </div>
+                </div>
+
+                <div className="flex items-center space-x-2 mt-2">
+                    <Button
+                        variant="outline"
+                        className="flex-1"
+                        size="sm"
+                        asChild
+                    >
+                        <Link to={`/products/${item.product._id}`}>
+                            View Details
+                        </Link>
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="flex-1"
+                        disabled={item.variant.stock === 0}
+                        onClick={() => moveToCart(item)}
+                    >
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        Move to Cart
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-gray-500 hover:text-red-500 h-8 w-8"
+                        onClick={() => handleRemoveClick(item)}
+                    >
+                        <Trash className="h-4 w-4" />
+                    </Button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <Layout>

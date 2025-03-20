@@ -3,11 +3,20 @@ import Product from "../models/product/productModel.js";
 import Variant from "../models/product/sizeVariantModel.js";
 import Wishlist from "../models/product/wishlistModel.js"; // Add this import
 
+const MAX_QUANTITY_PER_ITEM = 5; // Add this constant at the top of the file
+
 // Add to cart
 export const addToCart = async (req, res) => {
     try {
         const { variantId, quantity, removeFromWishlist } = req.body; // Add removeFromWishlist parameter
         const userId = req.user._id;
+
+        // Check maximum quantity
+        if (quantity > MAX_QUANTITY_PER_ITEM) {
+            return res.status(400).json({ 
+                message: `Maximum ${MAX_QUANTITY_PER_ITEM} items allowed per product` 
+            });
+        }
 
         // Check if variant exists and is not blocked
         const variant = await Variant.findById(variantId).populate({
@@ -47,12 +56,18 @@ export const addToCart = async (req, res) => {
         );
 
         if (existingItem) {
+            // Check if new total quantity exceeds maximum limit
+            const newQuantity = existingItem.quantity + quantity;
+            if (newQuantity > MAX_QUANTITY_PER_ITEM) {
+                return res.status(400).json({ 
+                    message: `Cannot add more than ${MAX_QUANTITY_PER_ITEM} items of the same product` 
+                });
+            }
             // Check if new total quantity exceeds stock
-            if (existingItem.quantity + quantity > variant.stock) {
+            if (newQuantity > variant.stock) {
                 return res.status(400).json({ message: "Insufficient stock" });
             }
-            // Update quantity and total price if already in cart
-            existingItem.quantity += quantity;
+            existingItem.quantity = newQuantity;
             existingItem.totalPrice = existingItem.price * existingItem.quantity;
         } else {
             // Add new item with price and total price
@@ -159,8 +174,10 @@ export const updateCartItem = async (req, res) => {
         const { variantId, quantity } = req.body;
         const userId = req.user._id;
 
-        if (quantity < 1) {
-            return res.status(400).json({ message: "Invalid quantity" });
+        if (quantity < 1 || quantity > MAX_QUANTITY_PER_ITEM) {
+            return res.status(400).json({ 
+                message: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ITEM}` 
+            });
         }
 
         // First find the cart and populate variant details

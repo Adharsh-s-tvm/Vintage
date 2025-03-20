@@ -102,38 +102,40 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
         throw new Error('Wishlist not found');
     }
 
-    // Check if the item exists in the wishlist - using a safer approach
-    const initialLength = wishlist.items.length;
-    
-    // Remove the item
-    wishlist.items = wishlist.items.filter(
-        item => item.variant && item.variant.toString() !== variantId
+    // Update the wishlist using MongoDB's pull operator and populate all necessary fields
+    wishlist = await Wishlist.findOneAndUpdate(
+        { user: req.user._id },
+        { $pull: { items: { variant: variantId } } },
+        { 
+            new: true,
+            populate: {
+                path: 'items',
+                populate: [
+                    {
+                        path: 'product',
+                        populate: [
+                            { path: 'brand', select: 'name' },
+                            { path: 'category', select: 'name' }
+                        ]
+                    },
+                    {
+                        path: 'variant',
+                        select: 'size color price stock mainImage'
+                    }
+                ]
+            }
+        }
     );
-    
-    // Check if any item was removed
-    if (wishlist.items.length === initialLength) {
+
+    if (!wishlist) {
         res.status(404);
-        throw new Error('Item not found in wishlist');
+        throw new Error('Failed to update wishlist');
     }
-
-    // Save the updated wishlist
-    await wishlist.save();
-
-    // Return the updated wishlist items
-    const updatedWishlist = await Wishlist.findOne({ user: req.user._id })
-        .populate({
-            path: 'items.product',
-            populate: [
-                { path: 'brand', select: 'name' },
-                { path: 'category', select: 'name' }
-            ]
-        })
-        .populate('items.variant');
 
     res.status(200).json({
         success: true,
         message: 'Item removed from wishlist',
-        items: updatedWishlist.items
+        items: wishlist.items
     });
 });
 
