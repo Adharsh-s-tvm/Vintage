@@ -191,13 +191,10 @@ export default function Orders() {
             {orders.map((order) => (
               <div
                 key={order._id}
-                className="bg-white rounded-lg shadow-sm overflow-hidden"
+                className="bg-white rounded-lg shadow-sm overflow-hidden p-4"
               >
-                <div 
-                  className="p-4 cursor-pointer hover:bg-gray-50 flex items-center justify-between"
-                  onClick={() => setSelectedOrder(selectedOrder?._id === order._id ? null : order)}
-                >
-                  <div className="grid grid-cols-4 gap-4 flex-1">
+                <div className="flex items-center justify-between">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
                     <div>
                       <div className="text-sm font-medium">Order #{order.orderId}</div>
                       <div className="text-xs text-gray-500">
@@ -212,102 +209,40 @@ export default function Orders() {
                     </div>
                     <div className="flex items-center gap-2">
                       {getStatusIcon(order.orderStatus)}
-                      <span className="text-sm">{order.orderStatus}</span>
+                      <span className="text-sm capitalize">{order.orderStatus}</span>
                     </div>
                   </div>
-                  <ChevronDown 
-                    className={`h-5 w-5 transition-transform ${
-                      selectedOrder?._id === order._id ? 'transform rotate-180' : ''
-                    }`}
-                  />
-                </div>
-
-                {selectedOrder?._id === order._id && (
-                  <div className="border-t border-gray-100 p-4">
-                    <Tabs defaultValue="items" className="w-full">
-                      <TabsList className="w-full">
-                        <TabsTrigger value="items">Items</TabsTrigger>
-                        <TabsTrigger value="shipping">Shipping</TabsTrigger>
-                        <TabsTrigger value="payment">Payment</TabsTrigger>
-                      </TabsList>
-
-                      <TabsContent value="items">
-                        <div className="space-y-4 mt-4">
-                          {order.items?.map((item) => (
-                            <div key={item._id} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                              <div className="h-20 w-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                                {item.sizeVariant?.mainImage && (
-                                  <img
-                                    src={item.sizeVariant.mainImage}
-                                    alt={item.product?.name}
-                                    className="h-full w-full object-cover"
-                                  />
-                                )}
-                              </div>
-                              <div className="flex-1">
-                                <div className="font-medium text-gray-900">{item.product?.name}</div>
-                                <div className="text-sm text-gray-600 mt-1">
-                                  Size: {item.sizeVariant?.size} • Quantity: {item.quantity}
-                                </div>
-                                <div className="text-sm font-medium text-gray-900 mt-2">
-                                  ₹{item.price.toFixed(2)} × {item.quantity} = ₹{item.finalPrice.toFixed(2)}
-                                </div>
-                              </div>
-                              {['pending', 'Processing'].includes(item.status) && (
-                                <Button
-                                  variant="destructive"
-                                  size="sm"
-                                  onClick={() => handleCancelClick(order.orderId)}
-                                  className="ml-4"
-                                >
-                                  Cancel
-                                </Button>
-                              )}
-                              {order.orderStatus === 'Delivered' && !order.returnRequested && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleReturnClick(order.orderId)}
-                                  className="ml-4"
-                                >
-                                  Return
-                                </Button>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="shipping">
-                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                          <h3 className="font-medium mb-3">Shipping Address</h3>
-                          <div className="space-y-2 text-sm">
-                            <p className="font-medium">{order.shipping?.address?.fullName}</p>
-                            <p>{order.shipping?.address?.street}</p>
-                            <p>
-                              {order.shipping?.address?.city}, {order.shipping?.address?.state}
-                            </p>
-                            <p>{order.shipping?.address?.country}</p>
-                            <p>PIN: {order.shipping?.address?.postalCode}</p>
-                            <p>Phone: {order.shipping?.address?.phone}</p>
-                          </div>
-                        </div>
-                      </TabsContent>
-
-                      <TabsContent value="payment">
-                        <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                          <h3 className="font-medium mb-3">Payment Details</h3>
-                          <div className="space-y-2 text-sm">
-                            <p>Method: {order.payment?.method}</p>
-                            <p>Status: {order.payment?.status}</p>
-                            <p>Transaction ID: {order.payment?.transactionId}</p>
-                            <p>Amount: ₹{order.payment?.amount.toFixed(2)}</p>
-                          </div>
-                        </div>
-                      </TabsContent>
-                    </Tabs>
+                  
+                  <div className="flex items-center gap-2">
+                    {['pending', 'Processing'].includes(order.orderStatus) && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => handleCancelClick(order.orderId)}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    {order.orderStatus === 'Delivered' && !order.returnRequested && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReturnClick(order.orderId)}
+                      >
+                        Return
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      asChild
+                    >
+                      <Link to={`/order-details/${order.orderId}`}>
+                        View Details
+                      </Link>
+                    </Button>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
@@ -455,7 +390,6 @@ export default function Orders() {
                 Return Details
               </DialogTitle>
             </DialogHeader>
-            // In the Return Details Dialog, remove the array declaration and keep only the Select component:
             <div className="mt-4 space-y-4">
               <div>
                 <Label htmlFor="reason">Reason for Return *</Label>

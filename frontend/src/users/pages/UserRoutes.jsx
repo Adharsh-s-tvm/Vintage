@@ -17,6 +17,7 @@ import UserAddresses from './profile/UserAddresses'
 import ChangePassword from './profile/ChangePassword'
 import Checkout from './Checkout'
 import OrderSuccess from './OrderSuccess'
+import OrderDetails from './OrderDetails'
 
 function UserRoutes() {
   return (
@@ -39,6 +40,7 @@ function UserRoutes() {
           <Route path="/profile/change-password" element={<ChangePassword />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/success/:orderId" element={<OrderSuccess />} />
+          <Route path="/order-details/:orderId" element={<OrderDetails />} />
         </Route>
       </Routes>
     </>

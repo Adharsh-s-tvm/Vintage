@@ -187,15 +187,29 @@ export const getOrderById = asyncHandler(async (req, res) => {
         orderId: req.params.id,
         user: req.user._id
     })
-        .populate('items.product')
-        .populate('items.sizeVariant')
-        .populate('shippingAddress');
+    .populate({
+        path: 'items.product',
+        select: 'name images'
+    })
+    .populate({
+        path: 'items.sizeVariant',
+        select: 'size color price mainImage subImages'
+    })
+    .populate({
+        path: 'shipping.address',
+        select: 'fullName street city state postalCode phone'
+    });
 
     if (order) {
-        res.json(order);
+        res.json({
+            success: true,
+            order
+        });
     } else {
-        res.status(404);
-        throw new Error('Order not found');
+        res.status(404).json({
+            success: false,
+            message: 'Order not found'
+        });
     }
 });
 
