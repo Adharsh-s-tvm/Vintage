@@ -74,6 +74,7 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 export const updateReturnStatus = async (req, res) => {
+  console.log("updateReturnStatus called");
   
   try {
     const { orderId } = req.params;
@@ -198,6 +199,7 @@ export const handleReturnRequest = async (req, res) => {
 
     // Start a session for transaction
     const session = await mongoose.startSession();
+    console.log("session started");
     await session.withTransaction(async () => {
       if (action === 'accept') {
         item.returnStatus = 'Return Approved';
@@ -227,5 +229,25 @@ export const handleReturnRequest = async (req, res) => {
       message: "Failed to handle return request",
       error: error.message 
     });
+  }
+};
+
+const handleReturnAction = async (orderId, itemId, action) => {
+  try {
+    const response = await axios.put(
+      `${api}/admin/orders/${orderId}/items/${itemId}/return`,
+      { action },
+      { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
+    );
+    
+    if (response.data) {
+      toast.success(`Return request ${action}ed successfully`);
+      fetchReturns();
+    } else {
+      toast.error(`Failed to ${action} return request`);
+    }
+  } catch (error) {
+    console.error('Action error:', error);
+    toast.error(error.response?.data?.message || `Failed to ${action} return request`);
   }
 };

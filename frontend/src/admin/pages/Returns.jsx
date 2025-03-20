@@ -57,19 +57,19 @@ function Returns() {
 
   const handleReturnAction = async (orderId, itemId, action) => {
     try {
-      await axios.patch(
-        `${api}/admin/orders/${orderId}/return/${itemId}`,
-        { 
-          approved: action === 'accept',
-          status: action === 'accept' ? 'Return Approved' : 'Return Rejected'
-        },
+      const response = await axios.put(
+        `${api}/admin/orders/${orderId}/items/${itemId}/return`,
+        { action },
         { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
       );
-      toast.success(`Return request ${action}ed successfully`);
-      fetchReturns();
+      
+      if (response.data) {
+        toast.success(`Return request ${action}ed successfully`);
+        fetchReturns(); // Refresh the returns list
+      }
     } catch (error) {
       console.error('Action error:', error);
-      toast.error(`Failed to ${action} return request`);
+      toast.error(error.response?.data?.message || `Failed to ${action} return request`);
     }
   };
 
