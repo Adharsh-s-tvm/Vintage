@@ -52,6 +52,7 @@ export const getAllOrders = async (req, res) => {
 };
 
 export const updateOrderStatus = async (req, res) => {
+  
   try {
     const { orderId } = req.params;
     const { status } = req.body;
@@ -73,6 +74,7 @@ export const updateOrderStatus = async (req, res) => {
 };
 
 export const updateReturnStatus = async (req, res) => {
+  
   try {
     const { orderId } = req.params;
     const { approved } = req.body;
@@ -138,7 +140,7 @@ export const getReturnRequests = async (req, res) => {
     let query = {
       'items': {
         $elemMatch: {
-          'returnRequested': { $exists: true }
+          'returnRequested': true
         }
       }
     };
@@ -194,21 +196,33 @@ export const handleReturnRequest = async (req, res) => {
       return res.status(404).json({ message: "Order item not found" });
     }
 
-    if (action === 'accept') {
-      item.status = 'Return Accepted';
-      // Update inventory if needed
-      const variant = await Variant.findById(item.sizeVariant);
-      if (variant) {
-        variant.stock += item.quantity;
-        await variant.save();
+    // Start a session for transaction
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      if (action === 'accept') {
+        item.returnStatus = 'Return Approved';
+        item.status = 'Returned';
+        
+        // Update inventory
+        await Variant.findByIdAndUpdate(
+          item.sizeVariant,
+          { $inc: { stock: item.quantity } },
+          { session }
+        );
+      } else if (action === 'reject') {
+        item.returnStatus = 'Return Rejected';
       }
-    } else if (action === 'reject') {
-      item.status = 'Return Rejected';
-    }
 
-    await order.save();
-    res.status(200).json({ message: `Return request ${action}ed successfully` });
+      await order.save({ session });
+    });
+    await session.endSession();
+
+    res.status(200).json({ 
+      message: `Return request ${action}ed successfully`,
+      order
+    });
   } catch (error) {
+    console.error('Error in handleReturnRequest:', error);
     res.status(500).json({ 
       message: "Failed to handle return request",
       error: error.message 

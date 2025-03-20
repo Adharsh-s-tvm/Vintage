@@ -253,15 +253,28 @@ export default function Orders() {
                         Cancel
                       </Button>
                     )}
-                    {console.log('Order Status:', order.orderStatus)}
                     {order.orderStatus === 'Delivered' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleReturnClick(order.orderId)}
-                      >
-                        Return
-                      </Button>
+                      <>
+                        {order.items.some(item => item.returnRequested) ? (
+                          <div className={`text-sm px-2 py-1 rounded ${
+                            order.items.find(item => item.returnRequested)?.returnStatus === 'Return Approved' 
+                              ? 'bg-green-100 text-green-800'
+                              : order.items.find(item => item.returnRequested)?.returnStatus === 'Return Rejected'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {order.items.find(item => item.returnRequested)?.returnStatus}
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleReturnClick(order.orderId)}
+                          >
+                            Return
+                          </Button>
+                        )}
+                      </>
                     )}
                     <Button
                       variant="outline"
