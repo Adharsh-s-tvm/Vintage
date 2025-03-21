@@ -790,7 +790,7 @@ const ProductListing = () => {
 
                   {/* Add this new color section */}
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xs text-gray-500">Colors:</span>
+                    <span className="text-xs text-gray-500">Color:</span>
                     <div className="flex gap-1">
                       {[...new Set(product.variants.map(v => v.color))].map(color => (
                         <span 
@@ -803,7 +803,7 @@ const ProductListing = () => {
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center mt-3">
+                  {/* <div className="flex justify-between items-center mt-3">
                     <span className="font-bold text-lg">{formatPrice(lowestPrice)}</span>
                     <div className="flex space-x-2">
                       <Button
@@ -826,7 +826,7 @@ const ProductListing = () => {
                         Add
                       </Button>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </Card>
             );
