@@ -12,7 +12,7 @@ const cartItemSchema = new mongoose.Schema({
         min: 1
     },
     price: {
-        type: Number,
+        type: Number,//REMOVE
         required: true
     },
     totalPrice: {

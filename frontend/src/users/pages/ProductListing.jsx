@@ -72,7 +72,7 @@ const ProductListing = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(20); // Number of products per page
+  const [itemsPerPage] = useState(4); // Number of products per page
 
   const navigate = useNavigate();
 
