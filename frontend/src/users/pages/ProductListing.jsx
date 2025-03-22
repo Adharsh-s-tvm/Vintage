@@ -72,7 +72,7 @@ const ProductListing = () => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(4); // Number of products per page
+  const [itemsPerPage] = useState(20); // Number of products per page
 
   const navigate = useNavigate();
 
@@ -801,10 +801,10 @@ const ProductListing = () => {
                         </span>
                       ))}
                     </div>
+                      <span className="font-bold text-lg mx-3">{formatPrice(lowestPrice)}</span>
                   </div>
 
                   {/* <div className="flex justify-between items-center mt-3">
-                    <span className="font-bold text-lg">{formatPrice(lowestPrice)}</span>
                     <div className="flex space-x-2">
                       <Button
                         size="icon"
