@@ -19,7 +19,7 @@ const paymentSchema = new mongoose.Schema({
     },
     currency: {
         type: String,
-        required: false
+        default: 'INR'
     },
     status: {
         type: String,
@@ -32,8 +32,16 @@ const paymentSchema = new mongoose.Schema({
     },
     checkoutId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Checkout',
-        required: true
+        ref: 'Order',
+        required: false
+    },
+    error: {
+        type: String,
+        required: false
+    },
+    tempOrderData: {
+        type: Object,
+        required: false
     }
 });
 

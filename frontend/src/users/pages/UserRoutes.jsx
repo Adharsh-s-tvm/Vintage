@@ -19,6 +19,8 @@ import Checkout from './Checkout'
 import OrderSuccess from './OrderSuccess'
 import OrderDetails from './OrderDetails'
 import PaymentFailure from './PaymentFailure'
+import OrderFailed from './OrderFailed';
+
 
 function UserRoutes() {
   return (
@@ -43,6 +45,7 @@ function UserRoutes() {
           <Route path="/success/:orderId" element={<OrderSuccess />} />
           <Route path="/order-details/:orderId" element={<OrderDetails />} />
           <Route path="/failure/:orderId" element={<PaymentFailure />} />
+          <Route path="/order-failed" element={<OrderFailed />} />
         </Route>
       </Routes>
     </>

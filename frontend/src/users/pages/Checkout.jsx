@@ -151,35 +151,28 @@ function Checkout() {
     }
 
     try {
-      // First create the order
-      const orderResponse = await axios.post(`${api}/user/orders`, {
-        addressId: selectedAddress,
-        paymentMethod: selectedPaymentMethod
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
-
-      if (!orderResponse.data || !orderResponse.data.orderId) {
-        throw new Error('Invalid order response');
-      }
-
       if (selectedPaymentMethod === 'cod') {
+        // For COD, create order directly
+        const orderResponse = await axios.post(`${api}/user/orders`, {
+          addressId: selectedAddress,
+          paymentMethod: selectedPaymentMethod
+        }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        });
+        
         toast.success('Order placed successfully!');
         navigate(`/success/${orderResponse.data.orderId}`);
         return;
       }
 
-      // For online payment, create Razorpay order
+      // For online payment, first create Razorpay order
       const paymentResponse = await axios.post(`${api}/payments/create-order`, {
         amount: total,
-        orderId: orderResponse.data.orderId
+        addressId: selectedAddress,
+        paymentMethod: selectedPaymentMethod
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
-
-      if (!paymentResponse.data || !paymentResponse.data.order) {
-        throw new Error('Invalid payment response');
-      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -194,19 +187,30 @@ function Checkout() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              orderId: orderResponse.data.orderId,
-              amount: total
+              tempOrderId: paymentResponse.data.tempOrderId,
+              amount: total,
+              addressId: selectedAddress,
+              paymentMethod: selectedPaymentMethod
             }, {
               headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
             });
 
             if (verifyResponse.data.success) {
               toast.success('Payment successful!');
-              navigate(`/success/${orderResponse.data.orderId}`);
+              navigate(`/success/${verifyResponse.data.orderId}`);
+            } else {
+              navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
             }
           } catch (error) {
-            toast.error('Payment verification failed');
-            navigate(`/failure/${orderResponse.data.orderId}`);
+            console.error('Payment verification error:', error);
+            toast.error(error.response?.data?.message || 'Payment verification failed');
+            navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
+          }
+        },
+        modal: {
+          ondismiss: function() {
+            toast.info('Payment cancelled');
+            navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
           }
         },
         prefill: {
@@ -223,7 +227,7 @@ function Checkout() {
 
       rzp.on('payment.failed', function (response) {
         toast.error('Payment failed');
-        navigate(`/failure/${orderResponse.data.orderId}`);
+        navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
       });
 
     } catch (error) {
