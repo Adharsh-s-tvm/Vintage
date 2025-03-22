@@ -2,26 +2,38 @@ import React from 'react';
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { XCircle, RefreshCw, ShoppingBag } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { api } from '../../lib/api';
 
 export default function OrderFailed() {
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(window.location.search);
-  const tempOrderId = searchParams.get('tempOrderId');
+  const [searchParams] = useSearchParams();
   const amount = searchParams.get('amount');
+  const addressId = searchParams.get('addressId');
+  const paymentMethod = searchParams.get('paymentMethod');
 
   const handleRetryPayment = async () => {
     try {
-      // Create new Razorpay order
+      if (!amount || !addressId || !paymentMethod) {
+        toast.error('Missing required payment information');
+        navigate('/checkout');
+        return;
+      }
+
+      // Create new Razorpay order with all required fields
       const paymentResponse = await axios.post(`${api}/payments/create-order`, {
         amount: parseFloat(amount),
-        tempOrderId
+        addressId: addressId,
+        paymentMethod: paymentMethod
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
+
+      if (!paymentResponse.data.success) {
+        throw new Error(paymentResponse.data.message || 'Failed to create payment order');
+      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -37,7 +49,9 @@ export default function OrderFailed() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               tempOrderId: paymentResponse.data.tempOrderId,
-              amount: amount
+              amount: parseFloat(amount),
+              addressId: addressId,
+              paymentMethod: paymentMethod
             }, {
               headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
             });
@@ -47,18 +61,22 @@ export default function OrderFailed() {
               navigate(`/success/${verifyResponse.data.orderId}`);
             } else {
               toast.error('Payment failed');
-              navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${amount}`);
+              navigate(`/order-failed?amount=${amount}&addressId=${addressId}&paymentMethod=${paymentMethod}`);
             }
           } catch (error) {
-            toast.error('Payment verification failed');
-            navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${amount}`);
+            console.error('Payment verification error:', error);
+            toast.error(error.response?.data?.message || 'Payment verification failed');
+            navigate(`/order-failed?amount=${amount}&addressId=${addressId}&paymentMethod=${paymentMethod}`);
           }
         },
         modal: {
           ondismiss: function() {
             toast.info('Payment cancelled');
-            navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${amount}`);
+            navigate(`/order-failed?amount=${amount}&addressId=${addressId}&paymentMethod=${paymentMethod}`);
           }
+        },
+        theme: {
+          color: "#000000"
         }
       };
 
@@ -67,11 +85,13 @@ export default function OrderFailed() {
 
       rzp.on('payment.failed', function (response) {
         toast.error('Payment failed');
-        navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${amount}`);
+        navigate(`/order-failed?amount=${amount}&addressId=${addressId}&paymentMethod=${paymentMethod}`);
       });
 
     } catch (error) {
-      toast.error('Failed to initiate payment');
+      console.error('Retry payment error:', error);
+      toast.error(error.response?.data?.message || 'Failed to retry payment');
+      navigate('/checkout');
     }
   };
 
@@ -84,11 +104,11 @@ export default function OrderFailed() {
           </div>
 
           <h1 className="text-4xl font-bold text-red-600 mb-4">
-            Order Failed
+            Payment Failed
           </h1>
 
           <p className="text-xl text-gray-600 mb-8">
-            We couldn't process your order. Please try again.
+            We couldn't process your payment. Please try again.
           </p>
 
           <div className="space-y-4 md:space-y-0 md:flex md:gap-4 justify-center">

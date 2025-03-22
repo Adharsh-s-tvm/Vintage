@@ -152,7 +152,6 @@ function Checkout() {
 
     try {
       if (selectedPaymentMethod === 'cod') {
-        // For COD, create order directly
         const orderResponse = await axios.post(`${api}/user/orders`, {
           addressId: selectedAddress,
           paymentMethod: selectedPaymentMethod
@@ -165,7 +164,7 @@ function Checkout() {
         return;
       }
 
-      // For online payment, first create Razorpay order
+      // For online payment
       const paymentResponse = await axios.post(`${api}/payments/create-order`, {
         amount: total,
         addressId: selectedAddress,
@@ -173,6 +172,10 @@ function Checkout() {
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
+
+      if (!paymentResponse.data.success) {
+        throw new Error(paymentResponse.data.message || 'Failed to create payment order');
+      }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -199,18 +202,18 @@ function Checkout() {
               toast.success('Payment successful!');
               navigate(`/success/${verifyResponse.data.orderId}`);
             } else {
-              navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
+              navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
             }
           } catch (error) {
             console.error('Payment verification error:', error);
             toast.error(error.response?.data?.message || 'Payment verification failed');
-            navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
+            navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
           }
         },
         modal: {
           ondismiss: function() {
             toast.info('Payment cancelled');
-            navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
+            navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
           }
         },
         prefill: {
@@ -227,7 +230,7 @@ function Checkout() {
 
       rzp.on('payment.failed', function (response) {
         toast.error('Payment failed');
-        navigate(`/order-failed?tempOrderId=${paymentResponse.data.tempOrderId}&amount=${total}`);
+        navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
       });
 
     } catch (error) {
