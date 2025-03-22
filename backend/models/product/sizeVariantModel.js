@@ -23,7 +23,11 @@ const variantSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    isBlocked: {  // Add this field
+    discountPrice: {
+      type: Number,
+      required: false,
+    },
+    isBlocked: {  
       type: Boolean,
       default: false,
     },
