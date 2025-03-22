@@ -100,7 +100,7 @@ const orderSchema = new mongoose.Schema(
             status: {
                 type: String,
                 required: true,
-                enum: ["pending", "completed", "failed", "cancelled", "retry_pending"],
+                enum: ["pending", "initiated", "completed", "failed", "cancelled", "retry_pending"],
                 default: "pending"
             },
             transactionId: {

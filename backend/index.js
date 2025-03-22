@@ -20,6 +20,7 @@ import { errorHandler } from "./middlewares/errorHandler.js";
 import userWishlistRoutes from './routes/userWishlistRoutes.js';
 import userOrderRoutes from './routes/userOrderRoutes.js';
 import adminOrderRoutes from './routes/admin/adminOrderRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 
 
 dotenv.config()
@@ -66,6 +67,8 @@ app.use("/api/user/cart", userCartRoutes)
 app.use("/api/user/wishlist", userWishlistRoutes);
 
 app.use('/api/user/orders', userOrderRoutes);
+
+app.use('/api/payments', paymentRoutes);
 
 app.use(errorHandler)
 app.listen(port, () => console.log(`Server running on port : ${port}`))

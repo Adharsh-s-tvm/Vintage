@@ -145,32 +145,89 @@ function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
-    if (!selectedAddress) {
-      toast.error('Please select a delivery address');
-      return;
-    }
-
-    if (!selectedPaymentMethod) {
-      toast.error('Please select a payment method');
+    if (!selectedAddress || !selectedPaymentMethod) {
+      toast.error('Please select delivery address and payment method');
       return;
     }
 
     try {
-      const response = await axios.post(`${api}/user/orders`, {
+      // First create the order
+      const orderResponse = await axios.post(`${api}/user/orders`, {
         addressId: selectedAddress,
         paymentMethod: selectedPaymentMethod
       }, {
-        headers: { 
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`
-        }
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
 
-      if (response.data) {
-        toast.success('Order placed successfully!');
-        // Navigate to success page with orderId
-        navigate(`/success/${response.data.orderId}`);
+      if (!orderResponse.data || !orderResponse.data.orderId) {
+        throw new Error('Invalid order response');
       }
+
+      if (selectedPaymentMethod === 'cod') {
+        toast.success('Order placed successfully!');
+        navigate(`/success/${orderResponse.data.orderId}`);
+        return;
+      }
+
+      // For online payment, create Razorpay order
+      const paymentResponse = await axios.post(`${api}/payments/create-order`, {
+        amount: total,
+        orderId: orderResponse.data.orderId
+      }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+      });
+
+      if (!paymentResponse.data || !paymentResponse.data.order) {
+        throw new Error('Invalid payment response');
+      }
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: paymentResponse.data.order.amount,
+        currency: "INR",
+        name: "Your Store Name",
+        description: "Order Payment",
+        order_id: paymentResponse.data.order.id,
+        handler: async function (response) {
+          try {
+            const verifyResponse = await axios.post(`${api}/payments/verify`, {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              orderId: orderResponse.data.orderId,
+              amount: total
+            }, {
+              headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+            });
+
+            if (verifyResponse.data.success) {
+              toast.success('Payment successful!');
+              navigate(`/success/${orderResponse.data.orderId}`);
+            }
+          } catch (error) {
+            toast.error('Payment verification failed');
+            navigate(`/failure/${orderResponse.data.orderId}`);
+          }
+        },
+        prefill: {
+          name: addresses.find(addr => addr._id === selectedAddress)?.fullName,
+          contact: addresses.find(addr => addr._id === selectedAddress)?.phone,
+        },
+        theme: {
+          color: "#000000"
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
+
+      rzp.on('payment.failed', function (response) {
+        toast.error('Payment failed');
+        navigate(`/failure/${orderResponse.data.orderId}`);
+      });
+
     } catch (error) {
+      console.error('Order/Payment Error:', error);
       toast.error(error.response?.data?.message || 'Failed to place order');
     }
   };
@@ -349,7 +406,7 @@ function Checkout() {
                   </div>
                   <div className="flex items-center space-x-2 border rounded-lg p-3">
                     <RadioGroupItem value="online" id="online" />
-                    <Label htmlFor="online" className="text-sm">UPI/Net Banking</Label>
+                    <Label htmlFor="online" className="text-sm">Online/Net Banking</Label>
                   </div>
                   <div className="flex items-center space-x-2 border rounded-lg p-3">
                     <RadioGroupItem value="card" id="card" />
