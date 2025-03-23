@@ -1,7 +1,7 @@
-import Cart from "../models/product/cartModel.js";
-import Product from "../models/product/productModel.js";
-import Variant from "../models/product/sizeVariantModel.js";
-import Wishlist from "../models/product/wishlistModel.js"; // Add this import
+import Cart from "../../models/product/cartModel.js";
+import Product from "../../models/product/productModel.js";
+import Variant from "../../models/product/sizeVariantModel.js";
+import Wishlist from "../../models/product/wishlistModel.js"; // Add this import
 
 const MAX_QUANTITY_PER_ITEM = 5; // Add this constant at the top of the file
 

@@ -1,5 +1,4 @@
 //packages
-import path from "path";
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -9,18 +8,18 @@ import morgan from "morgan";
 
 // Utiles 
 import connectDB from './config/db.js'
-import userRoutes from './routes/userRoutes.js'
-import adminRoutes from "./routes/adminRoutes.js";
-import signUpOtpRoutes from './routes/signUpOtpRoutes.js'
-import adminProductRoutes from './routes/adminProductRoutes.js'
-import userProductRoutes from './routes/userProductRoutes.js'
-import userProfileRoutes from './routes/userProfileRoutes.js'
-import userCartRoutes from './routes/userCartRoutes.js'
+import userRoutes from './routes/user/userRoutes.js'
+import adminRoutes from "./routes/admin/adminRoutes.js";
+import signUpOtpRoutes from './routes/user/signUpOtpRoutes.js'
+import adminProductRoutes from './routes/admin/adminProductRoutes.js'
+import userProductRoutes from './routes/user/userProductRoutes.js'
+import userProfileRoutes from './routes/user/userProfileRoutes.js'
+import userCartRoutes from './routes/user/userCartRoutes.js'
 import { errorHandler } from "./middlewares/errorHandler.js";
-import userWishlistRoutes from './routes/userWishlistRoutes.js';
-import userOrderRoutes from './routes/userOrderRoutes.js';
+import userWishlistRoutes from './routes/user/userWishlistRoutes.js';
+import userOrderRoutes from './routes/user/userOrderRoutes.js';
 import adminOrderRoutes from './routes/admin/adminOrderRoutes.js';
-import paymentRoutes from './routes/paymentRoutes.js';
+import paymentRoutes from './routes/user/paymentRoutes.js';
 
 
 dotenv.config()
@@ -30,7 +29,7 @@ connectDB()
 
 const app = express()
 app.use(cors({
-    origin: 'http://localhost:3000', // or whatever your frontend URL is
+    origin: 'http://localhost:3000',
     credentials: true
 }));
 

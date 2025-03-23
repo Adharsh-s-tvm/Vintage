@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticate, authorizeAdmin } from '../middlewares/authMiddleware.js'
+import { authenticate, authorizeAdmin } from '../../middlewares/authMiddleware.js'
 import {
   loginAdmin,
   logoutCurrentAdmin,
@@ -9,7 +9,7 @@ import {
   updateUserById,
   getDashboard,
   updateUserStatus
-} from "../controllers/adminController.js";
+} from "../../controllers/admin/adminController.js";
 
 const router = express.Router();
 

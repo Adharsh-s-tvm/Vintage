@@ -1,7 +1,7 @@
-import User from '../models/userModel.js';
-import Address from '../models/userAddressModel.js';
-import asyncHandler from '../middlewares/asyncHandler.js';
-import cloudinary from '../config/cloudinary.js';
+import User from '../../models/userModel.js';
+import Address from '../../models/userAddressModel.js';
+import asyncHandler from '../../middlewares/asyncHandler.js';
+import cloudinary from '../../config/cloudinary.js';
 import bcrypt from 'bcryptjs';
 
 // @desc    Get user details

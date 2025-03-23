@@ -1,12 +1,12 @@
-import User from "../models/userModel.js";
-import Otp from "../models/signUpOtpModel.js";
-import asyncHandler from "../middlewares/asyncHandler.js";
+import User from "../../models/userModel.js";
+import Otp from "../../models/signUpOtpModel.js";
+import asyncHandler from "../../middlewares/asyncHandler.js";
 import bcrypt from "bcryptjs";
-import createToken from "../utils/createToken.js";
+import createToken from "../../utils/createToken.js";
 import axios from "axios";
 import jwt from "jsonwebtoken";
 import dotenv from 'dotenv'
-import { oauth2client } from "../utils/googleConfig.js";
+import { oauth2client } from "../../utils/googleConfig.js";
 import crypto from 'crypto';
 
 

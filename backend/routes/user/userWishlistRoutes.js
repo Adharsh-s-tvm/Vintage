@@ -1,10 +1,10 @@
 import express from 'express';
-import { authenticate } from '../middlewares/authMiddleware.js';
+import { authenticate } from '../../middlewares/authMiddleware.js';
 import {
     addToWishlist,
     removeFromWishlist,
     getWishlist
-} from '../controllers/userWishlistController.js';
+} from '../../controllers/user/userWishlistController.js';
 
 const router = express.Router();
 

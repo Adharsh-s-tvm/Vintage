@@ -1,12 +1,12 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
-import Payment from '../models/product/paymentModel.js';
-import Order from '../models/product/orderModel.js';
+import Payment from '../../models/product/paymentModel.js';
+import Order from '../../models/product/orderModel.js';
 import asyncHandler from 'express-async-handler';
 import mongoose from 'mongoose';
-import Cart from '../models/product/cartModel.js';
-import Variant from '../models/product/sizeVariantModel.js';
-import Address from '../models/userAddressModel.js';
+import Cart from '../../models/product/cartModel.js';
+import Variant from '../../models/product/sizeVariantModel.js';
+import Address from '../../models/userAddressModel.js';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,

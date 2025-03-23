@@ -1,7 +1,7 @@
-import Product from "../models/product/productModel.js";
-import Variant from "../models/product/sizeVariantModel.js";
-import Category from "../models/product/categoryModel.js";
-import Brand from "../models/product/brandModel.js";
+import Product from "../../models/product/productModel.js";
+import Variant from "../../models/product/sizeVariantModel.js";
+import Category from "../../models/product/categoryModel.js";
+import Brand from "../../models/product/brandModel.js";
 
 // @desc    Add a new product
 // @route   POST /api/products/add

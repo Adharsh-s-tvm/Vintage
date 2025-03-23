@@ -1,5 +1,5 @@
-import asyncHandler from "../middlewares/asyncHandler.js";
-import OTP from "../models/signUpOtpModel.js";
+import asyncHandler from "../../middlewares/asyncHandler.js";
+import OTP from "../../models/signUpOtpModel.js";
 import nodemailer from "nodemailer";
 
 // Generate OTP

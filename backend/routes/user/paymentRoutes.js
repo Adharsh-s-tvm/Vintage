@@ -1,11 +1,11 @@
 import express from 'express';
-import { 
-  createPaymentOrder, 
-  verifyPayment, 
+import {
+  createPaymentOrder,
+  verifyPayment,
   cancelPayment,
-  handlePaymentFailure 
-} from '../controllers/paymentController.js';
-import { authenticate } from '../middlewares/authMiddleware.js';
+  handlePaymentFailure
+} from '../../controllers/user/paymentController.js';
+import { authenticate } from '../../middlewares/authMiddleware.js';
 
 const router = express.Router();
 

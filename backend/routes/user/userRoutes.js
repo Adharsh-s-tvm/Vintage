@@ -8,9 +8,9 @@ import {
     googleLogin,
     checkEmail,
     resetPassword,
-} from "../controllers/userController.js";
+} from "../../controllers/user/userController.js";
 
-import { authenticate, authorizeAdmin } from "../middlewares/authMiddleware.js";
+import { authenticate, authorizeAdmin } from "../../middlewares/authMiddleware.js";
 
 const router = express.Router();
 

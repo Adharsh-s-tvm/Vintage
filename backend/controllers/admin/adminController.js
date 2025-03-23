@@ -1,7 +1,7 @@
-import Admin from "../models/adminModel.js";
+import Admin from "../../models/adminModel.js";
 import jwt from "jsonwebtoken";
-import asyncHandler from "../middlewares/asyncHandler.js";
-import User from "../models/userModel.js";
+import asyncHandler from "../../middlewares/asyncHandler.js";
+import User from "../../models/userModel.js";
 import bcrypt from "bcrypt";
 
 

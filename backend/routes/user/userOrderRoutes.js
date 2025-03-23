@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticate } from '../middlewares/authMiddleware.js';
+import { authenticate } from '../../middlewares/authMiddleware.js';
 import {
     createOrder,
     getOrders,
@@ -7,7 +7,7 @@ import {
     cancelOrder,
     returnOrder,
     pdfDownloader
-} from '../controllers/userOrderController.js';
+} from '../../controllers/user/userOrderController.js';
 
 const router = express.Router();
 

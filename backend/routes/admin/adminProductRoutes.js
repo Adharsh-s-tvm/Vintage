@@ -1,8 +1,8 @@
 import express from "express";
 
-import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant, updateProductBlockStatus, updateVariantBlockStatus } from "../controllers/adminProductController.js";
-import asyncHandler from "../middlewares/asyncHandler.js";
-import { handleUpload } from "../middlewares/multer.js";
+import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant, updateProductBlockStatus, updateVariantBlockStatus } from "../../controllers/admin/adminProductController.js";
+import asyncHandler from "../../middlewares/asyncHandler.js";
+import { handleUpload } from "../../middlewares/multer.js";
 
 const router = express.Router();
 

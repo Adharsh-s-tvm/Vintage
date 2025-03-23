@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticate } from "../middlewares/authMiddleware.js";
+import { authenticate } from "../../middlewares/authMiddleware.js";
 import {
     getUserDetails,
     updateUserDetails,
@@ -10,8 +10,8 @@ import {
     uploadProfileImage,
     changePassword,
     updateUserEmail
-} from '../controllers/userProfileController.js';
-import { upload } from '../middlewares/multer.js';
+} from '../../controllers/user/userProfileController.js';
+import { upload } from '../../middlewares/multer.js';
 
 const router = express.Router();
 
