@@ -20,6 +20,8 @@ import userWishlistRoutes from './routes/user/userWishlistRoutes.js';
 import userOrderRoutes from './routes/user/userOrderRoutes.js';
 import adminOrderRoutes from './routes/admin/adminOrderRoutes.js';
 import paymentRoutes from './routes/user/paymentRoutes.js';
+import adminOfferRoutes from './routes/admin/adminOfferRoutes.js'
+import adminCouponRoutes from './routes/admin/adminCouponRoutes.js'
 
 
 dotenv.config()
@@ -47,17 +49,26 @@ app.use(cookieParser())
 
 app.use(morgan("dev"))
 
-app.use("/api", userRoutes);
-app.use("/api/admin", adminRoutes);
 
+
+
+app.use("/api/admin", adminRoutes);
 
 app.use("/api/admin/products", adminProductRoutes)
 
 app.use("/api/admin/orders", adminOrderRoutes)
 
-app.use("/api/products", userProductRoutes)
+app.use("/admin/offers", adminOfferRoutes)
+
+app.use("/admin/coupons", adminCouponRoutes)
+
+
+
+app.use("/api", userRoutes);
 
 app.use("/api/user/otp", signUpOtpRoutes);
+
+app.use("/api/products", userProductRoutes)
 
 app.use("/api/user/profile", userProfileRoutes)
 
