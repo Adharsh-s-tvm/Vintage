@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography } from '@mui/material';
-import { Add, Search } from '@mui/icons-material';
+import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper } from '@mui/material';
+import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
 
@@ -18,6 +18,7 @@ function Offers() {
     endDate: '',
     items: []
   });
+  const [expandedRows, setExpandedRows] = useState({});
 
   useEffect(() => {
     fetchProducts();
@@ -28,8 +29,10 @@ function Offers() {
   const fetchProducts = async () => {
     try {
       const response = await axios.get('http://localhost:7000/api/admin/products');
+      console.log('Fetched products:', response.data);
       setProducts(response.data);
     } catch (error) {
+      console.error('Error fetching products:', error);
       toast.error('Failed to fetch products');
     }
   };
@@ -37,8 +40,10 @@ function Offers() {
   const fetchCategories = async () => {
     try {
       const response = await axios.get('http://localhost:7000/api/admin/products/categories');
+      console.log('Fetched categories:', response.data);
       setCategories(response.data);
     } catch (error) {
+      console.error('Error fetching categories:', error);
       toast.error('Failed to fetch categories');
     }
   };
@@ -54,12 +59,23 @@ function Offers() {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post('http://localhost:7000/api/admin/offers', formData);
+      if (!formData.offerName || !formData.offerType || !formData.discountPercentage || !formData.startDate || !formData.endDate || !formData.items.length) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      const formattedData = {
+        ...formData,
+        discountPercentage: Number(formData.discountPercentage)
+      };
+
+      const response = await axios.post('http://localhost:7000/api/admin/offers', formattedData);
       toast.success('Offer added successfully');
       setShowModal(false);
       fetchOffers();
       resetForm();
     } catch (error) {
+      console.error('Error adding offer:', error);
       toast.error(error.response?.data?.message || 'Failed to add offer');
     }
   };
@@ -73,6 +89,26 @@ function Offers() {
       endDate: '',
       items: []
     });
+  };
+
+  const handleEditOffer = async (offerId, updatedData) => {
+    try {
+      const response = await axios.put(`http://localhost:7000/api/admin/offers/${offerId}`, updatedData);
+      toast.success('Offer updated successfully');
+      fetchOffers(); // Refresh the offers list
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update offer');
+    }
+  };
+
+  const handleBlockOffer = async (offerId) => {
+    try {
+      const response = await axios.patch(`http://localhost:7000/api/admin/offers/${offerId}/toggle-status`);
+      toast.success('Offer status updated successfully');
+      fetchOffers(); // Refresh the offers list
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update offer status');
+    }
   };
 
   return (
@@ -206,6 +242,65 @@ function Offers() {
           </Box>
         </Box>
       </Modal>
+
+      <TableContainer component={Paper} sx={{ mt: 3 }}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell>Offer Name</TableCell>
+              <TableCell>Type</TableCell>
+              <TableCell>Discount %</TableCell>
+              <TableCell>Start Date</TableCell>
+              <TableCell>End Date</TableCell>
+              <TableCell>Status</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {offers.map((offer) => (
+              <TableRow key={offer._id}>
+                <TableCell>{offer.offerName}</TableCell>
+                <TableCell>{offer.offerType}</TableCell>
+                <TableCell>{offer.discountPercentage}%</TableCell>
+                <TableCell>{new Date(offer.startDate).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(offer.endDate).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Chip 
+                    label={offer.isActive ? 'Active' : 'Blocked'}
+                    color={offer.isActive ? 'success' : 'error'}
+                  />
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton 
+                      color="primary"
+                      onClick={() => {
+                        setFormData({
+                          offerName: offer.offerName,
+                          offerType: offer.offerType,
+                          discountPercentage: offer.discountPercentage,
+                          startDate: offer.startDate.split('T')[0],
+                          endDate: offer.endDate.split('T')[0],
+                          items: offer.items
+                        });
+                        setShowModal(true);
+                      }}
+                    >
+                      <Edit />
+                    </IconButton>
+                    <IconButton 
+                      color={offer.isActive ? "error" : "success"}
+                      onClick={() => handleBlockOffer(offer._id)}
+                    >
+                      {offer.isActive ? <Block /> : <CheckCircle />}
+                    </IconButton>
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }

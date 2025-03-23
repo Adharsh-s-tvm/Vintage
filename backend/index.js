@@ -58,9 +58,9 @@ app.use("/api/admin/products", adminProductRoutes)
 
 app.use("/api/admin/orders", adminOrderRoutes)
 
-app.use("/admin/offers", adminOfferRoutes)
+app.use("/api/admin/offers", adminOfferRoutes)
 
-app.use("/admin/coupons", adminCouponRoutes)
+app.use("/api/admin/coupons", adminCouponRoutes)
 
 
 
