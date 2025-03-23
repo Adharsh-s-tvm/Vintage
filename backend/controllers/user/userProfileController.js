@@ -23,6 +23,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
             username: user.username,
             phone: user.phone,
             image: user.image,
+            referralCode: user.referralCode,
             createdAt: user.createdAt
         });
     } catch (error) {
