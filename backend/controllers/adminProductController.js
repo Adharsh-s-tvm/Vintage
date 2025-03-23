@@ -362,10 +362,23 @@ export const updateProductStatus = async (req, res) => {
 
 // Update variant
 export const updateVariant = async (req, res) => {
-
   try {
     const { variantId } = req.params;
     const updateData = req.body;
+    let mainImageUrl = '';
+    let subImageUrls = [];
+
+    // Handle image updates if files are present
+    if (req.files) {
+      if (req.files.mainImage && req.files.mainImage[0]) {
+        mainImageUrl = req.files.mainImage[0].path || req.files.mainImage[0].secure_url;
+        updateData.mainImage = mainImageUrl;
+      }
+      if (req.files.subImages) {
+        subImageUrls = req.files.subImages.map(file => file.path || file.secure_url);
+        updateData.subImages = subImageUrls;
+      }
+    }
 
     const updatedVariant = await Variant.findByIdAndUpdate(
       variantId,

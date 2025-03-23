@@ -99,6 +99,12 @@ const Products = () => {
     mainImage: '',
     subImages: ''
   });
+  const [editVariantImagePreview, setEditVariantImagePreview] = useState({
+    main: null,
+    sub1: null,
+    sub2: null,
+    sub3: null
+  });
 
   useEffect(() => {
     fetchCategories();
@@ -431,12 +437,58 @@ const Products = () => {
 
   const handleEditVariant = async () => {
     try {
-      await axios.put(`${API_BASE_URL}/products/variant/${selectedVariant._id}`, variantFormData);
+      const formData = new FormData();
+      
+      // Append basic data
+      formData.append('size', variantFormData.size);
+      formData.append('color', variantFormData.color);
+      formData.append('stock', variantFormData.stock);
+      formData.append('price', variantFormData.price);
+
+      // Append images if they were changed
+      if (variantFormData.mainImage instanceof File) {
+        formData.append('mainImage', variantFormData.mainImage);
+      }
+      
+      if (variantFormData.subImages) {
+        Object.values(variantFormData.subImages).forEach(file => {
+          if (file instanceof File) {
+            formData.append('subImages', file);
+          }
+        });
+      }
+
+      await axios.put(
+        `${API_BASE_URL}/products/variant/${selectedVariant._id}`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+      
       toast.success('Variant updated successfully');
       setShowEditVariantModal(false);
       fetchProducts();
     } catch (error) {
       toast.error('Failed to update variant');
+    }
+  };
+
+  const handleEditVariantImageChange = (e, type) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVariantFormData(prev => ({
+        ...prev,
+        [type]: file
+      }));
+      
+      const previewUrl = URL.createObjectURL(file);
+      setEditVariantImagePreview(prev => ({
+        ...prev,
+        [type === 'mainImage' ? 'main' : type]: previewUrl
+      }));
     }
   };
 
@@ -1324,57 +1376,147 @@ const Products = () => {
       />
 
       {/* Edit Variant Modal */}
-      <Modal show={showEditVariantModal} onHide={() => setShowEditVariantModal(false)} centered>
+      <Modal show={showEditVariantModal} onHide={() => setShowEditVariantModal(false)} centered size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Edit Variant</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <TextField
-            fullWidth
-            label="Size"
-            name="size"
-            value={variantFormData.size}
-            onChange={(e) => setVariantFormData(prev => ({
-              ...prev,
-              size: e.target.value
-            }))}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label="Color"
-            name="color"
-            value={variantFormData.color}
-            onChange={(e) => setVariantFormData(prev => ({
-              ...prev,
-              color: e.target.value
-            }))}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label="Stock"
-            name="stock"
-            type="number"
-            value={variantFormData.stock}
-            onChange={(e) => setVariantFormData(prev => ({
-              ...prev,
-              stock: Number(e.target.value)
-            }))}
-            margin="normal"
-          />
-          <TextField
-            fullWidth
-            label="Price"
-            name="price"
-            type="number"
-            value={variantFormData.price}
-            onChange={(e) => setVariantFormData(prev => ({
-              ...prev,
-              price: Number(e.target.value)
-            }))}
-            margin="normal"
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <TextField
+                fullWidth
+                label="Size"
+                name="size"
+                value={variantFormData.size}
+                onChange={(e) => setVariantFormData(prev => ({
+                  ...prev,
+                  size: e.target.value
+                }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Color"
+                name="color"
+                value={variantFormData.color}
+                onChange={(e) => setVariantFormData(prev => ({
+                  ...prev,
+                  color: e.target.value
+                }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Stock"
+                name="stock"
+                type="number"
+                value={variantFormData.stock}
+                onChange={(e) => setVariantFormData(prev => ({
+                  ...prev,
+                  stock: Number(e.target.value)
+                }))}
+                margin="normal"
+              />
+              <TextField
+                fullWidth
+                label="Price"
+                name="price"
+                type="number"
+                value={variantFormData.price}
+                onChange={(e) => setVariantFormData(prev => ({
+                  ...prev,
+                  price: Number(e.target.value)
+                }))}
+                margin="normal"
+              />
+            </div>
+
+            <div>
+              <Typography variant="subtitle1" gutterBottom>
+                Main Image
+              </Typography>
+              <Box
+                sx={{
+                  border: '2px dashed #ccc',
+                  borderRadius: 2,
+                  p: 1,
+                  mb: 2,
+                  height: '200px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
+                }}
+              >
+                {(editVariantImagePreview.main || selectedVariant?.mainImage) && (
+                  <img
+                    src={editVariantImagePreview.main || selectedVariant?.mainImage}
+                    alt="Main variant"
+                    style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleEditVariantImageChange(e, 'mainImage')}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    cursor: 'pointer'
+                  }}
+                />
+              </Box>
+
+              <Typography variant="subtitle1" gutterBottom>
+                Sub Images
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+                {[1, 2, 3].map((num) => (
+                  <Box
+                    key={num}
+                    sx={{
+                      border: '2px dashed #ccc',
+                      borderRadius: 2,
+                      p: 1,
+                      width: '100px',
+                      height: '100px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      position: 'relative'
+                    }}
+                  >
+                    {(editVariantImagePreview[`sub${num}`] || 
+                      (selectedVariant?.subImages && selectedVariant.subImages[num-1])) && (
+                      <img
+                        src={editVariantImagePreview[`sub${num}`] || selectedVariant.subImages[num-1]}
+                        alt={`Sub ${num}`}
+                        style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => handleEditVariantImageChange(e, `sub${num}`)}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        opacity: 0,
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </Box>
+                ))}
+              </Box>
+            </div>
+          </div>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowEditVariantModal(false)}>

@@ -48,7 +48,10 @@ router.put("/:id",
 router.put("/product/:id/status", asyncHandler(updateProductStatus));
 
 // Update variant
-router.put("/variant/:variantId", asyncHandler(updateVariant));
+router.put("/variant/:variantId", 
+  handleUpload,
+  asyncHandler(updateVariant)
+);
 
 // Block/unblock product
 router.put("/product/:id/block", asyncHandler(updateProductBlockStatus));
