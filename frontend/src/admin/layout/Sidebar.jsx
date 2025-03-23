@@ -10,11 +10,13 @@ import {
     AlertCircle,
     Crown,
     Menu,
-    Car
+    Car,
+    Ticket,
+    Bus
 } from 'lucide-react';
 import { cn } from '../../lib/util';
 import { Button } from '../../ui/Button';
-import { BrandingWatermark, Category } from '@mui/icons-material';
+import { BrandingWatermark, BrandingWatermarkOutlined, BrandingWatermarkRounded, BrandingWatermarkSharp, BrandingWatermarkTwoTone, Category, CategoryRounded, ListAlt, Percent, PersonAddAltRounded, ProductionQuantityLimitsSharp, WaterDamageOutlined, WidthNormalOutlined } from '@mui/icons-material';
 
 export function Sidebar({ className, mobileOpen, onMobileClose }) {
     const [collapsed, setCollapsed] = useState(false);
@@ -52,7 +54,7 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             }
         },
         {
-            icon: Category,
+            icon: CategoryRounded,
             label: 'Category',
             path: '/admin/category',
             badge: {
@@ -61,7 +63,7 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             }
         },
         {
-            icon: BrandingWatermark,
+            icon: BrandingWatermarkRounded,
             label: 'Brand',
             path: '/admin/brand',
             badge: {
@@ -70,20 +72,25 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             }
         },
         {
-            icon: FileText,
+            icon: ListAlt,
             label: 'Orders',
             path: '/admin/orders'
         },
         {
-            icon: Car,
+            icon: Bus,
             label: 'Returns',
             path: '/admin/returns'
         },
-        // {
-        //     icon: AlertCircle,
-        //     label: '404',
-        //     path: '/admin/404'
-        // },
+        {
+            icon: Percent,
+            label: 'Offers',
+            path: '/admin/offers'
+        },
+        {
+            icon: Ticket,
+            label: 'Coupons',
+            path: '/admin/coupons'
+        },
     ];
 
     return (

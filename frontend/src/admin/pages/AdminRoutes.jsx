@@ -12,6 +12,8 @@ import Brand from './Brand'
 import Category from './Category'
 import Orders from './Orders'
 import Returns from './Returns'
+import Coupons from './Coupons'
+import Offers from './Offers'
 
 function AdminRoutes() {
   return (
@@ -25,6 +27,9 @@ function AdminRoutes() {
         <Route path='category' element={<Category/>} />
         <Route path='orders' element={<Orders />} />
         <Route path='returns' element={<Returns />} />
+        <Route path='offers' element={<Offers />} />
+        <Route path='coupons' element={<Coupons />} />
+        
       </Route>
       <Route path='/*' element={<NotFound redirectPageType={'admin'} />} />
       {/* <Route path='/signup' element={<AdminSignUp/>} /> */}
