@@ -224,7 +224,7 @@ function UserSignUp() {
                                 id="firstName"
                                 name="firstName"
                                 type="text"
-                                placeholder="First Name"
+                                placeholder=""
                                 className="pl-10"
                                 value={formData.firstName}
                                 onChange={handleChange}
@@ -241,7 +241,7 @@ function UserSignUp() {
                                 id="lastName"
                                 name="lastName"
                                 type="text"
-                                placeholder="Last Name"
+                                placeholder=""
                                 className="pl-10"
                                 value={formData.lastName}
                                 onChange={handleChange}
@@ -258,7 +258,7 @@ function UserSignUp() {
                                 id="email"
                                 name="email"
                                 type="email"
-                                placeholder="name@example.com"
+                                placeholder=""
                                 className="pl-10"
                                 value={formData.email}
                                 onChange={handleChange}
@@ -275,7 +275,7 @@ function UserSignUp() {
                                 id="password"
                                 name="password"
                                 type={showPassword ? 'text' : 'password'}
-                                placeholder="••••••••"
+                                placeholder=""
                                 className="pl-10"
                                 value={formData.password}
                                 onChange={handleChange}
@@ -301,7 +301,7 @@ function UserSignUp() {
                                 id="password"
                                 name="confirmPassword"
                                 type={showPassword ? 'text' : 'password'}
-                                placeholder="••••••••"
+                                placeholder=""
                                 className="pl-10"
                                 value={formData.confirmPassword}
                                 onChange={handleChange}
@@ -317,6 +317,24 @@ function UserSignUp() {
                         </div>
                         <p className="text-xs text-gray-500 mt-1">
                             Password must be at least 8 characters long
+                        </p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="password">Referral Code (Optional)</Label>
+                        <div className="relative">
+                            {/* <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" /> */}
+                            <Input
+                                id="referralCode"
+                                name="referralCode"
+                                type="text"
+                                placeholder=""
+                                className="pl-10"
+                                value={formData.referralCode}
+                                onChange={handleChange}
+                            />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Enter your referral code to get a bonus
                         </p>
                     </div>
 
