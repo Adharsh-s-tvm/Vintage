@@ -20,6 +20,7 @@ function UserSignUp() {
         email: "",
         password: "",
         confirmPassword: "",
+        referralCode: ""  // Add this line to initialize referralCode
     });
     const [error, setError] = useState("");
     const dispatch = useDispatch();
@@ -124,8 +125,6 @@ function UserSignUp() {
     };
 
     const verifyOtpAndSignup = async (otp) => {
-        console.log("Thisd is the otp bu yusser", otp);
-
         try {
             // First verify OTP
             const verifyResponse = await axios.post("http://localhost:7000/api/user/otp/verify", {
@@ -139,7 +138,8 @@ function UserSignUp() {
                     firstname: formData.firstName.trim(),
                     lastname: formData.lastName.trim(),
                     email: formData.email.toLowerCase(),
-                    password: formData.password
+                    password: formData.password,
+                    referralCode: formData.referralCode // Add this line
                 };
 
                 const response = await axios.post("http://localhost:7000/api/signup", signupData, {

@@ -15,9 +15,9 @@ dotenv.config()
 
 
 const createUser = asyncHandler(async (req, res) => {
-    const { firstname, lastname, email, password } = req.body;
+    const { firstname, lastname, email, password, referralCode } = req.body;
 
-    console.log(firstname, lastname, email, password)
+    console.log(firstname, lastname, email, password, referralCode)
 
     if (!firstname || !lastname || !email || !password) {
         res.status(400);
@@ -29,6 +29,14 @@ const createUser = asyncHandler(async (req, res) => {
         res.status(400);
         throw new Error("User already exists");
     }
+
+    const referralUser = await User.findOne({ referralCode });
+    if (referralUser) {
+        console.log("Referral user found");
+    }
+
+    console.log("Referal User : ", referralCode, referralUser );
+    
 
     // Generate a unique username
     const baseUsername = `${firstname.toLowerCase()}_${lastname.toLowerCase()}`;
