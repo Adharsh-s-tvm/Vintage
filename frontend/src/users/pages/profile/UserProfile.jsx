@@ -3,7 +3,7 @@ import { Layout } from '../../layout/Layout';
 import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Label } from '../../../ui/Label';
-import { Camera, Edit, Plus, Trash, User, Package, MapPin, Heart, Ticket, Lock } from 'lucide-react';
+import { Camera, Edit, Plus, Trash, User, Package, MapPin, Heart, Ticket, Lock, Wallet } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
@@ -92,6 +92,10 @@ function UserProfile() {
               <a href="/wishlist" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
                 <Heart className="h-4 w-4" />
                 <span>Wishlist</span>
+              </a>
+              <a href="/wallet" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
+                <Wallet className="h-4 w-4" />
+                <span>Wallet</span>
               </a>
               <a href="/coupons" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
                 <Ticket className="h-4 w-4" />

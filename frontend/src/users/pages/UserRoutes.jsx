@@ -20,6 +20,7 @@ import OrderSuccess from './OrderSuccess'
 import OrderDetails from './OrderDetails'
 import PaymentFailure from './PaymentFailure'
 import OrderFailed from './OrderFailed';
+import Wallet from './Wallet'
 
 
 function UserRoutes() {
@@ -46,6 +47,7 @@ function UserRoutes() {
           <Route path="/order-details/:orderId" element={<OrderDetails />} />
           <Route path="/failure/:orderId" element={<PaymentFailure />} />
           <Route path="/order-failed" element={<OrderFailed />} />
+          <Route path="/wallet" element={<Wallet />} />
         </Route>
       </Routes>
     </>

@@ -230,7 +230,7 @@ function Coupons() {
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
               <TableCell>Coupon Code</TableCell>
               <TableCell>Discount Type</TableCell>
               <TableCell>Discount Value</TableCell>
