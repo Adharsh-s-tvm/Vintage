@@ -6,6 +6,7 @@ import asyncHandler from 'express-async-handler';
 import mongoose from 'mongoose';
 import Cart from '../models/product/cartModel.js';
 import Variant from '../models/product/sizeVariantModel.js';
+import Address from '../models/userAddressModel.js';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -77,12 +78,26 @@ const createOrder = async (orderData, session) => {
     const total = subtotal + shippingCost;
     const orderId = generateOrderId();
 
+    // Fetch the complete address first
+    const address = await Address.findById(addressId);
+    if (!address) {
+      throw new Error('Address not found');
+    }
+
     const order = await Order.create([{
       user: userId,
       cart: cart._id,
       items: orderItems,
       shipping: {
-        address: addressId,
+        address: {
+          fullName: address.fullName,
+          phone: address.phone,
+          street: address.street,
+          city: address.city,
+          state: address.state,
+          country: address.country || 'India',
+          postalCode: address.postalCode
+        },
         shippingMethod: "Standard",
         deliveryCharge: shippingCost
       },
@@ -92,11 +107,6 @@ const createOrder = async (orderData, session) => {
         transactionId: orderData.razorpayPaymentId || `TXN${Date.now()}`,
         amount: total
       },
-      shippingAddress: addressId,
-      paymentMethod,
-      subtotal,
-      shippingCost,
-      total,
       totalAmount: total,
       orderId: orderId,
       orderStatus: 'Processing'

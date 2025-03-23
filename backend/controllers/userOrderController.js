@@ -32,7 +32,7 @@ export const createOrder = asyncHandler(async (req, res) => {
     }
 
     // 2. Verify address
-    const address = await Address.findOne({ _id: addressId, user: userId });
+    const address = await Address.findById(addressId);
     if (!address) {
         res.status(404);
         throw new Error('Delivery address not found');
@@ -92,7 +92,15 @@ export const createOrder = asyncHandler(async (req, res) => {
         cart: cart._id,
         items: orderItems,
         shipping: {
-            address: addressId,
+            address: {
+                fullName: address.fullName,
+                phone: address.phone,
+                street: address.street,
+                city: address.city,
+                state: address.state,
+                country: address.country || 'India',
+                postalCode: address.postalCode
+            },
             shippingMethod: "Standard",
             deliveryCharge: shippingCost
         },

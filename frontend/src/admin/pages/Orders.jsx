@@ -356,7 +356,16 @@ function Orders() {
                                     {new Date(order.createdAt).toLocaleString()}
                                   </p>
                                 </div>
-                                {/* Add more order details as needed */}
+                                <div>
+                                  <p className="text-sm text-gray-600">Shipping Address:</p>
+                                  <p className="font-medium">
+                                    {order.shipping?.address?.fullName}<br />
+                                    {order.shipping?.address?.street}<br />
+                                    {order.shipping?.address?.city}, {order.shipping?.address?.state} {order.shipping?.address?.postalCode}<br />
+                                    {order.shipping?.address?.country}<br />
+                                    Phone: {order.shipping?.address?.phone}
+                                  </p>
+                                </div>
                               </div>
                             </div>
                           </TableCell>
