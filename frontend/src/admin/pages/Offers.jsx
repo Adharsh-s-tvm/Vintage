@@ -19,6 +19,8 @@ function Offers() {
     items: []
   });
   const [expandedRows, setExpandedRows] = useState({});
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editOfferId, setEditOfferId] = useState(null);
 
   useEffect(() => {
     fetchProducts();
@@ -69,14 +71,23 @@ function Offers() {
         discountPercentage: Number(formData.discountPercentage)
       };
 
-      const response = await axios.post('http://localhost:7000/api/admin/offers', formattedData);
-      toast.success('Offer added successfully');
+      let response;
+      if (isEditMode) {
+        response = await axios.put(`http://localhost:7000/api/admin/offers/${editOfferId}`, formattedData);
+        toast.success('Offer updated successfully');
+      } else {
+        response = await axios.post('http://localhost:7000/api/admin/offers', formattedData);
+        toast.success('Offer added successfully');
+      }
+
       setShowModal(false);
       fetchOffers();
       resetForm();
+      setIsEditMode(false);
+      setEditOfferId(null);
     } catch (error) {
-      console.error('Error adding offer:', error);
-      toast.error(error.response?.data?.message || 'Failed to add offer');
+      console.error('Error saving offer:', error);
+      toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} offer`);
     }
   };
 
@@ -89,6 +100,13 @@ function Offers() {
       endDate: '',
       items: []
     });
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setIsEditMode(false);
+    setEditOfferId(null);
+    resetForm();
   };
 
   const handleEditOffer = async (offerId, updatedData) => {
@@ -138,7 +156,7 @@ function Offers() {
       {/* Add Offer Modal */}
       <Modal
         open={showModal}
-        onClose={() => setShowModal(false)}
+        onClose={handleCloseModal}
         aria-labelledby="add-offer-modal"
         sx={{
           display: 'flex',
@@ -155,7 +173,7 @@ function Offers() {
           maxWidth: 500
         }}>
           <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-            Add New Offer
+            {isEditMode ? 'Edit Offer' : 'Add New Offer'}
           </Typography>
           
           <TextField
@@ -233,11 +251,11 @@ function Offers() {
           </FormControl>
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-            <Button variant="outlined" onClick={() => setShowModal(false)}>
+            <Button variant="outlined" onClick={handleCloseModal}>
               Cancel
             </Button>
             <Button variant="contained" onClick={handleSubmit}>
-              Save Offer
+              {isEditMode ? 'Update Offer' : 'Save Offer'}
             </Button>
           </Box>
         </Box>
@@ -275,13 +293,15 @@ function Offers() {
                     <IconButton 
                       color="primary"
                       onClick={() => {
+                        setIsEditMode(true);
+                        setEditOfferId(offer._id);
                         setFormData({
                           offerName: offer.offerName,
                           offerType: offer.offerType,
                           discountPercentage: offer.discountPercentage,
                           startDate: offer.startDate.split('T')[0],
                           endDate: offer.endDate.split('T')[0],
-                          items: offer.items
+                          items: offer.items.map(item => item._id)
                         });
                         setShowModal(true);
                       }}
