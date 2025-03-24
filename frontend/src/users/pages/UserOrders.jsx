@@ -188,6 +188,28 @@ export default function Orders() {
     );
   });
 
+  const OrderItemPrice = ({ item }) => {
+    const hasDiscount = item.discountPrice && item.discountPrice < item.price;
+    
+    return (
+      <div className="text-right">
+        <div className="font-medium">
+          ₹{item.discountPrice}
+        </div>
+        {hasDiscount && (
+          <div className="text-sm">
+            <span className="text-gray-500 line-through">
+              ₹{item.price}
+            </span>
+            <span className="text-green-600 ml-2">
+              {Math.round((item.price - item.discountPrice) / item.price * 100)}% OFF
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 py-8">

@@ -77,7 +77,7 @@ export const createOrder = asyncHandler(async (req, res) => {
             sizeVariant: item.variant._id,
             quantity: item.quantity,
             price: variant.price, // Original price
-            discountPrice: variant.discountPrice || variant.price, // Add discounted price
+            discountPrice: variant.discountPrice || variant.price, // Store discount price
             finalPrice: itemTotal,
             status: 'pending'
         });

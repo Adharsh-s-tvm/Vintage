@@ -61,7 +61,9 @@ const createOrder = async (orderData, session) => {
         { session }
       );
 
-      const itemTotal = item.quantity * variant.price;
+      // Use discountPrice if available, otherwise use regular price
+      const itemPrice = variant.discountPrice || variant.price;
+      const itemTotal = item.quantity * itemPrice;
       subtotal += itemTotal;
 
       orderItems.push({
@@ -69,6 +71,7 @@ const createOrder = async (orderData, session) => {
         sizeVariant: item.variant._id,
         quantity: item.quantity,
         price: variant.price,
+        discountPrice: variant.discountPrice || variant.price,
         finalPrice: itemTotal,
         status: 'pending'
       });
@@ -133,8 +136,9 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
       throw new Error('Amount, address, and payment method are required');
     }
 
+    // Create Razorpay order with the discounted amount
     const options = {
-      amount: Math.round(amount * 100),
+      amount: Math.round(amount * 100), // amount is already calculated with discounts
       currency: "INR",
       receipt: `tmp_${Date.now()}`
     };
@@ -148,7 +152,7 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
     const tempPayment = await Payment.create({
       userId: req.user._id,
       orderId: razorpayOrder.id,
-      amount: amount,
+      amount: amount, // This will be the discounted amount
       status: 'created',
       tempOrderData: {
         addressId,

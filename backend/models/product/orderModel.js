@@ -34,6 +34,14 @@ const orderSchema = new mongoose.Schema(
                     required: true,
                     min: 0,
                 },
+                discountPrice: {
+                    type: Number,
+                    required: true,
+                    min: 0,
+                    default: function() {
+                        return this.price;
+                    }
+                },
                 finalPrice: {
                     type: Number,
                     required: true,
