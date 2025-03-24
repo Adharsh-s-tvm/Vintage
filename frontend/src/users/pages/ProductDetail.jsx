@@ -92,18 +92,23 @@ const dummyCoupons = [
 const PriceDisplay = ({ variant }) => {
   if (!variant) return null;
   
-  if (variant.discountPrice && variant.discountPrice < variant.price && variant.discountPrice > 0) {
-    return (
-      <div className="flex items-center gap-4">
-        <span className="text-2xl font-bold">₹{variant.discountPrice}</span>
-        <span className="text-gray-500 line-through">₹{variant.price}</span>
-        <span className="text-green-600">
-          {Math.round((variant.price - variant.discountPrice) / variant.price * 100)}% OFF
-        </span>
-      </div>
-    );
-  }
-  return <span className="text-2xl font-bold">₹{variant.price}</span>;
+  const hasValidDiscount = variant.discountPrice && variant.discountPrice > 0 && variant.discountPrice < variant.price;
+  
+  return (
+    <div className="flex items-center gap-4">
+      <span className="text-2xl font-bold">
+        ₹{hasValidDiscount ? variant.discountPrice : variant.price}
+      </span>
+      {hasValidDiscount && (
+        <>
+          <span className="text-gray-500 line-through">₹{variant.price}</span>
+          <span className="text-green-600">
+            {Math.round((variant.price - variant.discountPrice) / variant.price * 100)}% OFF
+          </span>
+        </>
+      )}
+    </div>
+  );
 };
 
 export default function ProductDetail() {

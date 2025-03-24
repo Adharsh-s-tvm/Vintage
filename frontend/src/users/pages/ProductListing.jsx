@@ -238,15 +238,8 @@ const ProductListing = () => {
 
   // Function to get lowest price variant for each product
   const getLowestPrice = (product) => {
-    if (!product || !product.variants || product.variants.length === 0) return 0;
-    
-    const activeVariants = product.variants.filter(variant => 
-      variant && !variant.isBlocked && variant.price
-    );
-    
-    return activeVariants.length > 0 
-      ? Math.min(...activeVariants.map(variant => variant.price))
-      : 0;
+    const activeVariants = product.variants.filter(variant => !variant.isBlocked);
+    return Math.min(...activeVariants.map(variant => variant.price));
   };
 
   // Filter products based on selected filters
@@ -657,15 +650,25 @@ const ProductListing = () => {
 
   // Modify the price display in the product card
   const PriceDisplay = ({ originalPrice, discountPrice }) => {
-    if (discountPrice && discountPrice < originalPrice) {
-      return (
-        <div className="flex items-center gap-2">
-          <span className="text-gray-400 line-through">₹{originalPrice}</span>
-          <span className="font-bold text-lg">₹{discountPrice}</span>
-        </div>
-      );
-    }
-    return <span className="font-bold text-lg">₹{originalPrice}</span>;
+    if (!originalPrice) return null;
+    
+    const hasValidDiscount = discountPrice && discountPrice > 0 && discountPrice < originalPrice;
+    
+    return (
+      <div className="flex items-center gap-2">
+        <span className="font-bold text-lg">
+          ₹{hasValidDiscount ? discountPrice : originalPrice}
+        </span>
+        {hasValidDiscount && (
+          <>
+            <span className="text-gray-400 line-through">₹{originalPrice}</span>
+            <span className="text-green-600 text-sm">
+              {Math.round((originalPrice - discountPrice) / originalPrice * 100)}% OFF
+            </span>
+          </>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -823,14 +826,15 @@ const ProductListing = () => {
                     </div>
                     <PriceDisplay 
                       originalPrice={lowestPrice}
-                      discountPrice={product.variants
-                        .filter(v => v.discountPrice && v.discountPrice < v.price)
-                        .length > 0
-                          ? Math.min(...product.variants
-                              .filter(v => v.discountPrice && v.discountPrice < v.price)
-                              .map(v => v.discountPrice))
-                          : null
-                    }
+                      discountPrice={
+                        product.variants
+                          .filter(v => v.discountPrice && v.discountPrice > 0 && v.discountPrice < v.price)
+                          .length > 0
+                            ? Math.min(...product.variants
+                                .filter(v => v.discountPrice && v.discountPrice > 0 && v.discountPrice < v.price)
+                                .map(v => v.discountPrice))
+                            : null
+                      }
                     />
                   </div>
 
