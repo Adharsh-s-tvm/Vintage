@@ -25,7 +25,12 @@ const variantSchema = new mongoose.Schema(
     },
     discountPrice: {
       type: Number,
-      required: false,
+      default: null
+    },
+    activeOffer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Offer',
+      default: null
     },
     isBlocked: {  
       type: Boolean,

@@ -129,6 +129,34 @@ function Offers() {
     }
   };
 
+  const OfferDetails = ({ offer }) => {
+    const [affectedProducts, setAffectedProducts] = useState([]);
+    
+    useEffect(() => {
+      const fetchAffectedProducts = async () => {
+        try {
+          const response = await axios.get(`http://localhost:7000/api/admin/offers/${offer._id}/affected-products`);
+          setAffectedProducts(response.data);
+        } catch (error) {
+          console.error('Error fetching affected products:', error);
+        }
+      };
+      
+      fetchAffectedProducts();
+    }, [offer._id]);
+
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Applied to {affectedProducts.length} products
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {offer.offerType === 'category' ? 'Category-wide offer' : 'Product-specific offer'}
+        </Typography>
+      </Box>
+    );
+  };
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
