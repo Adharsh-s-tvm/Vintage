@@ -116,7 +116,7 @@ export const getSalesReport = async (req, res) => {
             { 
                 $match: {
                     ...dateFilter,
-                    'payment.status': 'completed'
+                    'payment.status': { $in: ['completed', 'pending'] } // Matches both statuses
                 }
             },
             {
@@ -134,10 +134,11 @@ export const getSalesReport = async (req, res) => {
             },
             { $sort: { '_id': 1 } }
         ]);
+        
 
         // Get recent transactions
         const transactions = await Order.find(dateFilter)
-            .select('orderId totalAmount payment createdAt orderStatus')
+            .select('orderId totalAmount payment createdAt orderStatus items.returnStatus')
             .sort('-createdAt')
             .limit(10);
 
@@ -160,7 +161,7 @@ export const getSalesReport = async (req, res) => {
                 orderId: t.orderId,
                 amount: t.totalAmount,
                 paymentMethod: t.payment.method,
-                status: t.orderStatus,
+                status: t.items.some(item => item.returnStatus === 'Return Approved') ? 'Returned' : t.orderStatus,
                 createdAt: t.createdAt
             }))
         });

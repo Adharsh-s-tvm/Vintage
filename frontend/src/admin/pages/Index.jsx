@@ -243,9 +243,7 @@ export default function Dashboard() {
                                                                 ? 'bg-green-100 text-green-800'
                                                                 : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
-                                                    {transaction.status === 'Returned' 
-                                                        ? 'Delivered, Returned' 
-                                                        : transaction.status}
+                                                    {transaction.status}
                                                 </span>
                                             </TableCell>
                                         </TableRow>
