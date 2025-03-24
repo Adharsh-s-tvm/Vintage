@@ -15,9 +15,16 @@ const cartSlice = createSlice({
   reducers: {
     setCartItems: (state, action) => {
       state.cartItems = action.payload.items;
-      state.subtotal = action.payload.subtotal;
-      state.shipping = action.payload.shipping;
-      state.total = action.payload.total;
+      state.subtotal = action.payload.items.reduce((sum, item) => {
+        const price = item.variant.discountPrice && 
+                     item.variant.discountPrice > 0 && 
+                     item.variant.discountPrice < item.variant.price 
+                       ? item.variant.discountPrice 
+                       : item.variant.price;
+        return sum + (price * item.quantity);
+      }, 0);
+      state.shipping = action.payload.shipping || 0;
+      state.total = state.subtotal + state.shipping;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;

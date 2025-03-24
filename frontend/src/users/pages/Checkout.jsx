@@ -112,6 +112,34 @@ function AddressForm({ onAddressAdded, onClose }) {
   );
 }
 
+function PriceDisplay({ item }) {
+  const hasValidDiscount = item.variant.discountPrice && 
+                          item.variant.discountPrice > 0 && 
+                          item.variant.discountPrice < item.variant.price;
+  
+  const itemTotal = hasValidDiscount 
+    ? item.variant.discountPrice * item.quantity
+    : item.variant.price * item.quantity;
+
+  return (
+    <div className="text-right">
+      <div className="font-medium">
+        ${itemTotal.toFixed(2)}
+      </div>
+      {hasValidDiscount && (
+        <div className="text-sm">
+          <span className="text-gray-500 line-through">
+            ${(item.variant.price * item.quantity).toFixed(2)}
+          </span>
+          <span className="text-green-600 ml-2">
+            {Math.round((item.variant.price - item.variant.discountPrice) / item.variant.price * 100)}% OFF
+          </span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Checkout() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -310,9 +338,7 @@ function Checkout() {
                         </p>
                         <p className="text-sm">Quantity: {item.quantity}</p>
                       </div>
-                      <div className="font-medium">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </div>
+                      <PriceDisplay item={item} />
                     </div>
                   ))}
                 </div>
