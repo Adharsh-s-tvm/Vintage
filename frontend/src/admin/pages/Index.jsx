@@ -1,9 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '../layout/Layout';
 import { StatsCard } from '../dashboard/StatsCard';
 import { PieChartCard } from '../dashboard/PieChartCard';
 import { BarChartCard } from '../dashboard/BarChartCard';
-import { ShoppingBag, Users, ShoppingCart, MessageCircle } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Clock, XCircle } from 'lucide-react';
+import axios from 'axios';
+import { api } from '../../lib/api';
+import { toast } from 'sonner';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/Select";
+import { DatePicker } from "../../ui/DatePicker";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/Table";
+import { Button } from "../../ui/Button";
 
 const visitsData = [
     { name: 'North America', value: 35, color: '#4E80EE' },
@@ -22,58 +42,197 @@ const websiteVisitsData = [
 ];
 
 export default function Dashboard() {
+    const [dateRange, setDateRange] = useState('daily');
+    const [customStartDate, setCustomStartDate] = useState(new Date());
+    const [customEndDate, setCustomEndDate] = useState(new Date());
+    const [stats, setStats] = useState({
+        totalRevenue: 0,
+        totalOrders: 0,
+        pendingOrders: 0,
+        totalReturns: 0,
+        cancelledOrders: 0
+    });
+    const [salesData, setSalesData] = useState([]);
+    const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetchSalesData();
+    }, [dateRange, customStartDate, customEndDate]);
+
+    const fetchSalesData = async () => {
+        try {
+            setLoading(true);
+            let params = { range: dateRange };
+            if (dateRange === 'custom') {
+                params.startDate = customStartDate.toISOString();
+                params.endDate = customEndDate.toISOString();
+            }
+
+            const response = await axios.get(`${api}/admin/sales-report`, {
+                params,
+                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+            });
+
+            if (response.data) {
+                // Ensure we have all required stats
+                const defaultStats = {
+                    totalRevenue: 0,
+                    totalOrders: 0,
+                    pendingOrders: 0,
+                    processingOrders: 0,
+                    cancelledOrders: 0
+                };
+
+                setStats({ ...defaultStats, ...response.data.stats });
+                
+                // Transform sales data for the chart
+                const transformedSalesData = (response.data.salesData || []).map(item => ({
+                    date: item._id,
+                    sales: item.sales || 0,
+                    orders: item.orders || 0
+                }));
+                
+                setSalesData(transformedSalesData);
+                setTransactions(response.data.transactions || []);
+            }
+        } catch (error) {
+            console.error('Error fetching sales data:', error);
+            toast.error(error.response?.data?.message || 'Failed to fetch sales data');
+            // Set default values on error
+            setStats({
+                totalRevenue: 0,
+                totalOrders: 0,
+                pendingOrders: 0,
+                processingOrders: 0,
+                cancelledOrders: 0
+            });
+            setSalesData([]);
+            setTransactions([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
-        <>
-            {/* <div className="mb-6">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 animate-fade-in">Dashboard</h1>
-                <p className="text-gray-500 mt-1 animate-fade-in">Overview of your business performance</p>
+        <div className="space-y-6 p-6">
+            <div className="flex items-center gap-4">
+                <Select value={dateRange} onValueChange={setDateRange}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {dateRange === 'custom' && (
+                    <div className="flex items-center gap-2">
+                        <DatePicker
+                            selected={customStartDate}
+                            onChange={setCustomStartDate}
+                            placeholderText="Start date"
+                        />
+                        <DatePicker
+                            selected={customEndDate}
+                            onChange={setCustomEndDate}
+                            placeholderText="End date"
+                        />
+                    </div>
+                )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6 animate-fade-in">
-                <StatsCard
-                    title="Total Sales"
-                    value="714K"
-                    icon={<ShoppingBag />}
-                    change={{ value: 2.5, trend: 'up' }}
-                    color="blue"
-                    sparklineData={[3, 7, 5, 9, 6, 8, 7]}
-                />
-                <StatsCard
-                    title="Active Users"
-                    value="1.35M"
-                    icon={<Users />}
-                    change={{ value: 8.1, trend: 'up' }}
-                    color="purple"
-                    sparklineData={[5, 3, 8, 6, 9, 11, 14]}
-                />
-                <StatsCard
-                    title="Orders"
-                    value="1.72M"
-                    icon={<ShoppingCart />}
-                    change={{ value: 1.2, trend: 'down' }}
-                    color="yellow"
-                    sparklineData={[9, 7, 6, 5, 8, 7, 6]}
-                />
-                <StatsCard
-                    title="Messages"
-                    value="234"
-                    icon={<MessageCircle />}
-                    change={{ value: 4.7, trend: 'up' }}
-                    color="red"
-                    sparklineData={[2, 4, 3, 6, 8, 9, 7]}
-                />
-            </div>
+            {loading ? (
+                <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+            ) : (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <StatsCard
+                            title="Total Revenue"
+                            value={stats?.totalRevenue ? `₹${stats.totalRevenue.toLocaleString()}` : '₹0'}
+                            icon={<ShoppingBag />}
+                            color="blue"
+                        />
+                        <StatsCard
+                            title="Total Orders"
+                            value={stats.totalOrders || 0}
+                            icon={<ShoppingCart />}
+                            color="purple"
+                        />
+                        <StatsCard
+                            title="Pending Orders"
+                            value={stats.pendingOrders || 0}
+                            icon={<Clock />}
+                            color="yellow"
+                        />
+                        <StatsCard
+                            title="Cancelled Orders"
+                            value={stats.cancelledOrders || 0}
+                            icon={<XCircle />}
+                            color="red"
+                        />
+                    </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 animate-fade-in">
-                <PieChartCard
-                    title="Current Visits"
-                    data={visitsData}
-                />
-                <BarChartCard
-                    title="Website Visits"
-                    data={websiteVisitsData}
-                />
-            </div> */}
-        </>
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <BarChartCard
+                            title="Sales Overview"
+                            data={salesData}
+                        />
+                    </div>
+
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <h2 className="text-xl font-semibold mb-4">Financial Ledger</h2>
+                        <div className="overflow-x-auto">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Transaction ID</TableHead>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>Type</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead>Payment Method</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {transactions.map((transaction) => (
+                                        <TableRow key={transaction._id}>
+                                            <TableCell>
+                                                {new Date(transaction.createdAt).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>{transaction._id}</TableCell>
+                                            <TableCell>Order #{transaction.orderId}</TableCell>
+                                            <TableCell>
+                                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                                                    CREDIT
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>₹{transaction.amount.toLocaleString()}</TableCell>
+                                            <TableCell>{transaction.paymentMethod}</TableCell>
+                                            <TableCell>
+                                                <span className={`px-2 py-1 rounded-full text-xs ${
+                                                    transaction.status === 'completed' 
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-yellow-100 text-yellow-800'
+                                                }`}>
+                                                    {transaction.status}
+                                                </span>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
     );
 } 

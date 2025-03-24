@@ -10,6 +10,7 @@ import {
   getDashboard,
   updateUserStatus
 } from "../../controllers/admin/adminController.js";
+import  { getSalesReport }  from '../../controllers/admin/salesController.js';
 
 const router = express.Router();
 
@@ -29,5 +30,6 @@ router
 
 router.put("/users/:id/status", authenticate, authorizeAdmin, updateUserStatus);
 
+router.get('/sales-report', getSalesReport);
 
 export default router;

@@ -2,39 +2,46 @@ import React from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { cn } from '../../lib/util';
 
-export function StatsCard({ title, value, icon, change, color, sparklineData = [3, 7, 5, 9, 6, 8, 7] }) {
+export function StatsCard({ 
+    title, 
+    value = 0, 
+    icon, 
+    change = { value: 0, trend: 'up' },
+    color = 'blue',
+    sparklineData = [] 
+}) {
     const colorStyles = {
         blue: {
-            bgLight: 'bg-blue-light',
-            iconBg: 'bg-blue/10',
-            iconColor: 'text-blue',
-            trendUp: 'text-green-600',
-            trendDown: 'text-red-600',
+            bgLight: 'bg-blue-50',
+            iconBg: 'bg-blue-100',
+            iconColor: 'text-blue-600',
         },
         purple: {
-            bgLight: 'bg-purple-light',
-            iconBg: 'bg-purple/10',
-            iconColor: 'text-purple',
-            trendUp: 'text-green-600',
-            trendDown: 'text-red-600',
+            bgLight: 'bg-purple-50',
+            iconBg: 'bg-purple-100',
+            iconColor: 'text-purple-600',
         },
         yellow: {
-            bgLight: 'bg-yellow-light',
-            iconBg: 'bg-yellow/10',
-            iconColor: 'text-yellow',
-            trendUp: 'text-green-600',
-            trendDown: 'text-red-600',
+            bgLight: 'bg-yellow-50',
+            iconBg: 'bg-yellow-100',
+            iconColor: 'text-yellow-600',
         },
         red: {
-            bgLight: 'bg-red-light',
-            iconBg: 'bg-red/10',
-            iconColor: 'text-red',
-            trendUp: 'text-green-600',
-            trendDown: 'text-red-600',
+            bgLight: 'bg-red-50',
+            iconBg: 'bg-red-100',
+            iconColor: 'text-red-600',
         },
+        green: {
+            bgLight: 'bg-green-50',
+            iconBg: 'bg-green-100',
+            iconColor: 'text-green-600',
+        }
     };
 
-    const styles = colorStyles[color];
+    // Format the value if it's a number
+    const displayValue = typeof value === 'number' ? 
+        value.toLocaleString() : 
+        value || '0';
 
     // Generate sparkline path
     const maxValue = Math.max(...sparklineData);
@@ -64,24 +71,25 @@ export function StatsCard({ title, value, icon, change, color, sparklineData = [
         <div className={cn(
             "relative overflow-hidden rounded-xl p-5 shadow-elevation-2 transition-all hover:shadow-elevation-3",
             "bg-white border border-gray-100",
+            colorStyles[color]?.bgLight
         )}>
             <div className="flex items-start justify-between">
                 <div>
                     <p className="text-sm font-medium text-gray-500">{title}</p>
-                    <h4 className="mt-2 text-2xl font-bold tracking-tight">{value}</h4>
+                    <h4 className="mt-2 text-2xl font-bold tracking-tight">{displayValue}</h4>
                 </div>
                 <div className={cn(
                     "flex items-center justify-center h-12 w-12 rounded-lg",
-                    styles.iconBg
+                    colorStyles[color]?.iconBg
                 )}>
-                    <div className={cn("h-6 w-6", styles.iconColor)}>
-                        {icon}
-                    </div>
+                    {React.cloneElement(icon, {
+                        className: cn("h-6 w-6", colorStyles[color]?.iconColor)
+                    })}
                 </div>
             </div>
 
-            <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center">
+            {change && (
+                <div className="flex items-center justify-between mt-4">
                     {change.trend === 'up' ? (
                         <ArrowUp className="h-4 w-4 text-green-500 mr-1" />
                     ) : (
@@ -96,19 +104,19 @@ export function StatsCard({ title, value, icon, change, color, sparklineData = [
                         {Math.abs(change.value)}%
                     </span>
                 </div>
+            )}
 
-                {/* Mini sparkline */}
-                <svg width="60" height="20" className="text-gray-300">
-                    <path
-                        d={path}
-                        fill="none"
-                        stroke={change.trend === 'up' ? '#10B981' : '#EF4444'}
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                    />
-                </svg>
-            </div>
+            {/* Mini sparkline */}
+            <svg width="60" height="20" className="text-gray-300">
+                <path
+                    d={path}
+                    fill="none"
+                    stroke={change && change.trend === 'up' ? '#10B981' : '#EF4444'}
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                />
+            </svg>
 
             {/* Background decoration */}
             <div className={cn(
@@ -116,7 +124,8 @@ export function StatsCard({ title, value, icon, change, color, sparklineData = [
                 color === 'blue' ? 'bg-blue' :
                     color === 'purple' ? 'bg-purple' :
                         color === 'yellow' ? 'bg-yellow' :
-                            'bg-red'
+                            color === 'green' ? 'bg-green' :
+                                'bg-red'
             )} />
         </div>
     );
