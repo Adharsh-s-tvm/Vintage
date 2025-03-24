@@ -88,6 +88,24 @@ const dummyCoupons = [
   }
 ];
 
+// Add this component near the top of the file
+const PriceDisplay = ({ variant }) => {
+  if (!variant) return null;
+  
+  if (variant.discountPrice && variant.discountPrice < variant.price && variant.discountPrice > 0) {
+    return (
+      <div className="flex items-center gap-4">
+        <span className="text-2xl font-bold">₹{variant.discountPrice}</span>
+        <span className="text-gray-500 line-through">₹{variant.price}</span>
+        <span className="text-green-600">
+          {Math.round((variant.price - variant.discountPrice) / variant.price * 100)}% OFF
+        </span>
+      </div>
+    );
+  }
+  return <span className="text-2xl font-bold">₹{variant.price}</span>;
+};
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -456,30 +474,28 @@ export default function ProductDetail() {
             </div>
 
             {/* Price section */}
-            <div className="mt-4 flex items-center justify-between">
-              <span className="text-2xl font-bold text-gray-900">
-                ₹{selectedVariant ? selectedVariant.price.toFixed(2) : product?.variants[0]?.price.toFixed(2)}
-              </span>
-
-              {/* Stock status only shown when variant is selected */}
-              {selectedVariant && (
-                <div className="flex items-center">
-                  {selectedVariant.stock > 0 ? (
-                    <div className="flex items-center">
-                      <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
-                      <span className="text-sm font-medium text-green-600">
-                        In Stock ({selectedVariant.stock} available)
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center">
-                      <div className="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div>
-                      <span className="text-sm font-medium text-red-600">Out of Stock</span>
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="mt-4">
+              <PriceDisplay variant={selectedVariant} />
             </div>
+
+            {/* Stock status only shown when variant is selected */}
+            {selectedVariant && (
+              <div className="flex items-center">
+                {selectedVariant.stock > 0 ? (
+                  <div className="flex items-center">
+                    <div className="h-2.5 w-2.5 rounded-full bg-green-500 mr-2"></div>
+                    <span className="text-sm font-medium text-green-600">
+                      In Stock ({selectedVariant.stock} available)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <div className="h-2.5 w-2.5 rounded-full bg-red-500 mr-2"></div>
+                    <span className="text-sm font-medium text-red-600">Out of Stock</span>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Description */}
             <div className="mt-6">
