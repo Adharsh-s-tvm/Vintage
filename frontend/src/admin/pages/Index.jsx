@@ -24,6 +24,14 @@ import {
   TableRow,
 } from "../../ui/Table";
 import { Button } from "../../ui/Button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "../../ui/Pagination";
 
 const visitsData = [
     { name: 'North America', value: 35, color: '#4E80EE' },
@@ -55,15 +63,22 @@ export default function Dashboard() {
     const [salesData, setSalesData] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [itemsPerPage] = useState(25);
 
     useEffect(() => {
         fetchSalesData();
-    }, [dateRange, customStartDate, customEndDate]);
+    }, [dateRange, customStartDate, customEndDate, currentPage]);
 
     const fetchSalesData = async () => {
         try {
             setLoading(true);
-            let params = { range: dateRange };
+            let params = { 
+                range: dateRange,
+                page: currentPage,
+                limit: itemsPerPage
+            };
             if (dateRange === 'custom') {
                 params.startDate = customStartDate.toISOString();
                 params.endDate = customEndDate.toISOString();
@@ -78,7 +93,7 @@ export default function Dashboard() {
             console.log('API Response:', response.data);
 
             if (response.data) {
-                const { stats, salesData, transactions } = response.data;
+                const { stats, salesData, transactions, totalPages: total } = response.data;
                 console.log('Received stats:', stats);
                 setStats(stats || {
                     totalRevenue: 0,
@@ -89,6 +104,7 @@ export default function Dashboard() {
                 });
                 setSalesData(salesData || []);
                 setTransactions(transactions || []);
+                setTotalPages(total || 1);
             }
         } catch (error) {
             console.error('Error details:', error.response || error);
@@ -195,17 +211,31 @@ export default function Dashboard() {
                                             <TableCell>{transaction._id}</TableCell>
                                             <TableCell>Order #{transaction.orderId}</TableCell>
                                             <TableCell>
-                                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                                                    CREDIT
+                                                <span className={`px-2 py-1 ${
+                                                    transaction.status === 'Cancelled' || transaction.status === 'Returned'
+                                                        ? 'bg-gray-100 text-gray-800'
+                                                        : 'bg-green-100 text-green-800'
+                                                } rounded-full text-xs`}>
+                                                    {transaction.status === 'Cancelled' || transaction.status === 'Returned' ? '—' : 'CREDIT'}
                                                 </span>
                                             </TableCell>
-                                            <TableCell>₹{transaction.amount.toLocaleString()}</TableCell>
+                                            <TableCell>
+                                                <span className={
+                                                    transaction.status === 'Cancelled' || transaction.status === 'Returned' 
+                                                        ? 'text-red-600' 
+                                                        : 'text-gray-900'
+                                                }>
+                                                    ₹{transaction.amount.toLocaleString()}
+                                                </span>
+                                            </TableCell>
                                             <TableCell>{transaction.paymentMethod}</TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-1 rounded-full text-xs ${
-                                                    transaction.status === 'completed' 
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-yellow-100 text-yellow-800'
+                                                    transaction.status === 'Cancelled' 
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : transaction.status === 'completed' 
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
                                                     {transaction.status}
                                                 </span>
@@ -214,6 +244,37 @@ export default function Dashboard() {
                                     ))}
                                 </TableBody>
                             </Table>
+                            
+                            <div className="mt-4 flex justify-center">
+                                <Pagination>
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious 
+                                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                disabled={currentPage === 1}
+                                            />
+                                        </PaginationItem>
+                                        
+                                        {[...Array(totalPages)].map((_, index) => (
+                                            <PaginationItem key={index + 1}>
+                                                <PaginationLink
+                                                    onClick={() => setCurrentPage(index + 1)}
+                                                    isActive={currentPage === index + 1}
+                                                >
+                                                    {index + 1}
+                                                </PaginationLink>
+                                            </PaginationItem>
+                                        ))}
+
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                                disabled={currentPage === totalPages}
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            </div>
                         </div>
                     </div>
                 </>

@@ -2,7 +2,8 @@ import Order from '../../models/product/orderModel.js';
 
 export const getSalesReport = async (req, res) => {
     try {
-        const { range, startDate, endDate } = req.query;
+        const { range, startDate, endDate, page = 1, limit = 10 } = req.query;
+        const skip = (parseInt(page) - 1) * parseInt(limit);
         let dateFilter = {};
 
         // Set date filter based on range
@@ -59,7 +60,7 @@ export const getSalesReport = async (req, res) => {
         }
 
         // Debug logs
-        console.log('Query Parameters:', { range, startDate, endDate });
+        console.log('Query Parameters:', { range, startDate, endDate, page, limit });
         console.log('Date Filter:', dateFilter);
 
         // First check if we have any orders at all
@@ -76,6 +77,16 @@ export const getSalesReport = async (req, res) => {
             'payment.status': 'completed'
         });
         console.log('Completed payments in range:', completedPayments);
+
+        // Get total count for pagination
+        const totalTransactions = await Order.countDocuments(dateFilter);
+
+        // Get transactions with pagination
+        const transactions = await Order.find(dateFilter)
+            .select('orderId totalAmount payment createdAt orderStatus')
+            .sort('-createdAt')
+            .skip(skip)
+            .limit(parseInt(limit));
 
         // Get stats
         const stats = await Order.aggregate([
@@ -135,13 +146,6 @@ export const getSalesReport = async (req, res) => {
             { $sort: { '_id': 1 } }
         ]);
 
-        // Get recent transactions
-        const transactions = await Order.find(dateFilter)
-            .select('orderId totalAmount payment createdAt orderStatus')
-            .sort('-createdAt')
-            .limit(10);
-
-        // Send response with default values if no stats found
         res.json({
             stats: stats[0] || {
                 totalRevenue: 0,
@@ -161,7 +165,9 @@ export const getSalesReport = async (req, res) => {
                 paymentMethod: t.payment.method,
                 status: t.orderStatus,
                 createdAt: t.createdAt
-            }))
+            })),
+            totalPages: Math.ceil(totalTransactions / parseInt(limit)),
+            currentPage: parseInt(page)
         });
 
     } catch (error) {

@@ -11,6 +11,22 @@ import {
 } from 'recharts';
 import { cn } from '../../lib/util';
 
+const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-white p-3 border border-gray-100 shadow-sm rounded-lg">
+                <p className="text-sm font-medium text-gray-900 mb-1">{label}</p>
+                {payload.map((pld, index) => (
+                    <p key={index} className="text-sm text-gray-600">
+                        {pld.name}: {pld.name === 'Sales' ? '₹' : ''}{pld.value.toLocaleString()}
+                    </p>
+                ))}
+            </div>
+        );
+    }
+    return null;
+};
+
 export function BarChartCard({ title, data, className }) {
     // Transform data for the chart
     const chartData = data.map(item => ({
@@ -24,7 +40,7 @@ export function BarChartCard({ title, data, className }) {
 
     return (
         <div className={cn(
-            "rounded-xl p-5 bg-white border border-gray-100 shadow-elevation-2 transition-all hover:shadow-elevation-3 h-full",
+            "rounded-xl p-5 bg-white border border-gray-100 shadow-elevation-2 h-full",
             className
         )}>
             <h3 className="text-base font-medium text-gray-900">{title}</h3>
@@ -36,7 +52,10 @@ export function BarChartCard({ title, data, className }) {
                         <XAxis dataKey="date" />
                         <YAxis yAxisId="left" />
                         <YAxis yAxisId="right" orientation="right" />
-                        <Tooltip />
+                        <Tooltip 
+                            content={<CustomTooltip />} 
+                            cursor={{ fill: 'rgba(0, 0, 0, 0.02)' }}
+                        />
                         <Legend />
                         <Bar yAxisId="left" dataKey="Sales" fill="#4F46E5" />
                         <Bar yAxisId="right" dataKey="Orders" fill="#8B5CF6" />
