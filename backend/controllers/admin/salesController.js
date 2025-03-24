@@ -86,24 +86,69 @@ export const getSalesReport = async (req, res) => {
                     totalRevenue: { 
                         $sum: {
                             $cond: [
-                                { $and: [
-                                    { $eq: ['$payment.status', 'completed'] },
-                                    { $not: { $in: ['$orderStatus', ['Cancelled', 'Returned']] } }
-                                ]},
-                                '$totalAmount',
+                                {
+                                    $and: [
+                                        // Not cancelled
+                                        { $not: { $eq: ['$orderStatus', 'Cancelled'] } },
+                                        {
+                                            $or: [
+                                                // For COD orders
+                                                { 
+                                                    $and: [
+                                                        { $eq: ['$payment.method', 'cod'] },
+                                                        { $eq: ['$orderStatus', 'Delivered'] }
+                                                    ]
+                                                },
+                                                // For online orders
+                                                { 
+                                                    $and: [
+                                                        { $eq: ['$payment.method', 'online'] },
+                                                        { $in: ['$payment.status', ['completed', 'pending']] }
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    ]
+                                },
+                                {
+                                    $subtract: [
+                                        '$totalAmount',
+                                        {
+                                            $sum: {
+                                                $map: {
+                                                    input: '$items',
+                                                    as: 'item',
+                                                    in: {
+                                                        $cond: [
+                                                            { $eq: ['$$item.returnStatus', 'Return Approved'] },
+                                                            '$$item.finalPrice',
+                                                            0
+                                                        ]
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    ]
+                                },
                                 0
                             ]
                         }
                     },
                     totalOrders: { $sum: 1 },
                     pendingOrders: {
-                        $sum: { $cond: [{ $eq: ['$orderStatus', 'Pending'] }, 1, 0] }
+                        $sum: { $cond: [{ $eq: ['$orderStatus', 'pending'] }, 1, 0] }
                     },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$orderStatus', 'Cancelled'] }, 1, 0] }
                     },
                     returnedOrders: {
-                        $sum: { $cond: [{ $eq: ['$orderStatus', 'Returned'] }, 1, 0] }
+                        $sum: {
+                            $cond: [
+                                { $gt: [{ $size: { $filter: { input: '$items', as: 'item', cond: { $eq: ['$$item.returnStatus', 'Return Approved'] } } } }, 0] },
+                                1,
+                                0
+                            ]
+                        }
                     }
                 }
             }
@@ -116,7 +161,21 @@ export const getSalesReport = async (req, res) => {
             { 
                 $match: {
                     ...dateFilter,
-                    'payment.status': { $in: ['completed', 'pending'] } // Matches both statuses
+                    orderStatus: { $nin: ['Cancelled', 'Returned'] },
+                    $or: [
+                        {
+                            $and: [
+                                { 'payment.method': 'cod' },
+                                { 'orderStatus': 'Delivered' }
+                            ]
+                        },
+                        {
+                            $and: [
+                                { 'payment.method': 'online' },
+                                { 'payment.status': { $in: ['completed', 'pending'] } }
+                            ]
+                        }
+                    ]
                 }
             },
             {
@@ -125,7 +184,7 @@ export const getSalesReport = async (req, res) => {
                         $dateToString: { 
                             format: '%Y-%m-%d', 
                             date: '$createdAt',
-                            timezone: 'Asia/Kolkata'  // Adjust timezone as needed
+                            timezone: 'Asia/Kolkata'
                         }
                     },
                     sales: { $sum: '$totalAmount' },

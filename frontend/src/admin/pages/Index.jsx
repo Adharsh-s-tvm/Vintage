@@ -239,7 +239,7 @@ export default function Dashboard() {
                                                         ? 'bg-red-100 text-red-800'
                                                         : transaction.status === 'Returned'
                                                             ? 'bg-orange-100 text-orange-800'
-                                                            : transaction.status === 'completed' 
+                                                            : transaction.status === 'Delivered' || transaction.status === 'completed'
                                                                 ? 'bg-green-100 text-green-800'
                                                                 : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
