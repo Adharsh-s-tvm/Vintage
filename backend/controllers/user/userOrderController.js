@@ -67,14 +67,17 @@ export const createOrder = asyncHandler(async (req, res) => {
             throw new Error(`Insufficient stock for ${item.variant.product.name}`);
         }
 
-        const itemTotal = item.quantity * variant.price;
+        // Use discountPrice if available, otherwise use regular price
+        const itemPrice = variant.discountPrice || variant.price;
+        const itemTotal = item.quantity * itemPrice;
         subtotal += itemTotal;
 
         orderItems.push({
             product: item.variant.product._id,
             sizeVariant: item.variant._id,
             quantity: item.quantity,
-            price: variant.price,
+            price: variant.price, // Original price
+            discountPrice: variant.discountPrice || variant.price, // Add discounted price
             finalPrice: itemTotal,
             status: 'pending'
         });
@@ -108,14 +111,14 @@ export const createOrder = asyncHandler(async (req, res) => {
             method: paymentMethod,
             status: paymentMethod === 'cod' ? 'pending' : 'initiated',
             transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`,
-            amount: total
+            amount: total // This will now be calculated using discount prices
         },
         shippingAddress: addressId,
         paymentMethod,
-        subtotal,
+        subtotal, // This will now be the sum of discounted prices
         shippingCost,
-        total,
-        totalAmount: total,
+        total, // This will now be calculated using discounted subtotal
+        totalAmount: total, // This will also reflect the discounted total
         orderId: orderId
     });
 
@@ -415,5 +418,6 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
             // Delete file after download
             fs.unlinkSync(filePath);
         });
-    });
+    }); // Add this closing brace for pdfDownloader function
+
 });
