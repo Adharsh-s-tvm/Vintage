@@ -58,16 +58,29 @@ export const getSalesReport = async (req, res) => {
                 break;
         }
 
-        // Add payment status filter
-        dateFilter['payment.status'] = 'completed';
+        // Debug logs
+        console.log('Query Parameters:', { range, startDate, endDate });
+        console.log('Date Filter:', dateFilter);
+
+        // First check if we have any orders at all
+        const totalOrders = await Order.countDocuments({});
+        console.log('Total orders in database:', totalOrders);
+
+        // Check orders within date range
+        const ordersInRange = await Order.countDocuments(dateFilter);
+        console.log('Orders in date range:', ordersInRange);
+
+        // Check completed payments
+        const completedPayments = await Order.countDocuments({
+            ...dateFilter,
+            'payment.status': 'completed'
+        });
+        console.log('Completed payments in range:', completedPayments);
 
         // Get stats
         const stats = await Order.aggregate([
             { 
-                $match: {
-                    ...dateFilter,
-                    orderStatus: { $ne: 'Cancelled' }  // Exclude cancelled orders from revenue
-                }
+                $match: dateFilter
             },
             {
                 $group: {
@@ -95,6 +108,8 @@ export const getSalesReport = async (req, res) => {
                 }
             }
         ]);
+
+        console.log('Aggregation Results:', stats);
 
         // Get sales data for chart with proper date formatting
         const salesData = await Order.aggregate([
@@ -150,7 +165,7 @@ export const getSalesReport = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error generating sales report:', error);
+        console.error('Error in getSalesReport:', error);
         res.status(500).json({ message: 'Failed to generate sales report' });
     }
 }; 

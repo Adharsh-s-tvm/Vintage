@@ -29,7 +29,7 @@ export function BarChartCard({ title, data, className }) {
         )}>
             <h3 className="text-base font-medium text-gray-900">{title}</h3>
 
-            <div className="h-64 mt-2">
+            <div className="h-[450px] mt-4">
                 <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" />

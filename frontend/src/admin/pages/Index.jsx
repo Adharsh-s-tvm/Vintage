@@ -69,46 +69,30 @@ export default function Dashboard() {
                 params.endDate = customEndDate.toISOString();
             }
 
+            console.log('Fetching sales data with params:', params);
             const response = await axios.get(`${api}/admin/sales-report`, {
                 params,
                 headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
             });
 
+            console.log('API Response:', response.data);
+
             if (response.data) {
-                // Ensure we have all required stats
-                const defaultStats = {
+                const { stats, salesData, transactions } = response.data;
+                console.log('Received stats:', stats);
+                setStats(stats || {
                     totalRevenue: 0,
                     totalOrders: 0,
                     pendingOrders: 0,
                     processingOrders: 0,
                     cancelledOrders: 0
-                };
-
-                setStats({ ...defaultStats, ...response.data.stats });
-                
-                // Transform sales data for the chart
-                const transformedSalesData = (response.data.salesData || []).map(item => ({
-                    date: item._id,
-                    sales: item.sales || 0,
-                    orders: item.orders || 0
-                }));
-                
-                setSalesData(transformedSalesData);
-                setTransactions(response.data.transactions || []);
+                });
+                setSalesData(salesData || []);
+                setTransactions(transactions || []);
             }
         } catch (error) {
-            console.error('Error fetching sales data:', error);
+            console.error('Error details:', error.response || error);
             toast.error(error.response?.data?.message || 'Failed to fetch sales data');
-            // Set default values on error
-            setStats({
-                totalRevenue: 0,
-                totalOrders: 0,
-                pendingOrders: 0,
-                processingOrders: 0,
-                cancelledOrders: 0
-            });
-            setSalesData([]);
-            setTransactions([]);
         } finally {
             setLoading(false);
         }
@@ -179,10 +163,11 @@ export default function Dashboard() {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div className="mb-6">
                         <BarChartCard
                             title="Sales Overview"
                             data={salesData}
+                            className="h-[500px]"
                         />
                     </div>
 
