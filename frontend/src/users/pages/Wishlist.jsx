@@ -61,14 +61,13 @@ export default function Wishlist() {
       
       if (response.data.success) {
         dispatch(setWishlistItems(response.data.items));
+        
         toast({
           title: "Success",
           description: "Item removed from wishlist",
           duration: 2000,
           className: "bg-white text-black border border-gray-200"
         });
-      } else {
-        throw new Error(response.data.message || "Failed to remove item");
       }
     } catch (error) {
       console.error("Remove error:", error);

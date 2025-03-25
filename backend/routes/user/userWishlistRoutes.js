@@ -12,6 +12,6 @@ router.route('/')
     .get(authenticate, getWishlist)
     .post(authenticate, addToWishlist);
 
-router.delete('/:productId', authenticate, removeFromWishlist);
+router.delete('/:variantId', authenticate, removeFromWishlist);
 
 export default router;
