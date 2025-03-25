@@ -61,3 +61,59 @@ export const applyCoupon = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const calculateFinalPrice = async (req, res) => {
+  try {
+    const { couponCode, cartItems } = req.body;
+    
+    // First calculate original prices and existing discounts
+    let finalItems = cartItems.map(item => ({
+      ...item,
+      originalTotal: item.variant.price * item.quantity,
+      currentDiscountPrice: item.variant.discountPrice || item.variant.price,
+      finalPrice: (item.variant.discountPrice || item.variant.price) * item.quantity
+    }));
+
+    // Calculate subtotal after existing discounts
+    const subtotal = finalItems.reduce((sum, item) => sum + item.finalPrice, 0);
+
+    // If coupon exists, apply additional discount
+    if (couponCode) {
+      const coupon = await Coupon.findOne({
+        couponCode,
+        startDate: { $lte: new Date() },
+        endDate: { $gte: new Date() },
+        isExpired: false,
+        usedBy: { $nin: [req.user._id] }
+      });
+
+      if (coupon && subtotal >= coupon.minOrderAmount) {
+        const couponDiscount = coupon.discountType === 'percentage' 
+          ? (subtotal * coupon.discountValue) / 100
+          : coupon.discountValue;
+
+        // Distribute coupon discount proportionally across items
+        finalItems = finalItems.map(item => {
+          const itemDiscountShare = (item.finalPrice / subtotal) * couponDiscount;
+          const newFinalPrice = item.finalPrice - itemDiscountShare;
+          const newUnitPrice = newFinalPrice / item.quantity;
+
+          return {
+            ...item,
+            discountPrice: newUnitPrice,
+            finalPrice: newFinalPrice,
+            totalDiscount: item.originalTotal - newFinalPrice
+          };
+        });
+      }
+    }
+
+    res.json({
+      items: finalItems,
+      totalDiscount: finalItems.reduce((sum, item) => 
+        sum + (item.originalTotal - item.finalPrice), 0)
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

@@ -47,6 +47,14 @@ const orderSchema = new mongoose.Schema(
                     required: true,
                     min: 0,
                 },
+                savedAmount: {
+                    type: Number,
+                    required: true,
+                    min: 0,
+                    default: function() {
+                        return this.price - this.discountPrice;
+                    }
+                },
                 status: {
                     type: String,
                     default: "pending",

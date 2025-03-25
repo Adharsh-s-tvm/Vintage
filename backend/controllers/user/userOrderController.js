@@ -8,12 +8,13 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import Coupon from '../../models/product/couponModel.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export const createOrder = asyncHandler(async (req, res) => {
-    const { addressId, paymentMethod } = req.body;
+    const { addressId, paymentMethod, couponCode } = req.body;
     const userId = req.user._id;
 
     // 1. Get user's cart
@@ -87,13 +88,58 @@ export const createOrder = asyncHandler(async (req, res) => {
     const shippingCost = subtotal > 500 ? 0 : 50;
     const total = subtotal + shippingCost;
 
+    let couponDiscount = 0;
+    let appliedCoupon = null;
+
+    // If coupon is provided, validate and calculate discount
+    if (couponCode) {
+        appliedCoupon = await Coupon.findOne({
+            couponCode,
+            startDate: { $lte: new Date() },
+            endDate: { $gte: new Date() },
+            isExpired: false,
+            usedBy: { $nin: [userId] }
+        });
+
+        if (appliedCoupon) {
+            // Calculate coupon discount
+            if (appliedCoupon.discountType === 'percentage') {
+                couponDiscount = (subtotal * appliedCoupon.discountValue) / 100;
+            } else {
+                couponDiscount = appliedCoupon.discountValue;
+            }
+        }
+    }
+
+    // Calculate final amounts
+    const finalSubtotal = subtotal - couponDiscount;
+    const finalTotal = finalSubtotal + shippingCost;
+
+    // Inside createOrder function, after calculating coupon discount
+    const orderItemsWithDiscount = orderItems.map(item => {
+        const itemShare = item.finalPrice / subtotal;
+        const itemCouponDiscount = couponDiscount * itemShare;
+        const finalPriceAfterCoupon = item.finalPrice - itemCouponDiscount;
+
+        return {
+            product: item.product,
+            sizeVariant: item.sizeVariant,
+            quantity: item.quantity,
+            price: item.price,
+            discountPrice: item.discountPrice,
+            finalPrice: finalPriceAfterCoupon,
+            savedAmount: (item.price * item.quantity) - finalPriceAfterCoupon,
+            status: 'pending'
+        };
+    });
+
     const orderId = generateOrderId();
 
     // 5. Create order
     const order = new Order({
         user: userId,
         cart: cart._id,
-        items: orderItems,
+        items: orderItemsWithDiscount,
         shipping: {
             address: {
                 fullName: address.fullName,
@@ -111,15 +157,21 @@ export const createOrder = asyncHandler(async (req, res) => {
             method: paymentMethod,
             status: paymentMethod === 'cod' ? 'pending' : 'initiated',
             transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`,
-            amount: total // This will now be calculated using discount prices
+            amount: finalTotal
         },
         shippingAddress: addressId,
         paymentMethod,
-        subtotal, // This will now be the sum of discounted prices
+        subtotal: finalSubtotal,
         shippingCost,
-        total, // This will now be calculated using discounted subtotal
-        totalAmount: total, // This will also reflect the discounted total
-        orderId: orderId
+        total: finalTotal,
+        totalAmount: finalTotal,
+        orderId: orderId,
+        couponCode: appliedCoupon ? couponCode : null,
+        discountAmount: couponDiscount,
+        totalDiscount: orderItemsWithDiscount.reduce((acc, item) => {
+            const originalTotal = item.price * item.quantity;
+            return acc + (originalTotal - item.finalPrice);
+        }, 0)
     });
 
     try {
@@ -127,7 +179,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         await order.save();
 
         // Update stock for each item after order is saved
-        for (const item of orderItems) {
+        for (const item of orderItemsWithDiscount) {
             await Variant.findByIdAndUpdate(
                 item.sizeVariant,
                 { $inc: { stock: -item.quantity } },
@@ -139,9 +191,18 @@ export const createOrder = asyncHandler(async (req, res) => {
         cart.items = [];
         await cart.save();
 
+        // If coupon was applied successfully, add user to usedBy array
+        if (appliedCoupon) {
+            await Coupon.findByIdAndUpdate(appliedCoupon._id, {
+                $push: { usedBy: userId }
+            });
+        }
+
         return res.status(201).json({
             message: 'Order placed successfully',
-            orderId: orderId
+            orderId: orderId,
+            totalAmount: order.totalAmount,
+            totalDiscount: order.totalDiscount
         });
 
     } catch (error) {
@@ -421,3 +482,71 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
     }); // Add this closing brace for pdfDownloader function
 
 });
+
+const calculateReturnAmount = (orderItem, order) => {
+  // Get the original item price and quantity
+  const originalItemTotal = orderItem.price * orderItem.quantity;
+  
+  // Calculate product discount
+  const productDiscount = orderItem.price - orderItem.discountPrice;
+  const totalProductDiscount = productDiscount * orderItem.quantity;
+  
+  // Calculate proportional coupon discount if coupon was applied
+  let couponDiscountShare = 0;
+  if (order.couponCode && order.discountAmount > 0) {
+    // Calculate this item's share of the total coupon discount
+    const itemSharePercentage = orderItem.finalPrice / order.subtotal;
+    couponDiscountShare = order.discountAmount * itemSharePercentage;
+  }
+  
+  // Calculate final return amount
+  const returnAmount = originalItemTotal - totalProductDiscount - couponDiscountShare;
+  
+  return {
+    returnAmount,
+    productDiscount: totalProductDiscount,
+    couponDiscountShare
+  };
+};
+
+export const processReturn = async (req, res) => {
+  try {
+    const { orderId, itemId } = req.body;
+    const order = await Order.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    
+    const orderItem = order.items.find(item => item._id.toString() === itemId);
+    if (!orderItem) {
+      return res.status(404).json({ message: 'Order item not found' });
+    }
+    
+    // Calculate return amounts
+    const { returnAmount, productDiscount, couponDiscountShare } = calculateReturnAmount(orderItem, order);
+    
+    // Update revenue records
+    await updateRevenue(-returnAmount);
+    
+    // Update order totals
+    order.totalAmount -= returnAmount;
+    order.totalDiscount -= (productDiscount + couponDiscountShare);
+    if (order.couponCode) {
+      order.discountAmount -= couponDiscountShare;
+    }
+    
+    // Update item status
+    orderItem.status = 'Returned';
+    await order.save();
+    
+    res.json({
+      message: 'Return processed successfully',
+      returnAmount,
+      updatedOrder: order
+    });
+    
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

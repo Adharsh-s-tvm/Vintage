@@ -198,13 +198,20 @@ function Checkout() {
     }
 
     try {
+      const orderData = {
+        addressId: selectedAddress,
+        paymentMethod: selectedPaymentMethod,
+        couponCode: selectedCoupon
+      };
+
       if (selectedPaymentMethod === 'cod') {
-        const orderResponse = await axios.post(`${api}/user/orders`, {
-          addressId: selectedAddress,
-          paymentMethod: selectedPaymentMethod
-        }, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-        });
+        const orderResponse = await axios.post(
+          `${api}/user/orders`,
+          orderData,
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+          }
+        );
         
         toast.success('Order placed successfully!');
         navigate(`/success/${orderResponse.data.orderId}`);
@@ -299,20 +306,40 @@ function Checkout() {
     }
 
     try {
-      const response = await axios.post(
+      // First, apply the coupon and get the discount amount
+      const applyResponse = await axios.post(
         `${api}/user/coupons/apply`,
         {
           couponCode,
-          cartTotal: subtotal
+          cartTotal: subtotal // Using subtotal from Redux state
         },
         {
           headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
         }
       );
 
+      // If successful, set the coupon and discount
       setSelectedCoupon(couponCode);
-      setCouponDiscount(response.data.discountAmount);
-      toast.success('Coupon applied successfully!');
+      setCouponDiscount(applyResponse.data.discountAmount);
+
+      // Calculate final prices with coupon
+      const calculateResponse = await axios.post(
+        `${api}/user/coupons/calculate-price`,
+        {
+          couponCode,
+          cartItems: cartItems // Using cartItems from Redux state
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        }
+      );
+
+      // Update cart items with new prices
+      dispatch({
+        type: 'UPDATE_CART_PRICES',
+        payload: calculateResponse.data.items
+      });
+
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to apply coupon');
       setSelectedCoupon(null);
