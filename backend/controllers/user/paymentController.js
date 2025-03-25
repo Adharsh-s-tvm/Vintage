@@ -25,7 +25,15 @@ const generateOrderId = () => {
 // Helper function to create order
 const createOrder = async (orderData, session) => {
   try {
-    const { userId, addressId, paymentMethod } = orderData;
+    const { 
+      userId, 
+      addressId, 
+      paymentMethod, 
+      amount,
+      couponCode,
+      discountAmount,
+      razorpayPaymentId 
+    } = orderData;
 
     const cart = await Cart.findOne({ user: userId })
       .populate({
@@ -61,9 +69,7 @@ const createOrder = async (orderData, session) => {
         { session }
       );
 
-      // Use discountPrice if available, otherwise use regular price
-      const itemPrice = variant.discountPrice || variant.price;
-      const itemTotal = item.quantity * itemPrice;
+      const itemTotal = item.quantity * variant.price;
       subtotal += itemTotal;
 
       orderItems.push({
@@ -71,7 +77,6 @@ const createOrder = async (orderData, session) => {
         sizeVariant: item.variant._id,
         quantity: item.quantity,
         price: variant.price,
-        discountPrice: variant.discountPrice || variant.price,
         finalPrice: itemTotal,
         status: 'pending'
       });
@@ -107,10 +112,12 @@ const createOrder = async (orderData, session) => {
       payment: {
         method: paymentMethod,
         status: 'completed',
-        transactionId: orderData.razorpayPaymentId || `TXN${Date.now()}`,
-        amount: total
+        transactionId: razorpayPaymentId || `TXN${Date.now()}`,
+        amount: amount
       },
-      totalAmount: total,
+      totalAmount: amount,
+      couponCode: couponCode,
+      discountAmount: discountAmount,
       orderId: orderId,
       orderStatus: 'Processing'
     }], { session });
@@ -129,7 +136,7 @@ const createOrder = async (orderData, session) => {
 
 export const createPaymentOrder = asyncHandler(async (req, res) => {
   try {
-    const { amount, addressId, paymentMethod } = req.body;
+    const { amount, addressId, paymentMethod, } = req.body;
     
     if (!amount || !addressId || !paymentMethod) {
       res.status(400);
@@ -152,13 +159,15 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
     const tempPayment = await Payment.create({
       userId: req.user._id,
       orderId: razorpayOrder.id,
-      amount: amount, // This will be the discounted amount
+      amount: amount,
       status: 'created',
       tempOrderData: {
         addressId,
         paymentMethod,
         amount,
-        userId: req.user._id
+        userId: req.user._id,
+        couponCode: req.body.couponCode,
+        discountAmount: req.body.discountAmount
       }
     });
 
@@ -177,13 +186,18 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
 });
 
 export const verifyPayment = asyncHandler(async (req, res) => {
+  console.log("Request " ,req);
+  
   const session = await mongoose.startSession();
   try {
     const { 
       razorpay_order_id, 
       razorpay_payment_id, 
       razorpay_signature,
-      tempOrderId
+      tempOrderId,
+      amount, // This is total-couponDiscount
+      couponCode, // Add this
+      discountAmount // Add this
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -207,7 +221,16 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       throw new Error('Temporary payment record not found');
     }
 
-    const order = await createOrder(tempPayment.tempOrderData, session);
+    // Pass coupon details to createOrder
+    const orderData = {
+      ...tempPayment.tempOrderData,
+      razorpayPaymentId: razorpay_payment_id,
+      amount: amount,
+      couponCode: couponCode,
+      discountAmount: discountAmount
+    };
+
+    const order = await createOrder(orderData, session);
 
     await Payment.findByIdAndUpdate(
       tempOrderId,

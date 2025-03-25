@@ -220,7 +220,7 @@ function Checkout() {
 
       // For online payment
       const paymentResponse = await axios.post(`${api}/payments/create-order`, {
-        amount: total,
+        amount: total - couponDiscount,
         addressId: selectedAddress,
         paymentMethod: selectedPaymentMethod
       }, {
@@ -245,9 +245,11 @@ function Checkout() {
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
               tempOrderId: paymentResponse.data.tempOrderId,
-              amount: total,
+              amount: total - couponDiscount,
               addressId: selectedAddress,
-              paymentMethod: selectedPaymentMethod
+              paymentMethod: selectedPaymentMethod,
+              couponCode: selectedCoupon,
+              discountAmount: couponDiscount
             }, {
               headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
             });
@@ -256,18 +258,18 @@ function Checkout() {
               toast.success('Payment successful!');
               navigate(`/success/${verifyResponse.data.orderId}`);
             } else {
-              navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
+              navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
             }
           } catch (error) {
             console.error('Payment verification error:', error);
             toast.error(error.response?.data?.message || 'Payment verification failed');
-            navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
+            navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
           }
         },
         modal: {
           ondismiss: function() {
             toast.info('Payment cancelled');
-            navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
+            navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
           }
         },
         prefill: {
@@ -284,7 +286,7 @@ function Checkout() {
 
       rzp.on('payment.failed', function (response) {
         toast.error('Payment failed');
-        navigate(`/order-failed?amount=${total}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
+        navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
       });
 
     } catch (error) {
