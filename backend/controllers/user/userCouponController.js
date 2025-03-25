@@ -1,16 +1,23 @@
 import Coupon from '../../models/product/couponModel.js';
 
 export const getAvailableCoupons = async (req, res) => {
+  
+    console.log("function called coupon 1");
+    
+
   try {
+    console.log("function called coupon 2");
+    
     const currentDate = new Date();
     const coupons = await Coupon.find({
-      startDate: { $lte: currentDate },
-      endDate: { $gte: currentDate },
+      
       isExpired: false,
       usedBy: { $nin: [req.user._id] }
     });
+    console.log( "coupons" , coupons);
+    
 
-    res.json(coupons);
+    res.json(coupons );
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

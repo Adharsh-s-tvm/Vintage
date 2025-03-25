@@ -179,11 +179,13 @@ function Checkout() {
   };
 
   const fetchAvailableCoupons = async () => {
+    
     try {
       const response = await axios.get(`${api}/user/coupons/available`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
       setAvailableCoupons(response.data);
+      console.log("response.data ",response.data);
     } catch (error) {
       toast.error('Failed to fetch available coupons');
     }
