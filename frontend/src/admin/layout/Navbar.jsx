@@ -128,13 +128,7 @@ export function Navbar({ onMobileMenuClick }) {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-blue-light overflow-hidden">
-                                        <img
-                                            src="https://i.pravatar.cc/100?img=8"
-                                            alt=""
-                                            className="h-full w-full object-cover"
-                                        />
-                                    </div>
+                                    
                                     <div className="hidden md:block text-left">
                                         <p className="text-sm font-medium">{adminData?.firstname || ''} {adminData?.lastname || ''}</p>
                                         <p className="text-xs text-gray-500">{adminData?.email || ''}</p>
@@ -143,9 +137,9 @@ export function Navbar({ onMobileMenuClick }) {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56 bg-white text-black">
-                                <DropdownMenuItem>Profile</DropdownMenuItem>
+                                {/* <DropdownMenuItem>Profile</DropdownMenuItem>
                                 <DropdownMenuItem>Settings</DropdownMenuItem>
-                                <DropdownMenuItem>Billing</DropdownMenuItem>
+                                <DropdownMenuItem>Billing</DropdownMenuItem> */}
                                 <DropdownMenuItem className="text-red-500" onClick={handleLogout}>
                                     Logout
                                 </DropdownMenuItem>
