@@ -205,8 +205,10 @@ const ProductListing = () => {
       const response = await axios.get(`${api}/products/categories`);
       console.log("Category fetched :", response.data)
       const categoriesData = response.data.categories || response.data;
-      // Filter out blocked categories
-      const activeCategories = categoriesData.filter(category => !category.isBlocked);
+      // Filter out blocked categories and not listed categories
+      const activeCategories = categoriesData.filter(category => 
+        !category.isBlocked && category.status !== 'Not listed'
+      );
       setCategories(activeCategories);
     } catch (error) {
       console.error('Failed to fetch categories:', error);
@@ -218,8 +220,10 @@ const ProductListing = () => {
       const response = await axios.get(`${api}/admin/products/brands`);
       console.log('Brands response:', response.data);
       const brandsData = response.data.brands || response.data;
-      // Filter out blocked brands
-      const activeBrands = brandsData.filter(brand => !brand.isBlocked);
+      // Filter out blocked brands and brands with 'Not listed' status
+      const activeBrands = brandsData.filter(brand => 
+        !brand.isBlocked && brand.status !== 'Not listed'
+      );
       setBrands(activeBrands);
     } catch (error) {
       console.error('Failed to fetch brands:', error);
@@ -244,21 +248,34 @@ const ProductListing = () => {
 
   // Filter products based on selected filters
   const filteredProducts = products.filter(product => {
+    // Check if product is blocked
     if (product.isBlocked) {
-        console.log(`Product ${product._id} filtered out - blocked product`);
-        return false;
+      console.log(`Product ${product._id} filtered out - blocked product`);
+      return false;
+    }
+
+    // Filter out products from brands with 'Not listed' status
+    if (product.brand.status === 'Not listed') {
+      console.log(`Product ${product._id} filtered out - brand not listed`);
+      return false;
+    }
+
+    // Filter out products from categories with 'Not listed' status
+    if (product.category.status === 'Not listed') {
+      console.log(`Product ${product._id} filtered out - category not listed`);
+      return false;
     }
 
     const activeVariants = product.variants.filter(variant => !variant.isBlocked);
     if (activeVariants.length === 0) {
-        console.log(`Product ${product._id} filtered out - no active variants`);
-        return false;
+      console.log(`Product ${product._id} filtered out - no active variants`);
+      return false;
     }
 
     const productLowestPrice = Math.min(...activeVariants.map(variant => variant.price));
     if (productLowestPrice < priceRange[0] || productLowestPrice > priceRange[1]) {
-        console.log(`Product ${product._id} filtered out - price range`);
-        return false;
+      console.log(`Product ${product._id} filtered out - price range`);
+      return false;
     }
 
     // Category filter

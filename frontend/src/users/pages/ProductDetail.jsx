@@ -133,7 +133,8 @@ export default function ProductDetail() {
         const productData = response.data.product;
         console.log("Single product: ", productData);
 
-        if (productData.isBlocked) {
+        // Check if product is blocked or if brand is not listed
+        if (productData.isBlocked || productData.brand.status === 'Not listed' || productData.category.status === 'Not listed') {
           toast({
             variant: "destructive",
             title: "Product Unavailable",
@@ -253,7 +254,6 @@ export default function ProductDetail() {
   // Add this function to fetch related products
   const fetchRelatedProducts = async (product) => {
     try {
-      // Fetch products with the same category or brand
       const response = await axios.get(`${api}/products`, {
         params: {
           category: product.category._id,
@@ -262,7 +262,12 @@ export default function ProductDetail() {
         }
       });
 
-      setRelatedProducts(response.data.products.slice(0, 4)); // Limit to 4 related products
+      // Filter out products with 'Not listed' brand status
+      const filteredProducts = response.data.products.filter(
+        product => product.brand.status !== 'Not listed'
+      );
+      
+      setRelatedProducts(filteredProducts.slice(0, 4)); // Limit to 4 related products
     } catch (error) {
       console.error('Error fetching related products:', error);
     }
