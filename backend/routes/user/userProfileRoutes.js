@@ -12,6 +12,7 @@ import {
     updateUserEmail
 } from '../../controllers/user/userProfileController.js';
 import { upload } from '../../middlewares/multer.js';
+import { getWalletDetails } from "../../controllers/user/userWalletController.js";
 
 const router = express.Router();
 
@@ -36,6 +37,11 @@ router.put("/change-password", authenticate, changePassword);
 
 // Add this route to your existing userRoutes.js file
 router.put('/profile/update-email', authenticate, updateUserEmail);
+
+
+router.get('/wallet', authenticate, getWalletDetails);
+
+
 
 export default router;
 

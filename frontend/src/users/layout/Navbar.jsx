@@ -8,7 +8,8 @@ import {
   X,
   Heart,
   LogOut,
-  UserCircle
+  UserCircle,
+  Wallet
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import {
@@ -252,6 +253,10 @@ export function Navbar() {
                     <DropdownMenuItem onClick={() => navigate('/wishlist')}>
                       <Heart className="mr-2 h-4 w-4" />
                       <span>My Wishlist</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate('/wallet')}>
+                      <Wallet className="mr-2 h-4 w-4" />
+                      <span>Wallet</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={handleLogout}>
                       <LogOut className="mr-2 h-4 w-4" />

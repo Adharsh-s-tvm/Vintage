@@ -10,7 +10,8 @@ import {
     resetPassword,
 } from "../../controllers/user/userController.js";
 
-import { authenticate, authorizeAdmin } from "../../middlewares/authMiddleware.js";
+import { authenticate } from "../../middlewares/authMiddleware.js";
+import { getWalletDetails } from "../../controllers/user/userWalletController.js";
 
 const router = express.Router();
 
@@ -31,6 +32,9 @@ router.post('/google', googleLogin)
 
 router.post("/check-email", checkEmail);
 router.post("/reset-password", resetPassword);
+
+
+
 
 
 

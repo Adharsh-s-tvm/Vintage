@@ -9,6 +9,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Coupon from '../../models/product/couponModel.js';
+import { processReturnRefund } from './userWalletController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -115,23 +116,16 @@ export const createOrder = asyncHandler(async (req, res) => {
     const finalSubtotal = subtotal - couponDiscount;
     const finalTotal = finalSubtotal + shippingCost;
 
-    // Inside createOrder function, after calculating coupon discount
-    const orderItemsWithDiscount = orderItems.map(item => {
-        const itemShare = item.finalPrice / subtotal;
-        const itemCouponDiscount = couponDiscount * itemShare;
-        const finalPriceAfterCoupon = item.finalPrice - itemCouponDiscount;
-
-        return {
-            product: item.product,
-            sizeVariant: item.sizeVariant,
-            quantity: item.quantity,
-            price: item.price,
-            discountPrice: item.discountPrice,
-            finalPrice: finalPriceAfterCoupon,
-            savedAmount: (item.price * item.quantity) - finalPriceAfterCoupon,
-            status: 'pending'
-        };
-    });
+    // Create order items with discount information
+    const orderItemsWithDiscount = orderItems.map(item => ({
+        product: item.product,
+        sizeVariant: item.sizeVariant,
+        quantity: item.quantity,
+        price: item.price,
+        discountPrice: item.discountPrice,
+        finalPrice: item.finalPrice,
+        status: 'pending'
+    }));
 
     const orderId = generateOrderId();
 
@@ -169,9 +163,10 @@ export const createOrder = asyncHandler(async (req, res) => {
         couponCode: appliedCoupon ? couponCode : null,
         discountAmount: couponDiscount,
         totalDiscount: orderItemsWithDiscount.reduce((acc, item) => {
-            const originalTotal = item.price * item.quantity;
-            return acc + (originalTotal - item.finalPrice);
-        }, 0)
+            const itemOriginalTotal = item.price * item.quantity;
+            const itemFinalTotal = item.finalPrice * item.quantity;
+            return acc + (itemOriginalTotal - itemFinalTotal);
+        }, 0) + couponDiscount
     });
 
     try {
@@ -510,43 +505,52 @@ const calculateReturnAmount = (orderItem, order) => {
 };
 
 export const processReturn = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
-    const { orderId, itemId } = req.body;
-    const order = await Order.findOne({ orderId });
-    
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
-    }
-    
-    const orderItem = order.items.find(item => item._id.toString() === itemId);
-    if (!orderItem) {
-      return res.status(404).json({ message: 'Order item not found' });
-    }
-    
-    // Calculate return amounts
-    const { returnAmount, productDiscount, couponDiscountShare } = calculateReturnAmount(orderItem, order);
-    
-    // Update revenue records
-    await updateRevenue(-returnAmount);
-    
-    // Update order totals
-    order.totalAmount -= returnAmount;
-    order.totalDiscount -= (productDiscount + couponDiscountShare);
-    if (order.couponCode) {
-      order.discountAmount -= couponDiscountShare;
-    }
-    
-    // Update item status
-    orderItem.status = 'Returned';
-    await order.save();
-    
-    res.json({
-      message: 'Return processed successfully',
-      returnAmount,
-      updatedOrder: order
+    await session.withTransaction(async () => {
+      const { orderId, itemId } = req.body;
+      const order = await Order.findOne({ orderId }).session(session);
+      
+      if (!order) {
+        throw new Error('Order not found');
+      }
+      
+      const orderItem = order.items.find(item => item._id.toString() === itemId);
+      if (!orderItem) {
+        throw new Error('Order item not found');
+      }
+      
+      // Calculate return amounts
+      const { returnAmount } = calculateReturnAmount(orderItem, order);
+      
+      // Process refund to wallet
+      const refundSuccess = await processReturnRefund(
+        orderId,
+        order.user,
+        returnAmount,
+        `Refund for returned item from order #${order.orderId}`
+      );
+
+      if (!refundSuccess) {
+        throw new Error('Failed to process refund to wallet');
+      }
+      
+      // Update item status
+      orderItem.status = 'Returned';
+      orderItem.returnProcessed = true;
+      await order.save({ session });
+      
+      res.json({
+        success: true,
+        message: 'Return processed and refund added to wallet successfully',
+        returnAmount,
+        updatedOrder: order
+      });
     });
-    
   } catch (error) {
+    await session.abortTransaction();
     res.status(500).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 };

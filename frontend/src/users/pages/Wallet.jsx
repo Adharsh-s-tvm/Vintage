@@ -18,10 +18,10 @@ function Wallet() {
 
   const fetchWalletDetails = async () => {
     try {
-      const response = await axios.get(`${api}/user/wallet`, {
+      setLoading(true);
+      const response = await axios.get(`${api}/user/profile/wallet`, {
         headers: { 
           Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-          'Content-Type': 'application/json'
         },
         withCredentials: true
       });
@@ -31,10 +31,10 @@ function Wallet() {
       } else {
         toast.error('No wallet data received');
       }
-      setLoading(false);
     } catch (error) {
       console.error('Wallet fetch error:', error);
-      toast.error(error.response?.data?.message || 'Failed to fetch wallet data');
+      toast.error('Failed to fetch wallet details');
+    } finally {
       setLoading(false);
     }
   };
@@ -42,7 +42,12 @@ function Wallet() {
   if (loading) {
     return (
       <Layout>
-        <div className="max-w-3xl mx-auto p-4">Loading...</div>
+        <div className="max-w-3xl mx-auto p-4">
+          <div className="animate-pulse">
+            <div className="h-32 bg-gray-200 rounded-lg mb-4"></div>
+            <div className="h-64 bg-gray-200 rounded-lg"></div>
+          </div>
+        </div>
       </Layout>
     );
   }

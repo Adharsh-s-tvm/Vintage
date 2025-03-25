@@ -67,6 +67,10 @@ const orderSchema = new mongoose.Schema(
                     type: Boolean,
                     default: false,
                 },
+                returnProcessed: {
+                    type: Boolean,
+                    default: false,
+                },
                 returnReason: {
                     type: String,
                     enum: [
@@ -77,13 +81,10 @@ const orderSchema = new mongoose.Schema(
                         "Other"
                     ],
                 },
-                additionalDetails: {
-                    type: String,
-                },
                 returnStatus: {
                     type: String,
                     default: "Return Pending",
-                    enum: ["Return Pending", "Return Approved", "Return Rejected"],
+                    enum: ["Return Pending", "Return Approved", "Return Rejected", "Refunded"],
                 },
                 rejectionReason: {
                     type: String,

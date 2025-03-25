@@ -1,12 +1,10 @@
 
 
 LOADERS.............
-WISHLIST REMOVE RAW.................
 IMAGE VARIANT EDIT CROP..................
 
 If a product is added to the cart, ensure it is removed from the wishlist if it exists there.
 
-Display products moved to checkout with: Applicable discount
 
 If the verification is accepted ,then return the previously paid amount by the consumer or user to the wallet.
 
