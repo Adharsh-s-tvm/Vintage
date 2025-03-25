@@ -22,6 +22,7 @@ import adminOrderRoutes from './routes/admin/adminOrderRoutes.js';
 import paymentRoutes from './routes/user/paymentRoutes.js';
 import adminOfferRoutes from './routes/admin/adminOfferRoutes.js'
 import adminCouponRoutes from './routes/admin/adminCouponRoutes.js'
+import userCouponRoutes from './routes/user/userCouponRoutes.js'
 
 
 dotenv.config()
@@ -79,6 +80,8 @@ app.use("/api/user/wishlist", userWishlistRoutes);
 app.use('/api/user/orders', userOrderRoutes);
 
 app.use('/api/payments', paymentRoutes);
+
+app.use("/api/user/coupons", userCouponRoutes);
 
 app.use(errorHandler)
 app.listen(port, () => console.log(`Server running on port : ${port}`))

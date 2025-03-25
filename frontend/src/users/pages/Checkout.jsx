@@ -20,6 +20,9 @@ import { Label } from '../../ui/Label';
 import { Separator } from '../../ui/Separator';
 import { MapPin, CreditCard, Shield, RefreshCw, Truck, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/Dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
+
+
 
 function AddressForm({ onAddressAdded, onClose }) {
   const [formData, setFormData] = useState({
@@ -149,12 +152,15 @@ function Checkout() {
   const [selectedAddress, setSelectedAddress] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
 
-  useEffect(() => {
-    // Remove fetchCart since cart data is managed by Redux
-    fetchAddresses();
-  }, []);
+  // Add these new state variables at the top of the Checkout component
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
-  // Remove fetchCart function as it's handled in Cart.jsx
+  useEffect(() => {
+    fetchAddresses();
+    fetchAvailableCoupons();
+  }, []);
 
   const fetchAddresses = async () => {
     try {
@@ -169,6 +175,17 @@ function Checkout() {
       }
     } catch (error) {
       toast.error('Failed to fetch addresses');
+    }
+  };
+
+  const fetchAvailableCoupons = async () => {
+    try {
+      const response = await axios.get(`${api}/user/coupons/available`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+      });
+      setAvailableCoupons(response.data);
+    } catch (error) {
+      toast.error('Failed to fetch available coupons');
     }
   };
 
@@ -270,6 +287,35 @@ function Checkout() {
   const handleAddressAdded = (newAddress) => {
     setAddresses([...addresses, newAddress]);
     setSelectedAddress(newAddress._id);
+  };
+
+  const handleApplyCoupon = async (couponCode) => {
+    if (couponCode === "none") {
+      setSelectedCoupon(null);
+      setCouponDiscount(0);
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${api}/user/coupons/apply`,
+        {
+          couponCode,
+          cartTotal: subtotal
+        },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        }
+      );
+
+      setSelectedCoupon(couponCode);
+      setCouponDiscount(response.data.discountAmount);
+      toast.success('Coupon applied successfully!');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to apply coupon');
+      setSelectedCoupon(null);
+      setCouponDiscount(0);
+    }
   };
 
   if (loading) {
@@ -453,6 +499,30 @@ function Checkout() {
               </CardContent>
             </Card>
 
+            {/* Coupon Selection */}
+            <div className="mb-4">
+              <Label htmlFor="coupon">Apply Coupon</Label>
+              <Select
+                value={selectedCoupon || "none"}
+                onValueChange={handleApplyCoupon}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a coupon" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No coupon</SelectItem>
+                  {availableCoupons.map((coupon) => (
+                    <SelectItem key={coupon._id} value={coupon.couponCode}>
+                      {coupon.couponCode} - {coupon.discountType === 'percentage' 
+                        ? `${coupon.discountValue}% off` 
+                        : `₹${coupon.discountValue} off`}
+                      {coupon.minOrderAmount > 0 && ` (Min: ₹${coupon.minOrderAmount})`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Payment Summary Card */}
             <Card>
               <CardHeader>
@@ -462,16 +532,22 @@ function Checkout() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span>Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>₹{subtotal.toFixed(2)}</span>
                   </div>
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Coupon Discount</span>
+                      <span>-₹{couponDiscount.toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between">
                     <span>Shipping</span>
-                    <span>${shipping.toFixed(2)}</span>
+                    <span>₹{shipping.toFixed(2)}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between font-bold">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>₹{(total - couponDiscount).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
