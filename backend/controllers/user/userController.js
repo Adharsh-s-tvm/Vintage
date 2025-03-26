@@ -187,7 +187,10 @@ const googleLogin = asyncHandler(async (req, res) => {
             }
         );
 
-        const { email, given_name: firstname, family_name: lastname } = userInfo.data;
+        const { email, given_name: firstname, family_name } = userInfo.data;
+
+        // Use family_name if available, otherwise use a default value
+        const lastname = family_name || null;
 
         // Find or create user
         let user = await User.findOne({ email });

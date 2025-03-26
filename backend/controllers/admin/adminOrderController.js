@@ -215,7 +215,7 @@ export const handleReturnRequest = async (req, res) => {
       );
 
       // Process refund for online payments
-      if (order.payment.method === 'online') {
+      if (order.payment.method) {
         // Calculate refund amount for this item
         const refundAmount = order.totalAmount; // Use the final price of the item
         
