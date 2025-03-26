@@ -39,7 +39,7 @@ export default function OrderFailed() {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: paymentResponse.data.order.amount,
         currency: "INR",
-        name: "Your Store Name",
+        name: "Vintage Jacket Store",
         description: "Order Payment",
         order_id: paymentResponse.data.order.id,
         handler: async function (response) {

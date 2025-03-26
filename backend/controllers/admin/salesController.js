@@ -83,52 +83,29 @@ export const getSalesReport = async (req, res) => {
             {
                 $group: {
                     _id: null,
-                    totalRevenue: { 
+                    totalRevenue: {
                         $sum: {
                             $cond: [
+                                { $eq: ['$orderStatus', 'Delivered'] },
                                 {
-                                    $and: [
-                                        // Not cancelled
-                                        { $not: { $eq: ['$orderStatus', 'Cancelled'] } },
-                                        {
-                                            $or: [
-                                                // For COD orders
-                                                { 
-                                                    $and: [
-                                                        { $eq: ['$payment.method', 'cod'] },
-                                                        { $eq: ['$orderStatus', 'Delivered'] }
-                                                    ]
-                                                },
-                                                // For online orders
-                                                { 
-                                                    $and: [
-                                                        { $eq: ['$payment.method', 'online'] },
-                                                        { $in: ['$payment.status', ['completed', 'pending']] }
-                                                    ]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                {
-                                    $subtract: [
-                                        '$totalAmount',
-                                        {
-                                            $sum: {
-                                                $map: {
-                                                    input: '$items',
-                                                    as: 'item',
-                                                    in: {
-                                                        $cond: [
-                                                            { $eq: ['$$item.returnStatus', 'Return Approved'] },
-                                                            '$$item.finalPrice',
-                                                            0
+                                    $sum: {
+                                        $map: {
+                                            input: '$items',
+                                            as: 'item',
+                                            in: {
+                                                $cond: [
+                                                    {
+                                                        $and: [
+                                                            { $ne: ['$orderStatus', 'Cancelled'] },
+                                                            { $ne: ['$$item.status', 'Returned'] }
                                                         ]
-                                                    }
-                                                }
+                                                    },
+                                                    '$totalAmount',
+                                                    0
+                                                ]
                                             }
                                         }
-                                    ]
+                                    }
                                 },
                                 0
                             ]
@@ -140,15 +117,6 @@ export const getSalesReport = async (req, res) => {
                     },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$orderStatus', 'Cancelled'] }, 1, 0] }
-                    },
-                    returnedOrders: {
-                        $sum: {
-                            $cond: [
-                                { $gt: [{ $size: { $filter: { input: '$items', as: 'item', cond: { $eq: ['$$item.returnStatus', 'Return Approved'] } } } }, 0] },
-                                1,
-                                0
-                            ]
-                        }
                     }
                 }
             }
@@ -161,21 +129,20 @@ export const getSalesReport = async (req, res) => {
             { 
                 $match: {
                     ...dateFilter,
-                    orderStatus: { $nin: ['Cancelled', 'Returned'] },
-                    $or: [
-                        {
-                            $and: [
-                                { 'payment.method': 'cod' },
-                                { 'orderStatus': 'Delivered' }
-                            ]
-                        },
-                        {
-                            $and: [
-                                { 'payment.method': 'online' },
-                                { 'payment.status': { $in: ['completed', 'pending'] } }
-                            ]
+                    orderStatus: 'Delivered'
+                }
+            },
+            {
+                $project: {
+                    createdAt: 1,
+                    items: {
+                        $filter: {
+                            input: '$items',
+                            as: 'item',
+                            cond: { $ne: ['$$item.status', 'Returned'] }
                         }
-                    ]
+                    },
+                    payment: 1
                 }
             },
             {
@@ -187,7 +154,15 @@ export const getSalesReport = async (req, res) => {
                             timezone: 'Asia/Kolkata'
                         }
                     },
-                    sales: { $sum: '$totalAmount' },
+                    sales: {
+                        $sum: {
+                            $reduce: {
+                                input: '$items',
+                                initialValue: 0,
+                                in: { $add: ['$$value', '$$this.finalPrice'] }
+                            }
+                        }
+                    },
                     orders: { $sum: 1 }
                 }
             },
@@ -207,8 +182,7 @@ export const getSalesReport = async (req, res) => {
                 totalRevenue: 0,
                 totalOrders: 0,
                 pendingOrders: 0,
-                cancelledOrders: 0,
-                returnedOrders: 0
+                cancelledOrders: 0
             },
             salesData: salesData.map(item => ({
                 date: item._id,
