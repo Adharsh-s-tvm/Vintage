@@ -143,20 +143,21 @@ export const getSalesReport = async (req, res) => {
             { 
                 $match: {
                     ...dateFilter,
-                    orderStatus: 'Delivered'
+                    $or: [
+                        { orderStatus: 'Delivered' },
+                        { 'items.status': 'Returned' },
+                        { 'items.returnStatus': 'Refunded' },
+                        { 'items.returnStatus': 'Return Approved' }
+                    ]
                 }
             },
             {
                 $project: {
                     createdAt: 1,
-                    items: {
-                        $filter: {
-                            input: '$items',
-                            as: 'item',
-                            cond: { $ne: ['$$item.status', 'Returned'] }
-                        }
-                    },
-                    payment: 1
+                    orderStatus: 1,
+                    items: 1,
+                    payment: 1,
+                    totalAmount: 1
                 }
             },
             {
@@ -170,14 +171,60 @@ export const getSalesReport = async (req, res) => {
                     },
                     sales: {
                         $sum: {
-                            $reduce: {
-                                input: '$items',
-                                initialValue: 0,
-                                in: { $add: ['$$value', '$$this.finalPrice'] }
-                            }
+                            $cond: [
+                                {
+                                    $or: [
+                                        { $eq: ['$orderStatus', 'Cancelled'] },
+                                        {
+                                            $gt: [{
+                                                $size: {
+                                                    $filter: {
+                                                        input: '$items',
+                                                        as: 'item',
+                                                        cond: {
+                                                            $or: [
+                                                                { $eq: ['$$item.status', 'Returned'] },
+                                                                { $eq: ['$$item.returnStatus', 'Refunded'] },
+                                                                { $eq: ['$$item.returnStatus', 'Return Approved'] }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }, 0]
+                                        }
+                                    ]
+                                },
+                                0,
+                                '$totalAmount'
+                            ]
                         }
                     },
-                    orders: { $sum: 1 }
+                    orders: { $sum: 1 },
+                    returns: {
+                        $sum: {
+                            $cond: [
+                                {
+                                    $gt: [{
+                                        $size: {
+                                            $filter: {
+                                                input: '$items',
+                                                as: 'item',
+                                                cond: {
+                                                    $or: [
+                                                        { $eq: ['$$item.status', 'Returned'] },
+                                                        { $eq: ['$$item.returnStatus', 'Refunded'] },
+                                                        { $eq: ['$$item.returnStatus', 'Return Approved'] }
+                                                    ]
+                                                }
+                                            }
+                                        }
+                                    }, 0]
+                                },
+                                1,
+                                0
+                            ]
+                        }
+                    }
                 }
             },
             { $sort: { '_id': 1 } }
@@ -186,7 +233,7 @@ export const getSalesReport = async (req, res) => {
 
         // Get recent transactions
         const transactions = await Order.find(dateFilter)
-            .select('orderId totalAmount payment createdAt orderStatus items.returnStatus')
+            .select('orderId totalAmount payment createdAt orderStatus items.status items.returnStatus')
             .sort('-createdAt')
             .limit(10);
 
@@ -208,7 +255,11 @@ export const getSalesReport = async (req, res) => {
                 orderId: t.orderId,
                 amount: t.totalAmount,
                 paymentMethod: t.payment.method,
-                status: t.items.some(item => item.returnStatus === 'Return Approved') ? 'Returned' : t.orderStatus,
+                status: t.items.some(item => 
+                    item.status === 'Returned' || 
+                    item.returnStatus === 'Refunded' || 
+                    item.returnStatus === 'Return Approved'
+                ) ? 'Returned' : t.orderStatus,
                 createdAt: t.createdAt
             }))
         });

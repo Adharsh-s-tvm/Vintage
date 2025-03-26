@@ -220,20 +220,24 @@ export default function Dashboard() {
                                             <TableCell>Order #{transaction.orderId}</TableCell>
                                             <TableCell>
                                                 <span className={`px-2 py-1 ${
-                                                    transaction.status === 'Cancelled' || transaction.status === 'Returned'
-                                                        ? 'bg-gray-100 text-gray-800'
-                                                        : 'bg-green-100 text-green-800'
+                                                    transaction.status === 'Cancelled' 
+                                                        ? 'bg-red-100 text-red-800'
+                                                        : transaction.status === 'Returned' || transaction.status === 'Refunded'
+                                                            ? 'bg-orange-100 text-orange-800'
+                                                            : 'bg-green-100 text-green-800'
                                                 } rounded-full text-xs`}>
                                                     {transaction.status === 'Cancelled' 
                                                         ? '—' 
-                                                        : transaction.status === 'Returned'
-                                                        ? '-'
-                                                        : 'CREDIT'}
+                                                        : transaction.status === 'Returned' || transaction.status === 'Refunded'
+                                                            ? 'REFUND'
+                                                            : 'CREDIT'}
                                                 </span>
                                             </TableCell>
                                             <TableCell>
                                                 <span className={
-                                                    transaction.status === 'Cancelled' || transaction.status === 'Returned'
+                                                    transaction.status === 'Cancelled' || 
+                                                    transaction.status === 'Returned' || 
+                                                    transaction.status === 'Refunded'
                                                         ? 'text-red-600' 
                                                         : 'text-gray-900'
                                                 }>
@@ -245,9 +249,9 @@ export default function Dashboard() {
                                                 <span className={`px-2 py-1 rounded-full text-xs ${
                                                     transaction.status === 'Cancelled' 
                                                         ? 'bg-red-100 text-red-800'
-                                                        : transaction.status === 'Returned'
+                                                        : transaction.status === 'Returned' || transaction.status === 'Refunded'
                                                             ? 'bg-orange-100 text-orange-800'
-                                                            : transaction.status === 'Delivered' || transaction.status === 'completed'
+                                                            : transaction.status === 'Delivered'
                                                                 ? 'bg-green-100 text-green-800'
                                                                 : 'bg-yellow-100 text-yellow-800'
                                                 }`}>
