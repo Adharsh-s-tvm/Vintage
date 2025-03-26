@@ -168,8 +168,8 @@ export default function Dashboard() {
                             color="purple"
                         />
                         <StatsCard
-                            title="Pending Orders"
-                            value={stats.pendingOrders || 0}
+                            title="Returned Orders"
+                            value={stats.returnedOrders || 0}
                             icon={<Clock />}
                             color="yellow"
                         />

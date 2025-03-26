@@ -112,8 +112,22 @@ export const getSalesReport = async (req, res) => {
                         }
                     },
                     totalOrders: { $sum: 1 },
-                    pendingOrders: {
-                        $sum: { $cond: [{ $eq: ['$orderStatus', 'pending'] }, 1, 0] }
+                    returnedOrders: {
+                        $sum: {
+                            $cond: [
+                                { $gt: [{ 
+                                    $size: { 
+                                        $filter: { 
+                                            input: "$items",
+                                            as: "item",
+                                            cond: { $eq: ["$$item.status", "Returned"] }
+                                        }
+                                    }
+                                }, 0] },
+                                1,
+                                0
+                            ]
+                        }
                     },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$orderStatus', 'Cancelled'] }, 1, 0] }
@@ -181,7 +195,7 @@ export const getSalesReport = async (req, res) => {
             stats: stats[0] || {
                 totalRevenue: 0,
                 totalOrders: 0,
-                pendingOrders: 0,
+                returnedOrders: 0,
                 cancelledOrders: 0
             },
             salesData: salesData.map(item => ({
