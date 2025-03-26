@@ -55,36 +55,32 @@ export const processCancelRefund = async (orderId, userId) => {
 };
 
 // Process refund for returned order
-export const processReturnRefund = asyncHandler(async (orderId, userId, amount, description) => {
-  const session = await mongoose.startSession();
+export const processReturnRefund = async (orderId, userId, amount, description, session) => {
   try {
-    await session.withTransaction(async () => {
-      let wallet = await Wallet.findOne({ userId }).session(session);
-      
-      if (!wallet) {
-        wallet = await Wallet.create([{
-          userId,
-          balance: 0,
-          transactions: []
-        }], { session });
-        wallet = wallet[0];
-      }
+    let wallet = await Wallet.findOne({ userId }).session(session);
+    
+    if (!wallet) {
+      wallet = await Wallet.create([{
+        userId,
+        balance: 0,
+        transactions: []
+      }], { session });
+      wallet = wallet[0];
+    }
 
-      wallet.balance += amount;
-      wallet.transactions.push({
-        type: 'credit',
-        amount,
-        description: description || `Refund for order #${orderId}`,
-        date: new Date()
-      });
-
-      await wallet.save({ session });
-      return true;
+    wallet.balance += amount;
+    wallet.transactions.push({
+      userId,
+      type: 'credit',
+      amount,
+      description: description || `Refund for order #${orderId}`,
+      date: new Date()
     });
+
+    await wallet.save({ session });
+    return true;
   } catch (error) {
     console.error('Return refund processing error:', error);
     return false;
-  } finally {
-    session.endSession();
   }
-}); 
+}; 

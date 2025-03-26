@@ -1,6 +1,7 @@
 import Order from "../../models/product/orderModel.js";
 import mongoose from "mongoose";
 import Variant from "../../models/product/sizeVariantModel.js";
+import { processReturnRefund } from '../user/userWalletController.js';
 
 export const getAllOrders = async (req, res) => {
   try {
@@ -183,52 +184,79 @@ export const getReturnRequests = async (req, res) => {
 
 // Add this controller function for handling return requests
 export const handleReturnRequest = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
+    await session.startTransaction();
     const { orderId, itemId } = req.params;
     const { action } = req.body;
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findById(orderId)
+      .populate('items.product')
+      .populate('items.sizeVariant');
+      
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      throw new Error('Order not found');
     }
 
     const item = order.items.id(itemId);
     if (!item) {
-      return res.status(404).json({ message: "Order item not found" });
+      throw new Error('Order item not found');
     }
 
-    // Start a session for transaction
-    const session = await mongoose.startSession();
-    console.log("session started");
-    await session.withTransaction(async () => {
-      if (action === 'accept') {
-        item.returnStatus = 'Return Approved';
-        item.status = 'Returned';
+    if (action === 'accept') {
+      item.returnStatus = 'Return Approved';
+      item.status = 'Returned';
+      
+      // Update inventory
+      await Variant.findByIdAndUpdate(
+        item.sizeVariant,
+        { $inc: { stock: item.quantity } },
+        { session }
+      );
+
+      // Process refund for online payments
+      if (order.payment.method === 'online') {
+        // Calculate refund amount for this item
+        const refundAmount = item.finalPrice; // Use the final price of the item
         
-        // Update inventory
-        await Variant.findByIdAndUpdate(
-          item.sizeVariant,
-          { $inc: { stock: item.quantity } },
-          { session }
+        // Process refund to wallet
+        const refundSuccess = await processReturnRefund(
+          order.orderId,
+          order.user,
+          refundAmount,
+          `Refund for returned item from order #${order.orderId}`,
+          session
         );
-      } else if (action === 'reject') {
-        item.returnStatus = 'Return Rejected';
+
+        if (!refundSuccess) {
+          throw new Error('Failed to process refund to wallet');
+        }
+
+        item.returnProcessed = true;
+        item.returnStatus = 'Refunded';
       }
+    } else if (action === 'reject') {
+      item.returnStatus = 'Return Rejected';
+    }
 
-      await order.save({ session });
-    });
-    await session.endSession();
+    await order.save({ session });
+    await session.commitTransaction();
 
-    res.status(200).json({ 
+    res.status(200).json({
       message: `Return request ${action}ed successfully`,
       order
     });
   } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     console.error('Error in handleReturnRequest:', error);
     res.status(500).json({ 
       message: "Failed to handle return request",
       error: error.message 
     });
+  } finally {
+    session.endSession();
   }
 };
 
