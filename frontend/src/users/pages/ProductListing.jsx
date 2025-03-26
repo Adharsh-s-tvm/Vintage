@@ -693,9 +693,10 @@ const ProductListing = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <div className="relative">
+            
             <Input
               type="text"
-              placeholder="Search products..."
+              // placeholder="Search products..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={`w-full ${searchQuery ? 'pl-4 pr-10' : 'pl-10 pr-4'}`}
