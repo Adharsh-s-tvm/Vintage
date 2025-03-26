@@ -146,6 +146,27 @@ export default function Dashboard() {
                         />
                     </div>
                 )}
+
+                <div className="flex items-center gap-2 ml-auto">
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            // Add PDF download logic here
+                            console.log('Downloading PDF...');
+                        }}
+                    >
+                        Download PDF
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => {
+                            // Add Excel download logic here
+                            console.log('Downloading Excel...');
+                        }}
+                    >
+                        Download Excel
+                    </Button>
+                </div>
             </div>
 
             {loading ? (
