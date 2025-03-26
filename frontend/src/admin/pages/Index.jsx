@@ -3,7 +3,7 @@ import { Layout } from '../layout/Layout';
 import { StatsCard } from '../dashboard/StatsCard';
 import { PieChartCard } from '../dashboard/PieChartCard';
 import { BarChartCard } from '../dashboard/BarChartCard';
-import { ShoppingBag, ShoppingCart, Clock, XCircle } from 'lucide-react';
+import { ShoppingBag, ShoppingCart, Clock, XCircle, Tag } from 'lucide-react';
 import axios from 'axios';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
@@ -58,7 +58,8 @@ export default function Dashboard() {
         totalOrders: 0,
         pendingOrders: 0,
         totalReturns: 0,
-        cancelledOrders: 0
+        cancelledOrders: 0,
+        totalDiscounts: 0
     });
     const [salesData, setSalesData] = useState([]);
     const [transactions, setTransactions] = useState([]);
@@ -100,7 +101,8 @@ export default function Dashboard() {
                     totalOrders: 0,
                     pendingOrders: 0,
                     processingOrders: 0,
-                    cancelledOrders: 0
+                    cancelledOrders: 0,
+                    totalDiscounts: 0
                 });
                 setSalesData(salesData || []);
                 setTransactions(transactions || []);
@@ -152,7 +154,7 @@ export default function Dashboard() {
                 </div>
             ) : (
                 <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                         <StatsCard
                             title="Total Revenue"
                             value={stats?.totalRevenue ? `₹${stats.totalRevenue.toLocaleString()}` : '₹0'}
@@ -176,6 +178,12 @@ export default function Dashboard() {
                             value={stats.cancelledOrders || 0}
                             icon={<XCircle />}
                             color="red"
+                        />
+                        <StatsCard
+                            title="Total Discounts"
+                            value={stats?.totalDiscounts ? `₹${stats.totalDiscounts.toLocaleString()}` : '₹0'}
+                            icon={<Tag />}
+                            color="green"
                         />
                     </div>
 
