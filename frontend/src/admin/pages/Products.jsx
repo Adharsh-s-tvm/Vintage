@@ -720,7 +720,19 @@ const Products = () => {
   );
 
   return (
-    <Box sx={{ padding: 3, backgroundColor: "#f5f5f5", minHeight: "100vh" }}>
+    <Box
+      sx={{
+        maxWidth: '1400px', // Maximum width for larger screens
+        margin: '0 auto', // Center the content
+        padding: { xs: 2, sm: 3 }, // Responsive padding
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        '& .MuiPaper-root': {
+          backgroundColor: '#ffffff',
+          transition: 'all 0.3s ease'
+        }
+      }}
+    >
       {/* Header Section */}
       <Box
         sx={{
@@ -729,9 +741,11 @@ const Products = () => {
           alignItems: "center",
           backgroundColor: "#3f51b5",
           borderRadius: 2,
-          padding: 2,
-          marginBottom: 2,
+          padding: { xs: 2, sm: 3 }, // Responsive padding
+          marginBottom: 3,
           boxShadow: 3,
+          flexWrap: 'wrap', // Allow wrapping on smaller screens
+          gap: 2
         }}
       >
         <Typography variant="h6" sx={{ color: "#ffffff", fontWeight: "bold" }}>
@@ -785,9 +799,12 @@ const Products = () => {
           mb: 2,
           boxShadow: 3,
           borderRadius: 2,
+          overflowX: 'hidden', // Prevent horizontal scroll
           '& .MuiTable-root': {
             borderCollapse: 'separate',
-            borderSpacing: '0 8px' // Add spacing between rows
+            borderSpacing: '0 8px',
+            minWidth: '100%', // Ensure table takes full width
+            tableLayout: 'fixed' // Fixed table layout for better column control
           }
         }}
       >
@@ -802,10 +819,17 @@ const Products = () => {
                 padding: '16px',
                 borderBottom: 'none',
                 textTransform: 'uppercase',
-                letterSpacing: '0.5px'
+                letterSpacing: '0.5px',
+                whiteSpace: 'nowrap', // Prevent text wrapping
+                overflow: 'hidden',
+                textOverflow: 'ellipsis' // Show ellipsis for overflow text
               },
-              '& th:first-of-type': { borderTopLeftRadius: 8 },
-              '& th:last-child': { borderTopRightRadius: 8 }
+              '& th:first-of-type': { borderTopLeftRadius: 8, width: '20%' }, // Name column
+              '& th:nth-of-type(2)': { width: '15%' }, // Category column
+              '& th:nth-of-type(3)': { width: '15%' }, // Brand column
+              '& th:nth-of-type(4)': { width: '15%' }, // Status column
+              '& th:nth-of-type(5)': { width: '25%' }, // Actions column
+              '& th:last-child': { borderTopRightRadius: 8, width: '10%' } // Variants column
             }}>
               <TableCell>Name</TableCell>
               <TableCell>Category</TableCell>
@@ -977,7 +1001,16 @@ const Products = () => {
                                 backgroundColor: 'white',
                                 borderRadius: 1,
                                 overflow: 'hidden',
-                                boxShadow: 1
+                                boxShadow: 1,
+                                '& .MuiTableCell-root': {
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  padding: '12px 16px'
+                                },
+                                '& .MuiTableCell-head': {
+                                  fontWeight: 'bold'
+                                }
                               }}
                             >
                               <TableHead>
@@ -989,11 +1022,11 @@ const Products = () => {
                                     fontSize: '0.9rem'
                                   }
                                 }}>
-                                  <TableCell>Size</TableCell>
-                                  <TableCell>Color</TableCell>
-                                  <TableCell>Stock</TableCell>
-                                  <TableCell>Price</TableCell>
-                                  <TableCell align="center">Actions</TableCell>
+                                  <TableCell width="20%">Size</TableCell>
+                                  <TableCell width="20%">Color</TableCell>
+                                  <TableCell width="15%">Stock</TableCell>
+                                  <TableCell width="15%">Price</TableCell>
+                                  <TableCell width="30%" align="center">Actions</TableCell>
                                 </TableRow>
                               </TableHead>
                               <TableBody>

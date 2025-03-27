@@ -104,7 +104,7 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             )}
         >
             <div className="flex items-center justify-between h-16 px-4 border-b border-gray-100">
-                <Link to="/" className="flex items-center" onClick={closeOnMobile}>
+                <Link to="/admin" className="flex items-center" onClick={closeOnMobile}>
                     {!collapsed && (
                         <span className="text-xl font-semibold text-gray-900 animate-fade-in p-10">Admin </span>
                     )}
