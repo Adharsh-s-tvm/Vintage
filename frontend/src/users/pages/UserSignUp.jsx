@@ -42,7 +42,7 @@ function UserSignUp() {
     const [timer, setTimer] = useState(60);
     const [email, setEmail] = useState(formData.email)
 
-
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -71,31 +71,36 @@ function UserSignUp() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true); // Start loading
         const { firstName, lastName, email, password, confirmPassword } = formData;
 
-        // Check for empty or whitespace-only names
+        // Validation checks
         if (!firstName?.trim() || !lastName?.trim()) {
+            setIsLoading(false);
             toast.error("First name and last name cannot be empty", { position: "top-center" });
             return;
         }
 
-        // Check for minimum length after trimming whitespace
         if (firstName.trim().length < 2) {
+            setIsLoading(false);
             toast.error("First name must be at least 2 characters long", { position: "top-center" });
             return;
         }
 
         if (lastName.trim().length < 1) {
+            setIsLoading(false);
             toast.error("Last name must be at least 1 character long", { position: "top-center" });
             return;
         }
 
         if (!validateEmail(email)) {
+            setIsLoading(false);
             toast.error("Please enter a valid email address", { position: "top-center" });
             return;
         }
 
         if (!validatePassword(password)) {
+            setIsLoading(false);
             toast.error(
                 "Password must be at least 8 characters long and contain uppercase, lowercase, numbers, and special characters",
                 { position: "top-center" }
@@ -104,12 +109,15 @@ function UserSignUp() {
         }
 
         if (password !== confirmPassword) {
+            setIsLoading(false);
             toast.error("Passwords do not match", { position: "top-center" });
             return;
         }
 
         try {
-            // First send OTP
+            // Add artificial delay
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
             const otpResponse = await axios.post("http://localhost:7000/api/user/otp/send", {
                 email: email.toLowerCase()
             });
@@ -121,6 +129,8 @@ function UserSignUp() {
         } catch (error) {
             const errorMessage = error.response?.data?.message || "Error sending OTP";
             toast.error(errorMessage, { position: "top-center" });
+        } finally {
+            setIsLoading(false); // Stop loading
         }
     };
 
@@ -338,9 +348,41 @@ function UserSignUp() {
                         </p>
                     </div>
 
-                    <Button type="submit" className="w-full">
-                        Create Account
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button 
+                        type="submit" 
+                        className="w-full flex items-center justify-center gap-2" 
+                        disabled={isLoading}
+                    >
+                        {isLoading ? (
+                            <>
+                                <svg 
+                                    className="animate-spin h-5 w-5 text-white" 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    fill="none" 
+                                    viewBox="0 0 24 24"
+                                >
+                                    <circle 
+                                        className="opacity-25" 
+                                        cx="12" 
+                                        cy="12" 
+                                        r="10" 
+                                        stroke="currentColor" 
+                                        strokeWidth="4"
+                                    />
+                                    <path 
+                                        className="opacity-75" 
+                                        fill="currentColor" 
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                    />
+                                </svg>
+                                <span>Creating Account...</span>
+                            </>
+                        ) : (
+                            <>
+                                <span>Create Account</span>
+                                <ArrowRight className="h-4 w-4" />
+                            </>
+                        )}
                     </Button>
                 </form>
 
