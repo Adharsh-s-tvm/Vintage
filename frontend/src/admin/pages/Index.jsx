@@ -67,6 +67,7 @@ export default function Dashboard() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [itemsPerPage] = useState(25);
+    const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
         fetchSalesData();
@@ -116,18 +117,86 @@ export default function Dashboard() {
         }
     };
 
+    const handleDownloadPDF = async () => {
+        try {
+            setIsDownloading(true);
+            let params = { range: dateRange };
+            if (dateRange === 'custom') {
+                params.startDate = customStartDate.toISOString();
+                params.endDate = customEndDate.toISOString();
+            }
+
+            const response = await axios({
+                url: `${api}/admin/sales-report/download`,
+                method: 'GET',
+                params,
+                responseType: 'blob',
+                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+            });
+
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            toast.success('Report downloaded successfully');
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error('Failed to download report');
+        } finally {
+            setIsDownloading(false);
+        }
+    };
+
+    const handleDownloadExcel = async () => {
+        try {
+            let params = { range: dateRange };
+            if (dateRange === 'custom') {
+                params.startDate = customStartDate.toISOString();
+                params.endDate = customEndDate.toISOString();
+            }
+
+            const response = await axios({
+                url: `${api}/admin/sales-report/download`,
+                method: 'GET',
+                params,
+                responseType: 'blob',
+                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+            });
+
+            // Create blob link to download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+
+            toast.success('Report downloaded successfully');
+        } catch (error) {
+            console.error('Download error:', error);
+            toast.error('Failed to download report');
+        }
+    };
+
     return (
-        <div className="space-y-6 p-6">
-            <div className="flex items-center gap-4">
+        <div>
+            <div className="flex items-center gap-4 mb-6">
                 <Select value={dateRange} onValueChange={setDateRange}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select range" />
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select date range" />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value="daily">Daily</SelectItem>
                         <SelectItem value="weekly">Weekly</SelectItem>
                         <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="yearly">Yearly</SelectItem>
                         <SelectItem value="custom">Custom</SelectItem>
                     </SelectContent>
                 </Select>
@@ -147,22 +216,17 @@ export default function Dashboard() {
                     </div>
                 )}
 
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex gap-2 ml-auto">
                     <Button
                         variant="outline"
-                        onClick={() => {
-                            // Add PDF download logic here
-                            console.log('Downloading PDF...');
-                        }}
+                        onClick={handleDownloadPDF}
+                        disabled={isDownloading}
                     >
-                        Download PDF
+                        {isDownloading ? 'Downloading...' : 'Download PDF'}
                     </Button>
                     <Button
                         variant="outline"
-                        onClick={() => {
-                            // Add Excel download logic here
-                            console.log('Downloading Excel...');
-                        }}
+                        onClick={handleDownloadExcel}
                     >
                         Download Excel
                     </Button>
@@ -320,4 +384,4 @@ export default function Dashboard() {
             )}
         </div>
     );
-} 
+}

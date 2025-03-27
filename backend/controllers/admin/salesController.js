@@ -1,4 +1,7 @@
 import Order from '../../models/product/orderModel.js';
+import PDFDocument from 'pdfkit';
+import fs from 'fs';
+import path from 'path';
 
 export const getSalesReport = async (req, res) => {
     try {
@@ -264,4 +267,142 @@ export const getSalesReport = async (req, res) => {
         console.error('Error in getSalesReport:', error);
         res.status(500).json({ message: 'Failed to generate sales report' });
     }
-}; 
+};
+
+
+export const downloadSalesReport = async (req, res) => {
+    try {
+        const { range, startDate, endDate } = req.query;
+        let dateFilter = {};
+
+        // Reuse the same date filter logic from getSalesReport
+        switch (range) {
+            case 'daily':
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                dateFilter = {
+                    createdAt: {
+                        $gte: today,
+                        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000)
+                    }
+                };
+                break;
+            case 'weekly':
+                const weekStart = new Date();
+                weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+                weekStart.setHours(0, 0, 0, 0);
+                dateFilter = {
+                    createdAt: {
+                        $gte: weekStart,
+                        $lt: new Date()
+                    }
+                };
+                break;
+            case 'monthly':
+                const monthStart = new Date();
+                monthStart.setDate(1);
+                monthStart.setHours(0, 0, 0, 0);
+                dateFilter = {
+                    createdAt: {
+                        $gte: monthStart,
+                        $lt: new Date()
+                    }
+                };
+                break;
+            case 'yearly':
+                const yearStart = new Date(new Date().getFullYear(), 0, 1);
+                dateFilter = {
+                    createdAt: {
+                        $gte: yearStart,
+                        $lt: new Date()
+                    }
+                };
+                break;
+            case 'custom':
+                dateFilter = {
+                    createdAt: {
+                        $gte: new Date(startDate),
+                        $lt: new Date(endDate)
+                    }
+                };
+                break;
+        }
+
+        const stats = await Order.aggregate([
+            { $match: dateFilter },
+            {
+                $group: {
+                    _id: null,
+                    totalRevenue: {
+                        $sum: {
+                            $cond: [
+                                { $eq: ['$orderStatus', 'Delivered'] },
+                                '$totalAmount',
+                                0
+                            ]
+                        }
+                    },
+                    totalOrders: { $sum: 1 },
+                    returnedOrders: {
+                        $sum: {
+                            $cond: [{ $eq: ['$orderStatus', 'Returned'] }, 1, 0]
+                        }
+                    },
+                    cancelledOrders: {
+                        $sum: { $cond: [{ $eq: ['$orderStatus', 'Cancelled'] }, 1, 0] }
+                    },
+                    totalDiscounts: {
+                        $sum: '$discountAmount'
+                    }
+                }
+            }
+        ]);
+
+        // Create PDF
+        const doc = new PDFDocument();
+        const filename = `sales-report-${new Date().toISOString().split('T')[0]}.pdf`;
+
+        // Set response headers
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+        // Pipe the PDF to the response
+        doc.pipe(res);
+
+        // Add content to PDF
+        doc.fontSize(20).text('Sales Report', { align: 'center' });
+        doc.moveDown();
+        
+        // Add date range
+        doc.fontSize(12).text(`Period: ${range.charAt(0).toUpperCase() + range.slice(1)}`, { align: 'left' });
+        if (range === 'custom') {
+            doc.text(`From: ${new Date(startDate).toLocaleDateString()}`);
+            doc.text(`To: ${new Date(endDate).toLocaleDateString()}`);
+        }
+        doc.moveDown();
+
+        // Add statistics
+        const reportStats = stats[0] || {
+            totalRevenue: 0,
+            totalOrders: 0,
+            returnedOrders: 0,
+            cancelledOrders: 0,
+            totalDiscounts: 0
+        };
+
+        doc.fontSize(14).text('Summary', { underline: true });
+        doc.moveDown(0.5);
+        doc.fontSize(12).text(`Total Revenue: ₹${reportStats.totalRevenue.toFixed(2)}`);
+        doc.text(`Total Orders: ${reportStats.totalOrders}`);
+        doc.text(`Returned Orders: ${reportStats.returnedOrders}`);
+        doc.text(`Cancelled Orders: ${reportStats.cancelledOrders}`);
+        doc.text(`Total Discounts: ₹${reportStats.totalDiscounts.toFixed(2)}`);
+
+        // Finalize PDF
+        doc.end();
+
+    } catch (error) {
+        console.error('Error generating PDF:', error);
+        res.status(500).json({ message: 'Failed to generate PDF report' });
+    }
+};
