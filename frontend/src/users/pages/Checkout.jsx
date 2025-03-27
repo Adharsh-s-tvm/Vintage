@@ -518,8 +518,8 @@ function Checkout() {
                     <RadioGroupItem value="online" id="online" />
                     <Label htmlFor="online" className="text-sm">Online/Net Banking</Label>
                   </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-3">
-                    <RadioGroupItem value="card" id="card" />
+                  <div className="flex items-center space-x-2 border rounded-lg p-3 opacity-50">
+                    <RadioGroupItem value="card" id="card" disabled />
                     <Label htmlFor="card" className="text-sm">Credit/Debit Card</Label>
                   </div>
                   <div className="flex items-center space-x-2 border rounded-lg p-3">
