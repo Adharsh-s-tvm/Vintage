@@ -98,6 +98,9 @@ export default function Cart() {
   const fetchCart = async () => {
     dispatch(setLoading(true));
     try {
+      // Simulate loading for 2 seconds
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       const response = await axios.get(`${api}/user/cart`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
@@ -202,7 +205,11 @@ export default function Cart() {
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
 
-        {cartItems?.length > 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : cartItems?.length > 0 ? (
           <div className="grid md:grid-cols-3 gap-8">
             <div className="md:col-span-2">
               <div className="bg-white rounded-lg shadow-sm overflow-hidden">

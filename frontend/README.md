@@ -1,13 +1,16 @@
+Pending
+-remove cartId from order schema
+-save address as string or object in order schema instead of objectId
+-do not save price in cart schema
+-edit product with image
+-crop image
 
+Provide the option to download the invoice for each order.(pdf)
+Implement search to find specific order
 
-LOADERS.............
-IMAGE VARIANT EDIT CROP..................
-
-If a product is added to the cart, ensure it is removed from the wishlist if it exists there.
-
-
+Admin side :
 If the verification is accepted ,then return the previously paid amount by the consumer or user to the wallet.
-
+Implement Pagination
 
 
 
