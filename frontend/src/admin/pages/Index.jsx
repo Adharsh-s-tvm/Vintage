@@ -66,7 +66,7 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
-    const [itemsPerPage] = useState(25);
+    const [itemsPerPage] = useState(10);
     const [isDownloading, setIsDownloading] = useState(false);
 
     useEffect(() => {
