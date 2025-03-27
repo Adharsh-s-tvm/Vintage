@@ -120,7 +120,10 @@ export default function Dashboard() {
     const handleDownloadPDF = async () => {
         try {
             setIsDownloading(true);
-            let params = { range: dateRange };
+            let params = { 
+                range: dateRange,
+                format: 'pdf'
+            };
             if (dateRange === 'custom') {
                 params.startDate = customStartDate.toISOString();
                 params.endDate = customEndDate.toISOString();
@@ -131,14 +134,17 @@ export default function Dashboard() {
                 method: 'GET',
                 params,
                 responseType: 'blob',
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+                headers: { 
+                    Authorization: `Bearer ${localStorage.getItem('jwt')}`,
+                    'Accept': 'application/pdf'
+                }
             });
 
             // Create blob link to download
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
             const link = document.createElement('a');
             link.href = url;
-            link.setAttribute('download', `sales-report-${new Date().toISOString().split('T')[0]}.pdf`);
+            link.setAttribute('download', `sales-report-${dateRange}-${new Date().toISOString().split('T')[0]}.pdf`);
             document.body.appendChild(link);
             link.click();
             link.remove();

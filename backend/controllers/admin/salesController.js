@@ -328,6 +328,35 @@ export const downloadSalesReport = async (req, res) => {
                 break;
         }
 
+        const doc = new PDFDocument({
+            size: 'A4',
+            margin: 40
+        });
+        
+        const filename = `sales-report-${new Date().toISOString().split('T')[0]}.pdf`;
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+        doc.pipe(res);
+
+        // Page 1: Header and Summary
+        doc.font('Helvetica-Bold')
+           .fontSize(20)
+           .text('Sales Report', { align: 'center' });
+
+        // Compact metadata line
+        doc.moveDown(0.5)
+           .fontSize(10)
+           .font('Helvetica')
+           .text(`Period: ${range.charAt(0).toUpperCase() + range.slice(1)} | Generated: ${new Date().toLocaleString('en-IN', { 
+                dateStyle: 'medium', 
+                timeStyle: 'short',
+                timeZone: 'Asia/Kolkata'
+            })}`, 
+            { align: 'center' }
+           );
+
+        // Stats Grid - 2 columns for better space usage
+        doc.moveDown();
         const stats = await Order.aggregate([
             { $match: dateFilter },
             {
@@ -357,31 +386,6 @@ export const downloadSalesReport = async (req, res) => {
                 }
             }
         ]);
-
-        // Create PDF
-        const doc = new PDFDocument();
-        const filename = `sales-report-${new Date().toISOString().split('T')[0]}.pdf`;
-
-        // Set response headers
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-
-        // Pipe the PDF to the response
-        doc.pipe(res);
-
-        // Add content to PDF
-        doc.fontSize(20).text('Sales Report', { align: 'center' });
-        doc.moveDown();
-        
-        // Add date range
-        doc.fontSize(12).text(`Period: ${range.charAt(0).toUpperCase() + range.slice(1)}`, { align: 'left' });
-        if (range === 'custom') {
-            doc.text(`From: ${new Date(startDate).toLocaleDateString()}`);
-            doc.text(`To: ${new Date(endDate).toLocaleDateString()}`);
-        }
-        doc.moveDown();
-
-        // Add statistics
         const reportStats = stats[0] || {
             totalRevenue: 0,
             totalOrders: 0,
@@ -390,15 +394,73 @@ export const downloadSalesReport = async (req, res) => {
             totalDiscounts: 0
         };
 
-        doc.fontSize(14).text('Summary', { underline: true });
-        doc.moveDown(0.5);
-        doc.fontSize(12).text(`Total Revenue: ₹${reportStats.totalRevenue.toFixed(2)}`);
-        doc.text(`Total Orders: ${reportStats.totalOrders}`);
-        doc.text(`Returned Orders: ${reportStats.returnedOrders}`);
-        doc.text(`Cancelled Orders: ${reportStats.cancelledOrders}`);
-        doc.text(`Total Discounts: ₹${reportStats.totalDiscounts.toFixed(2)}`);
+        const statsTable = {
+            headers: ['Metric', 'Value'],
+            rows: [
+                ['Total Revenue', `₹${reportStats.totalRevenue.toLocaleString('en-IN')}`],
+                ['Total Orders', reportStats.totalOrders],
+                ['Returned Orders', reportStats.returnedOrders],
+                ['Cancelled Orders', reportStats.cancelledOrders],
+                ['Total Discounts', `₹${reportStats.totalDiscounts.toLocaleString('en-IN')}`]
+            ]
+        };
 
-        // Finalize PDF
+        createTable(doc, statsTable, {
+            startX: 40,
+            startY: doc.y + 10,
+            rowHeight: 25,
+            columnSpacing: 8,
+            headerColor: '#4E80EE',
+            alternateRowColor: '#F8F9FA',
+            width: doc.page.width - 80
+        });
+
+        // Recent Transactions with optimized space
+        doc.moveDown()
+           .font('Helvetica-Bold')
+           .fontSize(12)
+           .text('Recent Transactions', { underline: true });
+
+        const transactions = await Order.find(dateFilter)
+            .select('orderId totalAmount payment createdAt orderStatus')
+            .sort('-createdAt')
+            .limit(15); // Reduced from previous limit
+
+        const transactionsTable = {
+            headers: ['Date', 'Order ID', 'Amount', 'Method', 'Status'], // Shortened headers
+            rows: transactions.map(t => [
+                new Date(t.createdAt).toLocaleDateString('en-IN', { 
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: '2-digit'
+                }),
+                t.orderId,
+                `₹${t.totalAmount.toLocaleString('en-IN')}`,
+                t.payment.method,
+                t.orderStatus
+            ])
+        };
+
+        createTable(doc, transactionsTable, {
+            startX: 40,
+            startY: doc.y + 10,
+            rowHeight: 20, // Reduced row height
+            columnSpacing: 5, // Reduced spacing
+            headerColor: '#4E80EE',
+            alternateRowColor: '#F8F9FA',
+            width: doc.page.width - 80,
+            fontSize: 9 // Smaller font size
+        });
+
+        // Add footer
+        doc.fontSize(8)
+           .text(
+                'Generated by Vintage Jacket Store',
+                40,
+                doc.page.height - 40,
+                { align: 'center', width: doc.page.width - 80 }
+            );
+
         doc.end();
 
     } catch (error) {
@@ -406,3 +468,75 @@ export const downloadSalesReport = async (req, res) => {
         res.status(500).json({ message: 'Failed to generate PDF report' });
     }
 };
+
+// Optimized helper function for creating tables
+function createTable(doc, table, options) {
+    const {
+        startX,
+        startY,
+        rowHeight = 20,
+        columnSpacing = 5,
+        headerColor = '#4E80EE',
+        alternateRowColor = '#F8F9FA',
+        width = doc.page.width - 80,
+        fontSize = 9
+    } = options;
+
+    const columnWidth = width / table.headers.length;
+    let currentY = startY;
+
+    // Draw headers
+    doc.font('Helvetica-Bold')
+       .fontSize(fontSize);
+
+    // Header background
+    doc.fillColor(headerColor)
+       .rect(startX, currentY, width, rowHeight)
+       .fill();
+
+    // Header text
+    doc.fillColor('white');
+    table.headers.forEach((header, i) => {
+        doc.text(
+            header,
+            startX + (i * columnWidth) + columnSpacing,
+            currentY + (rowHeight / 3),
+            { 
+                width: columnWidth - (columnSpacing * 2),
+                align: i === 0 ? 'left' : 'right'
+            }
+        );
+    });
+
+    // Draw rows
+    currentY += rowHeight;
+    doc.font('Helvetica')
+       .fontSize(fontSize);
+
+    table.rows.forEach((row, rowIndex) => {
+        // Alternate row background
+        if (rowIndex % 2 === 0) {
+            doc.fillColor(alternateRowColor)
+               .rect(startX, currentY, width, rowHeight)
+               .fill();
+        }
+
+        // Row text
+        doc.fillColor('black');
+        row.forEach((cell, i) => {
+            doc.text(
+                cell.toString(),
+                startX + (i * columnWidth) + columnSpacing,
+                currentY + (rowHeight / 3),
+                { 
+                    width: columnWidth - (columnSpacing * 2),
+                    align: i === 0 ? 'left' : 'right'
+                }
+            );
+        });
+
+        currentY += rowHeight;
+    });
+
+    doc.y = currentY + 10;
+}
