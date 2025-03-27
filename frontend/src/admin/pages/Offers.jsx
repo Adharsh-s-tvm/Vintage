@@ -157,6 +157,13 @@ function Offers() {
     );
   };
 
+  // Add this function to filter offers based on search query
+  const filteredOffers = offers.filter(offer => 
+    offer.offerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    offer.offerType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    offer.discountPercentage.toString().includes(searchQuery)
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -303,7 +310,7 @@ function Offers() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {offers.map((offer) => (
+            {filteredOffers.map((offer) => (
               <TableRow key={offer._id}>
                 <TableCell>{offer.offerName}</TableCell>
                 <TableCell>{offer.offerType}</TableCell>

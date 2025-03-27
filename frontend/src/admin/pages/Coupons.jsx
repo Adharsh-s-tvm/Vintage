@@ -93,6 +93,14 @@ function Coupons() {
     setEditCouponId(null);
   };
 
+  // Add this function to filter coupons based on search query
+  const filteredCoupons = coupons.filter(coupon =>
+    coupon.couponCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    coupon.discountType.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    coupon.discountValue.toString().includes(searchQuery) ||
+    coupon.minOrderAmount.toString().includes(searchQuery)
+  );
+
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
@@ -242,7 +250,7 @@ function Coupons() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {coupons.map((coupon) => (
+            {filteredCoupons.map((coupon) => (
               <TableRow key={coupon._id}>
                 <TableCell>{coupon.couponCode}</TableCell>
                 <TableCell>{coupon.discountType}</TableCell>
