@@ -50,7 +50,7 @@ const websiteVisitsData = [
 ];
 
 export default function Dashboard() {
-    const [dateRange, setDateRange] = useState('daily');
+    const [dateRange, setDateRange] = useState('monthly');
     const [customStartDate, setCustomStartDate] = useState(new Date());
     const [customEndDate, setCustomEndDate] = useState(new Date());
     const [stats, setStats] = useState({

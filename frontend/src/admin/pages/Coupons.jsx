@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper } from '@mui/material';
+import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper, TablePagination } from '@mui/material';
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -18,6 +18,8 @@ function Coupons() {
   });
   const [isEditMode, setIsEditMode] = useState(false);
   const [editCouponId, setEditCouponId] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   useEffect(() => {
     fetchCoupons();
@@ -93,12 +95,25 @@ function Coupons() {
     setEditCouponId(null);
   };
 
-  // Add this function to filter coupons based on search query
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   const filteredCoupons = coupons.filter(coupon =>
     coupon.couponCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
     coupon.discountType.toLowerCase().includes(searchQuery.toLowerCase()) ||
     coupon.discountValue.toString().includes(searchQuery) ||
     coupon.minOrderAmount.toString().includes(searchQuery)
+  );
+
+  const paginatedCoupons = filteredCoupons.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   return (
@@ -250,7 +265,7 @@ function Coupons() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredCoupons.map((coupon) => (
+            {paginatedCoupons.map((coupon) => (
               <TableRow key={coupon._id}>
                 <TableCell>{coupon.couponCode}</TableCell>
                 <TableCell>{coupon.discountType}</TableCell>
@@ -300,6 +315,16 @@ function Coupons() {
             ))}
           </TableBody>
         </Table>
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredCoupons.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </TableContainer>
     </Box>
   );

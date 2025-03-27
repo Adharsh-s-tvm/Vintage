@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper } from '@mui/material';
+import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper, TablePagination } from '@mui/material';
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -21,6 +21,8 @@ function Offers() {
   const [expandedRows, setExpandedRows] = useState({});
   const [isEditMode, setIsEditMode] = useState(false);
   const [editOfferId, setEditOfferId] = useState(null);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   useEffect(() => {
     fetchProducts();
@@ -157,11 +159,24 @@ function Offers() {
     );
   };
 
-  // Add this function to filter offers based on search query
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   const filteredOffers = offers.filter(offer => 
     offer.offerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     offer.offerType.toLowerCase().includes(searchQuery.toLowerCase()) ||
     offer.discountPercentage.toString().includes(searchQuery)
+  );
+
+  const paginatedOffers = filteredOffers.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
   );
 
   return (
@@ -310,7 +325,7 @@ function Offers() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredOffers.map((offer) => (
+            {paginatedOffers.map((offer) => (
               <TableRow key={offer._id}>
                 <TableCell>{offer.offerName}</TableCell>
                 <TableCell>{offer.offerType}</TableCell>
@@ -355,6 +370,16 @@ function Offers() {
             ))}
           </TableBody>
         </Table>
+        
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredOffers.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </TableContainer>
     </Box>
   );
