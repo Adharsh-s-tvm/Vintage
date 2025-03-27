@@ -156,10 +156,12 @@ function Checkout() {
   const [availableCoupons, setAvailableCoupons] = useState([]);
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [couponDiscount, setCouponDiscount] = useState(0);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
     fetchAddresses();
     fetchAvailableCoupons();
+    fetchWalletBalance();
   }, []);
 
   const fetchAddresses = async () => {
@@ -191,6 +193,17 @@ function Checkout() {
     }
   };
 
+  const fetchWalletBalance = async () => {
+    try {
+      const response = await axios.get(`${api}/user/profile/wallet`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+      });
+      setWalletBalance(response.data.balance);
+    } catch (error) {
+      toast.error('Failed to fetch wallet balance');
+    }
+  };
+
   const handlePlaceOrder = async () => {
     if (!selectedAddress || !selectedPaymentMethod) {
       toast.error('Please select delivery address and payment method');
@@ -198,99 +211,33 @@ function Checkout() {
     }
 
     try {
-      const orderData = {
-        addressId: selectedAddress,
-        paymentMethod: selectedPaymentMethod,
-        couponCode: selectedCoupon
-      };
+      const finalAmount = total - couponDiscount;
 
-      if (selectedPaymentMethod === 'cod') {
-        const orderResponse = await axios.post(
-          `${api}/user/orders`,
-          orderData,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-          }
-        );
-        
-        toast.success('Order placed successfully!');
-        navigate(`/success/${orderResponse.data.orderId}`);
+      // Check wallet balance if wallet payment selected
+      if (selectedPaymentMethod === 'wallet' && walletBalance < finalAmount) {
+        toast.error('Insufficient wallet balance');
         return;
       }
 
-      // For online payment
-      const paymentResponse = await axios.post(`${api}/payments/create-order`, {
-        amount: total - couponDiscount,
+      const orderData = {
         addressId: selectedAddress,
-        paymentMethod: selectedPaymentMethod
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
-
-      if (!paymentResponse.data.success) {
-        throw new Error(paymentResponse.data.message || 'Failed to create payment order');
-      }
-
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-        amount: paymentResponse.data.order.amount,
-        currency: "INR",
-        name: "Vintage Jacket Store",
-        description: "Order Payment",
-        order_id: paymentResponse.data.order.id,
-        handler: async function (response) {
-          try {
-            const verifyResponse = await axios.post(`${api}/payments/verify`, {
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_signature: response.razorpay_signature,
-              tempOrderId: paymentResponse.data.tempOrderId,
-              amount: total - couponDiscount,
-              addressId: selectedAddress,
-              paymentMethod: selectedPaymentMethod,
-              couponCode: selectedCoupon,
-              discountAmount: couponDiscount
-            }, {
-              headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            });
-
-            if (verifyResponse.data.success) {
-              toast.success('Payment successful!');
-              navigate(`/success/${verifyResponse.data.orderId}`);
-            } else {
-              navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
-            }
-          } catch (error) {
-            console.error('Payment verification error:', error);
-            toast.error(error.response?.data?.message || 'Payment verification failed');
-            navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
-          }
-        },
-        modal: {
-          ondismiss: function() {
-            toast.info('Payment cancelled');
-            navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
-          }
-        },
-        prefill: {
-          name: addresses.find(addr => addr._id === selectedAddress)?.fullName,
-          contact: addresses.find(addr => addr._id === selectedAddress)?.phone,
-        },
-        theme: {
-          color: "#000000"
-        }
+        paymentMethod: selectedPaymentMethod,
+        couponCode: selectedCoupon,
+        amount: finalAmount
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
+      const orderResponse = await axios.post(
+        `${api}/user/orders`,
+        orderData,
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        }
+      );
 
-      rzp.on('payment.failed', function (response) {
-        toast.error('Payment failed');
-        navigate(`/order-failed?amount=${total-couponDiscount}&addressId=${selectedAddress}&paymentMethod=${selectedPaymentMethod}`);
-      });
+      toast.success('Order placed successfully!');
+      navigate(`/success/${orderResponse.data.orderId}`);
 
     } catch (error) {
-      console.error('Order/Payment Error:', error);
       toast.error(error.response?.data?.message || 'Failed to place order');
     }
   };
@@ -517,10 +464,6 @@ function Checkout() {
                   <div className="flex items-center space-x-2 border rounded-lg p-3">
                     <RadioGroupItem value="online" id="online" />
                     <Label htmlFor="online" className="text-sm">Online/Net Banking</Label>
-                  </div>
-                  <div className="flex items-center space-x-2 border rounded-lg p-3 opacity-50">
-                    <RadioGroupItem value="card" id="card" disabled />
-                    <Label htmlFor="card" className="text-sm">Credit/Debit Card</Label>
                   </div>
                   <div className="flex items-center space-x-2 border rounded-lg p-3">
                     <RadioGroupItem value="wallet" id="wallet" />
