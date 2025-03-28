@@ -36,7 +36,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         const userId = req.user._id;
         const orderId = generateOrderId();
 
-        // If wallet payment, check balance and deduct amount
+        // Handle wallet payment
         if (paymentMethod === 'wallet') {
             const wallet = await Wallet.findOne({ userId }).session(session);
             
@@ -155,7 +155,14 @@ export const createOrder = asyncHandler(async (req, res) => {
             status: 'pending'
         }));
 
-        // 5. Create order
+        // Set payment status based on payment method
+        const paymentStatus = {
+            cod: 'pending',
+            wallet: 'completed',
+            online: 'pending'
+        }[paymentMethod];
+
+        // Create order with appropriate payment status
         const order = new Order({
             user: userId,
             cart: cart._id,
@@ -175,7 +182,7 @@ export const createOrder = asyncHandler(async (req, res) => {
             },
             payment: {
                 method: paymentMethod,
-                status: paymentMethod === 'cod' ? 'pending' : 'initiated',
+                status: paymentStatus,
                 transactionId: `TXN${Date.now()}${Math.floor(Math.random() * 10000)}`,
                 amount: finalTotal
             },
@@ -216,11 +223,6 @@ export const createOrder = asyncHandler(async (req, res) => {
             await Coupon.findByIdAndUpdate(appliedCoupon._id, {
                 $push: { usedBy: userId }
             }, { session });
-        }
-
-        // Update payment status for wallet payment
-        if (paymentMethod === 'wallet') {
-            order.payment.status = 'completed';
         }
 
         await order.save({ session });

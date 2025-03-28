@@ -219,24 +219,93 @@ function Checkout() {
         return;
       }
 
-      const orderData = {
-        addressId: selectedAddress,
-        paymentMethod: selectedPaymentMethod,
-        couponCode: selectedCoupon,
-        amount: finalAmount
-      };
+      // For COD and Wallet payments
+      if (selectedPaymentMethod === 'cod' || selectedPaymentMethod === 'wallet') {
+        const orderData = {
+          addressId: selectedAddress,
+          paymentMethod: selectedPaymentMethod,
+          couponCode: selectedCoupon,
+          amount: finalAmount
+        };
 
-      const orderResponse = await axios.post(
-        `${api}/user/orders`,
-        orderData,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        const orderResponse = await axios.post(
+          `${api}/user/orders`,
+          orderData,
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+          }
+        );
+
+        toast.success('Order placed successfully!');
+        navigate(`/success/${orderResponse.data.orderId}`);
+      } 
+      // For online payments (Razorpay)
+      else if (selectedPaymentMethod === 'online') {
+        const paymentResponse = await axios.post(
+          `${api}/payments/create-order`,
+          {
+            amount: finalAmount,
+            addressId: selectedAddress,
+            paymentMethod: selectedPaymentMethod,
+            couponCode: selectedCoupon,
+            discountAmount: couponDiscount
+          },
+          {
+            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+          }
+        );
+
+        if (!paymentResponse.data.success) {
+          throw new Error('Failed to create payment order');
         }
-      );
 
-      toast.success('Order placed successfully!');
-      navigate(`/success/${orderResponse.data.orderId}`);
+        const options = {
+          key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+          amount: paymentResponse.data.order.amount,
+          currency: "INR",
+          name: "Your Store Name",
+          description: "Order Payment",
+          order_id: paymentResponse.data.order.id,
+          handler: async function (response) {
+            try {
+              const verifyResponse = await axios.post(
+                `${api}/payments/verify`,
+                {
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_signature: response.razorpay_signature,
+                  tempOrderId: paymentResponse.data.tempOrderId,
+                  amount: finalAmount,
+                  couponCode: selectedCoupon,
+                  discountAmount: couponDiscount
+                },
+                {
+                  headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+                }
+              );
 
+              if (verifyResponse.data.success) {
+                toast.success('Payment successful!');
+                navigate(`/success/${verifyResponse.data.orderId}`);
+              }
+            } catch (error) {
+              toast.error('Payment verification failed');
+              navigate('/order-failed');
+            }
+          },
+          modal: {
+            ondismiss: function() {
+              navigate('/order-failed');
+            }
+          },
+          theme: {
+            color: "#000000"
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to place order');
     }
