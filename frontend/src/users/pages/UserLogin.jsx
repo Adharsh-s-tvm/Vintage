@@ -9,7 +9,7 @@ import { loginUser } from '../../redux/api/userApi';
 import { useDispatch } from 'react-redux';
 import { setUserInfo } from '../../redux/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
-import { googleAuth } from '../../utils/api';
+import { googleAuth } from '../../utils/apiGoogle';
 import axios from 'axios';
 import { api } from '../../lib/api';
 
