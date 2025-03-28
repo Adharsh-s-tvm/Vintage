@@ -9,6 +9,10 @@ export const addCoupon = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
+    if(discountType === 'percentage' && discountValue > 100){
+      return res.status(400).json({ message: 'Discount value must be less than 100 for percentage discount' });
+    }
+
     // Validate coupon code format
     if (couponCode.trim().length < 3) {
       return res.status(400).json({ message: 'Coupon code must be at least 3 characters long' });
