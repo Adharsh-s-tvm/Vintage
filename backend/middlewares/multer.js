@@ -54,7 +54,13 @@ const handleUpload = (req, res, next) => {
             });
         }
 
-        // Check if files exist
+        
+        // For variant updates, don't require files
+        if (req.method === 'PUT' && req.path.includes('/variant/')) {
+            return next();
+        }
+
+        // For other routes (like adding new variants), require files
         if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).json({
                 success: false,
