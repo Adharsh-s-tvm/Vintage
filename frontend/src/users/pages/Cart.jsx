@@ -58,28 +58,28 @@ const CartSummary = ({ cartItems, subtotal, shipping, total }) => {
         <div className="flex justify-between">
           <span>Original Subtotal</span>
           <span className={totalSavings > 0 ? "line-through text-gray-500" : ""}>
-            ${originalSubtotal.toFixed(2)}
+          ₹{originalSubtotal.toFixed(2)}
           </span>
         </div>
         {totalSavings > 0 && (
           <>
             <div className="flex justify-between text-green-600">
               <span>Savings</span>
-              <span>-${totalSavings.toFixed(2)}</span>
+              <span>-₹{totalSavings.toFixed(2)}</span>
             </div>
             <div className="flex justify-between font-medium">
               <span>Subtotal after discount</span>
-              <span>${subtotal.toFixed(2)}</span>
+              <span>₹{subtotal.toFixed(2)}</span>
             </div>
           </>
         )}
         <div className="flex justify-between">
           <span>Shipping</span>
-          <span>${shipping.toFixed(2)}</span>
+          <span>₹{shipping.toFixed(2)}</span>
         </div>
         <div className="border-t pt-2 flex justify-between font-semibold">
           <span>Total</span>
-          <span>${total.toFixed(2)}</span>
+          <span>₹{total.toFixed(2)}</span>
         </div>
       </div>
     </div>
@@ -249,7 +249,7 @@ export default function Cart() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>${item.price.toFixed(2)}</TableCell>
+                        <TableCell>₹{item.price.toFixed(2)}</TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">
                             <Button
@@ -272,7 +272,7 @@ export default function Cart() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">
-                          ${((item.variant.discountPrice && item.variant.discountPrice > 0 && item.variant.discountPrice < item.variant.price 
+                        ₹{((item.variant.discountPrice && item.variant.discountPrice > 0 && item.variant.discountPrice < item.variant.price 
                             ? item.variant.discountPrice 
                             : item.variant.price) * item.quantity).toFixed(2)}
                         </TableCell>

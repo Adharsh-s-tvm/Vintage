@@ -13,6 +13,28 @@ If the verification is accepted ,then return the previously paid amount by the c
 Implement Pagination
 
 
+------------------------------------------------------------------------------------------------------------------------------------------
+Repeat Pendings...
+
+issue in update product
+implement backend pagination in product
+issue in coupon validation
+implement backend pagination in coupon
+implement backend pagination in offer
+Issue in payment gateway integration
+cancel order need refund
+wallet need pagination
+keep same currency throught application
+order listing need pagination
+never call api from component
+create sevice or custom hook
+use axios interceptor
+need to under stand reusable component
+proper naming convention needed
+move to status code 
+coding test failed
+ 
+Mandatory code test needed
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------

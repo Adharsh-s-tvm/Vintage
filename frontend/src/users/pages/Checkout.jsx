@@ -127,12 +127,12 @@ function PriceDisplay({ item }) {
   return (
     <div className="text-right">
       <div className="font-medium">
-        ${itemTotal.toFixed(2)}
+      ₹{itemTotal.toFixed(2)}
       </div>
       {hasValidDiscount && (
         <div className="text-sm">
           <span className="text-gray-500 line-through">
-            ${(item.variant.price * item.quantity).toFixed(2)}
+          ₹{(item.variant.price * item.quantity).toFixed(2)}
           </span>
           <span className="text-green-600 ml-2">
             {Math.round((item.variant.price - item.variant.discountPrice) / item.variant.price * 100)}% OFF
@@ -633,7 +633,7 @@ function Checkout() {
                 <div>
                   <h3 className="font-medium">Shipping Policy</h3>
                   <p className="text-sm text-gray-600">
-                    Free shipping on orders over $500. Standard delivery in 3-5 business days.
+                    Free shipping on orders over ₹500. Standard delivery in 3-5 business days.
                   </p>
                 </div>
               </div>
