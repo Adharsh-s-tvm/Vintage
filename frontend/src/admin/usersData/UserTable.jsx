@@ -20,8 +20,6 @@ import {
     XCircle,
     MoreHorizontal,
     Search,
-    Filter,
-    UserPlus
 } from 'lucide-react';
 import { cn } from '../../lib/util';
 import axios from 'axios';
@@ -40,10 +38,7 @@ import {
 // Define the API base URL - replace with your actual API URL
 const API_BASE_URL = 'http://localhost:7000/api'; // Adjust this to match your backend URL
 
-export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDeleteUser, onUserUpdated }) {
-    const [users, setUsers] = useState(initialUsers || []);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [filter, setFilter] = useState('all');
+export function UsersTable({ users, onUserUpdated }) {
     const [isLoading, setIsLoading] = useState(false);
     const [confirmationDialog, setConfirmationDialog] = useState({
         isOpen: false,
@@ -52,16 +47,10 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
         userName: ''
     });
 
-    useEffect(() => {
-        if (initialUsers) {
-            setUsers(initialUsers);
-        }
-    }, [initialUsers]); // Add dependency to ensure effect runs when initialUsers changes
-
     const handleStatusChange = async (userId, newStatus) => {
         setIsLoading(true);
         try {
-            const response = await axios.put(
+            await axios.put(
                 `${API_BASE_URL}/admin/users/${userId}/status`,
                 { status: newStatus },
                 {
@@ -70,25 +59,16 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
                 }
             );
 
-            // Update local state
-            setUsers((prevUsers) =>
-                prevUsers.map((user) =>
-                    user._id === userId ? { ...user, status: newStatus } : user
-                )
-            );
-
             // Show success message
             toast.success(`User ${newStatus === 'active' ? 'activated' : 'banned'} successfully`);
 
-            // Notify parent component that a user was updated (if callback exists)
+            // Notify parent component that a user was updated
             if (onUserUpdated) {
                 onUserUpdated(userId, newStatus);
             }
         } catch (error) {
             console.error("Error updating user status:", error);
-            const errorMessage = error.response?.data?.message ||
-                "Failed to update user status. Please try again.";
-            toast.error(errorMessage);
+            toast.error(error.response?.data?.message || "Failed to update user status");
         } finally {
             setIsLoading(false);
         }
@@ -110,78 +90,9 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
         setConfirmationDialog({ isOpen: false, userId: null, newStatus: null, userName: '' });
     };
 
-    // Filter users based on search term and filter
-    const filteredUsers = users.filter(user => {
-        // Search filter - fixed typo in lastname
-        const matchesSearch =
-            user.firstname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.lastname.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-        // Status filter
-        const matchesFilter =
-            filter === 'all' ||
-            (filter === 'active' && user.status === 'active') ||
-            (filter === 'banned' && user.status === 'banned') ||
-            (filter === 'verified' && user.isVerified) ||  // Changed to match schema property name
-            (filter === 'unverified' && !user.isVerified); // Changed to match schema property name
-
-        return matchesSearch && matchesFilter;
-    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
     return (
         <>
             <div className="bg-white rounded-xl border border-gray-100 shadow-elevation-2 overflow-hidden">
-                <div className="p-4 border-b border-gray-100 flex flex-col md:flex-row justify-between gap-4">
-                    <div className="relative w-full md:w-auto md:flex-1 max-w-sm">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                        <Input
-                            type="search"
-                            placeholder="Search users..."
-                            className="pl-10 h-10 bg-gray-50 focus:bg-white transition-all w-full"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="outline" size="sm" className="h-10">
-                                    <Filter className="h-4 w-4 mr-2" />
-                                    Filter
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setFilter('all')}>
-                                    All Users
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilter('active')}>
-                                    Active Users
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilter('banned')}>
-                                    Banned Users
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilter('verified')}>
-                                    Verified Users
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setFilter('unverified')}>
-                                    Unverified Users
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-
-                        <Button
-                            className="h-10 bg-blue hover:bg-blue-dark transition-colors"
-                            onClick={onNewUser}
-                            disabled={isLoading}
-                        >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            New User
-                        </Button>
-                    </div>
-                </div>
-
                 <div className="overflow-x-auto">
                     <Table>
                         <TableHeader>
@@ -194,8 +105,8 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {filteredUsers.length > 0 ? (
-                                filteredUsers.map((user) => (
+                            {users.length > 0 ? (
+                                users.map((user) => (
                                     <TableRow key={user._id} className="hover:bg-gray-50 transition-colors">
                                         <TableCell>
                                             <div className="font-medium">{user.firstname} {user.lastname}</div>
@@ -216,7 +127,6 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
                                                 {user.status === 'active' ? 'Active' : 'Banned'}
                                             </span>
                                         </TableCell>
-
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -259,9 +169,7 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
                 <AlertDialogContent className="bg-white">
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            {confirmationDialog.newStatus === 'banned'
-                                ? 'Ban User'
-                                : 'Unban User'}
+                            {confirmationDialog.newStatus === 'banned' ? 'Ban User' : 'Unban User'}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             Are you sure you want to {confirmationDialog.newStatus === 'banned' ? 'ban' : 'unban'} {confirmationDialog.userName}?
@@ -285,7 +193,7 @@ export function UsersTable({ users: initialUsers, onNewUser, onEditUser, onDelet
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog >
+            </AlertDialog>
         </>
     );
 }

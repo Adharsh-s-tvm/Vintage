@@ -76,8 +76,71 @@ const logoutCurrentAdmin = asyncHandler(async (req, res) => {
 
 
 const getAllUsers = asyncHandler(async (req, res) => {
-    const users = await User.find({});
-    res.json(users);
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const search = req.query.search || '';
+        const filter = req.query.filter || 'all';
+
+        // Build filter query
+        let filterQuery = {};
+        
+        // Add search conditions if search query exists
+        if (search) {
+            filterQuery.$or = [
+                { firstname: { $regex: search, $options: 'i' } },
+                { lastname: { $regex: search, $options: 'i' } },
+                { email: { $regex: search, $options: 'i' } }
+            ];
+        }
+
+        // Add status/verification filters
+        switch (filter) {
+            case 'active':
+                filterQuery.status = 'active';
+                break;
+            case 'banned':
+                filterQuery.status = 'banned';
+                break;
+            case 'verified':
+                filterQuery.isVerified = true;
+                break;
+            case 'unverified':
+                filterQuery.isVerified = false;
+                break;
+            // 'all' case doesn't need additional filters
+        }
+
+        // Get total count for pagination
+        const total = await User.countDocuments(filterQuery);
+
+        // Fetch users with filters, pagination and sorting
+        const users = await User.find(filterQuery)
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .select('-password'); // Exclude password field
+
+        res.json({
+            users,
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalUsers: total,
+                hasNextPage: page * limit < total,
+                hasPrevPage: page > 1,
+                limit
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching users:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching users',
+            error: error.message 
+        });
+    }
 });
 
 
