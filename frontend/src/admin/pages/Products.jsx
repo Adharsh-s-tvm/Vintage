@@ -519,11 +519,26 @@ const Products = () => {
     <Button
       variant="contained"
       size="small"
-      color={product.isBlocked ? 'primary' : 'error'}
       onClick={() => {
         setItemToBlock(product);
         setBlockType('product');
         setBlockConfirmOpen(true);
+      }}
+      sx={{
+        background: product.isBlocked
+          ? 'linear-gradient(45deg, #22c55e 30%, #4ade80 90%)'
+          : 'linear-gradient(45deg, #ef4444 30%, #f87171 90%)',
+        color: 'white',
+        boxShadow: product.isBlocked
+          ? '0 3px 5px 2px rgba(34, 197, 94, .3)'
+          : '0 3px 5px 2px rgba(239, 68, 68, .3)',
+        '&:hover': {
+          background: product.isBlocked
+            ? 'linear-gradient(45deg, #16a34a 30%, #22c55e 90%)'
+            : 'linear-gradient(45deg, #dc2626 30%, #ef4444 90%)',
+          transform: 'translateY(-1px)'
+        },
+        transition: 'all 0.2s'
       }}
     >
       {product.isBlocked ? 'Unblock' : 'Block'}
@@ -713,7 +728,16 @@ const Products = () => {
       variant="contained"
       size="small"
       onClick={() => handleOpenVariantModal(product)}
-      startIcon={<Add />}
+      sx={{
+        background: 'linear-gradient(45deg, #0ea5e9 30%, #38bdf8 90%)',
+        color: 'white',
+        boxShadow: '0 3px 5px 2px rgba(14, 165, 233, .3)',
+        '&:hover': {
+          background: 'linear-gradient(45deg, #0284c7 30%, #0ea5e9 90%)',
+          transform: 'translateY(-1px)'
+        },
+        transition: 'all 0.2s'
+      }}
     >
       Add Variant
     </Button>
@@ -739,12 +763,12 @@ const Products = () => {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          backgroundColor: "#3f51b5",
-          borderRadius: 2,
-          padding: { xs: 2, sm: 3 }, // Responsive padding
-          marginBottom: 3,
-          boxShadow: 3,
-          flexWrap: 'wrap', // Allow wrapping on smaller screens
+          background: 'linear-gradient(135deg, #1e40af 0%, #3b82f6 100%)',
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '24px',
+          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)',
+          flexWrap: 'wrap',
           gap: 2
         }}
       >
@@ -773,21 +797,19 @@ const Products = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           sx={{
-            backgroundColor: "#ffffff",
-            borderRadius: 1,
-            width: "250px",
+            backgroundColor: "rgba(255, 255, 255, 0.9)",
+            borderRadius: '8px',
+            width: "300px",
             '& .MuiOutlinedInput-root': {
-              '& fieldset': { borderColor: "#3f51b5" },
-              '&:hover fieldset': { borderColor: "#3f51b5" },
-              '&.Mui-focused fieldset': { borderColor: "#3f51b5" },
-            },
+              '& fieldset': { borderColor: "transparent" },
+              '&:hover fieldset': { borderColor: "rgba(255, 255, 255, 0.2)" },
+              '&.Mui-focused fieldset': { borderColor: "#60a5fa" }
+            }
           }}
           InputProps={{
-            endAdornment: (
-              <IconButton>
-                <Search />
-              </IconButton>
-            ),
+            startAdornment: (
+              <Search sx={{ color: '#6b7280', mr: 1 }} />
+            )
           }}
         />
       </Box>
@@ -797,14 +819,14 @@ const Products = () => {
         component={Paper}
         sx={{
           mb: 2,
-          boxShadow: 3,
-          borderRadius: 2,
-          overflowX: 'hidden', // Prevent horizontal scroll
+          boxShadow: '0 4px 20px 0 rgba(0,0,0,0.1)',
+          borderRadius: '16px',
+          overflow: 'hidden',
           '& .MuiTable-root': {
             borderCollapse: 'separate',
             borderSpacing: '0 8px',
-            minWidth: '100%', // Ensure table takes full width
-            tableLayout: 'fixed' // Fixed table layout for better column control
+            minWidth: '100%',
+            background: '#ffffff'
           }
         }}
       >
@@ -855,17 +877,15 @@ const Products = () => {
                   <React.Fragment key={product._id}>
                     <TableRow
                       sx={{
-                        background: index % 2 === 0
-                          ? 'linear-gradient(to right, #ffffff, #f8f9fa)'
-                          : 'linear-gradient(to right, #f5f5f5, #e9ecef)',
+                        background: index % 2 === 0 ? '#ffffff' : '#f8fafc',
+                        transition: 'all 0.3s ease',
                         '&:hover': {
-                          background: 'linear-gradient(to right, #e3f2fd, #bbdefb)',
-                          transform: 'scale(1.002)',
-                          transition: 'all 0.2s ease',
-                          boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+                          background: 'linear-gradient(to right, #f0f7ff, #e6f3ff)',
+                          transform: 'translateY(-2px)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
                         },
                         '& td': {
-                          padding: '16px',
+                          padding: '20px 16px',
                           border: 'none',
                           borderBottom: '1px solid rgba(224, 224, 224, 0.4)'
                         }
@@ -920,10 +940,12 @@ const Products = () => {
                               setShowVariantModal(true);
                             }}
                             sx={{
-                              backgroundColor: "#00796b", // Teal
+                              background: 'linear-gradient(45deg, #0ea5e9 30%, #38bdf8 90%)',
+                              color: 'white',
+                              boxShadow: '0 3px 5px 2px rgba(14, 165, 233, .3)',
                               '&:hover': {
-                                backgroundColor: "#004d40",
-                                transform: 'translateY(-2px)'
+                                background: 'linear-gradient(45deg, #0284c7 30%, #0ea5e9 90%)',
+                                transform: 'translateY(-1px)'
                               },
                               transition: 'all 0.2s'
                             }}
@@ -933,14 +955,6 @@ const Products = () => {
                           <Button
                             variant="contained"
                             size="small"
-                            sx={{
-                              backgroundColor: "#1565c0", // Blue
-                              '&:hover': {
-                                backgroundColor: "#0d47a1",
-                                transform: 'translateY(-2px)'
-                              },
-                              transition: 'all 0.2s'
-                            }}
                             onClick={() => {
                               setSelectedProduct(product);
                               setFormData({
@@ -951,6 +965,16 @@ const Products = () => {
                               });
                               setEditMode(true);
                               setShowProductModal(true);
+                            }}
+                            sx={{
+                              background: 'linear-gradient(45deg, #8b5cf6 30%, #a78bfa 90%)',
+                              color: 'white',
+                              boxShadow: '0 3px 5px 2px rgba(139, 92, 246, .3)',
+                              '&:hover': {
+                                background: 'linear-gradient(45deg, #7c3aed 30%, #8b5cf6 90%)',
+                                transform: 'translateY(-1px)'
+                              },
+                              transition: 'all 0.2s'
                             }}
                           >
                             Edit
@@ -977,39 +1001,45 @@ const Products = () => {
                       <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
                         <Collapse in={expandedRows[product._id]} timeout="auto" unmountOnExit>
                           <Box sx={{
-                            margin: 2,
-                            backgroundColor: '#f3f6f9',
-                            borderRadius: 2,
-                            p: 2,
-                            boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                            margin: '16px 24px',
+                            backgroundColor: '#ffffff',
+                            borderRadius: '12px',
+                            p: 3,
+                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
                           }}>
                             <Typography
                               variant="h6"
                               gutterBottom
                               component="div"
                               sx={{
-                                color: '#1565c0',
-                                fontWeight: 'bold',
-                                marginBottom: 2
+                                color: '#1e40af',
+                                fontWeight: '600',
+                                marginBottom: 3,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1
                               }}
                             >
-                              Product Variants
+                              <span role="img" aria-label="variants"></span> Product Variants
                             </Typography>
+                            
                             <Table
                               size="small"
                               sx={{
                                 backgroundColor: 'white',
-                                borderRadius: 1,
+                                borderRadius: '8px',
                                 overflow: 'hidden',
-                                boxShadow: 1,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                                 '& .MuiTableCell-root': {
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  padding: '12px 16px'
+                                  padding: '16px',
+                                  fontSize: '0.9rem'
                                 },
-                                '& .MuiTableCell-head': {
-                                  fontWeight: 'bold'
+                                '& .MuiTableHead-root': {
+                                  backgroundColor: '#1e40af',
+                                  '& .MuiTableCell-root': {
+                                    color: 'white',
+                                    fontWeight: '600'
+                                  }
                                 }
                               }}
                             >
