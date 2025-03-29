@@ -13,27 +13,27 @@ export function StatsCard({
     const colorStyles = {
         blue: {
             bgLight: 'bg-blue-50',
-            iconBg: 'bg-blue-100',
+            // iconBg: 'bg-blue-100',
             iconColor: 'text-blue-600',
         },
         purple: {
             bgLight: 'bg-purple-50',
-            iconBg: 'bg-purple-100',
+            // iconBg: 'bg-purple-100',
             iconColor: 'text-purple-600',
         },
         yellow: {
             bgLight: 'bg-yellow-50',
-            iconBg: 'bg-yellow-100',
+            // iconBg: 'bg-yellow-100',
             iconColor: 'text-yellow-600',
         },
         red: {
             bgLight: 'bg-red-50',
-            iconBg: 'bg-red-100',
+            // iconBg: 'bg-red-100',
             iconColor: 'text-red-600',
         },
         green: {
             bgLight: 'bg-green-50',
-            iconBg: 'bg-green-100',
+            // iconBg: 'bg-green-100',
             iconColor: 'text-green-600',
         }
     };
@@ -88,7 +88,7 @@ export function StatsCard({
                 </div>
             </div>
 
-            {change && (
+            {/* {change && (
                 <div className="flex items-center justify-between mt-4">
                     {change.trend === 'up' ? (
                         <ArrowUp className="h-4 w-4 text-green-500 mr-1" />
@@ -104,7 +104,7 @@ export function StatsCard({
                         {Math.abs(change.value)}%
                     </span>
                 </div>
-            )}
+            )} */}
 
             {/* Mini sparkline */}
             <svg width="60" height="20" className="text-gray-300">
