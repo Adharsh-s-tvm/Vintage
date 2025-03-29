@@ -27,100 +27,62 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../../ui/Pagination";
+import { useSearchParams } from 'react-router-dom';
 
-function Returns() {
+export default function Returns() {
   const [returns, setReturns] = useState([]);
-  const [allReturns, setAllReturns] = useState([]); // Store all returns for frontend filtering
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [itemsPerPage] = useState(5);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [filterStatus, setFilterStatus] = useState('all');
 
   const fetchReturns = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${api}/admin/orders/returns`, {
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', itemsPerPage.toString());
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (filterStatus !== 'all') {
+        params.set('status', filterStatus);
+      }
+
+      // Update URL parameters
+      setSearchParams(params);
+
+      const response = await axios.get(`${api}/admin/orders/returns?${params}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
       });
-      
-      const returnOrders = response.data.returns.filter(order => 
-        order.items.some(item => item.returnRequested)
-      );
-      
-      setAllReturns(returnOrders);
-      setLoading(false);
+
+      setReturns(response.data.returns);
+      setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
       console.error('Fetch error:', error);
       toast.error('Failed to fetch return requests');
+    } finally {
       setLoading(false);
     }
-  };
-
-  // Filter returns based on search query
-  const getFilteredReturns = () => {
-    if (!allReturns.length) return [];
-    
-    if (!searchQuery.trim()) return allReturns;
-    
-    const query = searchQuery.toLowerCase();
-    return allReturns.filter(order => 
-      order.orderId?.toLowerCase().includes(query) ||
-      order.user?.fullname?.toLowerCase().includes(query) ||
-      order.items.some(item => 
-        item.product?.name?.toLowerCase().includes(query) ||
-        item.returnReason?.toLowerCase().includes(query)
-      )
-    );
-  };
-
-  // Get paginated returns
-  const getPaginatedReturns = () => {
-    const filtered = getFilteredReturns();
-    
-    // Count total items after flattening the data structure
-    const flattenedItems = filtered.flatMap(order => 
-      order.items
-        .filter(item => item.returnRequested)
-        .map(item => ({ order, item }))
-    );
-    
-    const totalItems = flattenedItems.length;
-    const totalFilteredPages = Math.ceil(totalItems / itemsPerPage);
-    setTotalPages(totalFilteredPages || 1);
-    
-    // Adjust current page if it exceeds the new total pages
-    if (currentPage > totalFilteredPages && totalFilteredPages > 0) {
-      setCurrentPage(totalFilteredPages);
-    }
-    
-    // Paginate the flattened items
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    const paginatedItems = flattenedItems.slice(startIndex, endIndex);
-    
-    // Group back by order for rendering
-    const orderMap = new Map();
-    
-    paginatedItems.forEach(({ order, item }) => {
-      if (!orderMap.has(order._id)) {
-        orderMap.set(order._id, { ...order, items: [] });
-      }
-      orderMap.get(order._id).items.push(item);
-    });
-    
-    return Array.from(orderMap.values());
   };
 
   useEffect(() => {
     fetchReturns();
-  }, []);
+  }, [searchParams]); // Only depend on searchParams
 
-  // Update returns when search or pagination changes
-  useEffect(() => {
-    const paginatedData = getPaginatedReturns();
-    setReturns(paginatedData);
-  }, [searchQuery, currentPage, allReturns]);
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    const params = new URLSearchParams(searchParams);
+    params.set('search', searchQuery);
+    params.set('page', '1');
+    setSearchParams(params);
+  };
 
   const handleReturnAction = async (orderId, itemId, action) => {
     try {
@@ -138,11 +100,6 @@ function Returns() {
       console.error('Action error:', error);
       toast.error(error.response?.data?.message || `Failed to ${action} return request`);
     }
-  };
-
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setCurrentPage(1); // Reset to first page when searching
   };
 
   const handleClearSearch = () => {
@@ -308,5 +265,3 @@ function Returns() {
     </div>
   );
 }
-
-export default Returns;

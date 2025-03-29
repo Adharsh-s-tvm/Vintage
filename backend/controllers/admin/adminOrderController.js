@@ -6,48 +6,59 @@ import { processReturnRefund } from '../user/userWalletController.js';
 export const getAllOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 5;
     const search = req.query.search || '';
+    const filter = req.query.filter || 'all';
+    const sortField = req.query.sort || 'createdAt';
+    const sortOrder = req.query.order || 'desc';
 
-    let query = {};
+    // Build filter query
+    let filterQuery = {};
     
+    // Add search conditions if search query exists
     if (search) {
-      // First, try to match the exact ObjectId if the search looks like one
-      if (search.match(/^[0-9a-fA-F]{24}$/)) {
-        query.$or = [
-          { _id: search },
-          { 'user.name': { $regex: search, $options: 'i' } }
-        ];
-      } else {
-        query.$or = [
-          { 'user.name': { $regex: search, $options: 'i' } }
-        ];
-      }
+      filterQuery.$or = [
+        { orderId: { $regex: search, $options: 'i' } },
+        { 'user.fullname': { $regex: search, $options: 'i' } }
+      ];
     }
 
-    const total = await Order.countDocuments(query);
-    
-    const orders = await Order.find(query)
-      .populate('user', 'name email')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .select('orderId createdAt user totalAmount orderStatus')  // Include orderId in selection
-      .lean(); // Convert to plain JavaScript objects
+    // Add status filter if not 'all'
+    if (filter !== 'all') {
+      filterQuery.orderStatus = filter;
+    }
 
-    // Ensure we always send an array
-    res.status(200).json({
-      orders: orders || [],
-      total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit)
+    // Build sort object
+    let sortObj = {};
+    sortObj[sortField] = sortOrder === 'desc' ? -1 : 1;
+
+    // Get total count for pagination
+    const total = await Order.countDocuments(filterQuery);
+
+    // Fetch orders with filters, sorting and pagination
+    const orders = await Order.find(filterQuery)
+      .populate('user', 'fullname email')
+      .sort(sortObj)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      orders,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalOrders: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+        limit
+      }
     });
+
   } catch (error) {
-    console.error('Error in getAllOrders:', error);
+    console.error('Error fetching orders:', error);
     res.status(500).json({ 
-      message: "Failed to fetch orders", 
-      error: error.message,
-      orders: [] // Always provide an array, even on error
+      message: "Failed to fetch orders",
+      error: error.message 
     });
   }
 };
@@ -129,17 +140,16 @@ export const updateReturnStatus = async (req, res) => {
   }
 };
 
-// Add this new controller function
-// Add this function to get return requests
+// Update getReturnRequests to handle search and pagination
 export const getReturnRequests = async (req, res) => {
-  console.log("Return called");
-  
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 5;
     const search = req.query.search || '';
+    const status = req.query.status || 'all';
 
-    let query = {
+    // Build filter query
+    let filterQuery = {
       'items': {
         $elemMatch: {
           'returnRequested': true
@@ -147,37 +157,51 @@ export const getReturnRequests = async (req, res) => {
       }
     };
 
+    // Add search conditions if search exists
     if (search) {
-      query.$or = [
+      filterQuery.$or = [
         { orderId: { $regex: search, $options: 'i' } },
-        { 'user.fullname': { $regex: search, $options: 'i' } }
+        { 'user.fullname': { $regex: search, $options: 'i' } },
+        { 'items.product.name': { $regex: search, $options: 'i' } }
       ];
     }
 
-    const total = await Order.countDocuments(query);
+    // Add status filter if not 'all'
+    if (status !== 'all') {
+      filterQuery['items.returnStatus'] = status;
+    }
 
-    const returns = await Order.find(query)
+    // Get total count for pagination
+    const total = await Order.countDocuments(filterQuery);
+
+    // Fetch returns with filters and pagination
+    const returns = await Order.find(filterQuery)
       .populate('user', 'fullname email')
       .populate({
         path: 'items.product',
         select: 'name images'
       })
-      .populate('items.sizeVariant')
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
       .limit(limit);
 
-    res.status(200).json({
+    res.json({
       returns,
-      total,
-      currentPage: page,
-      totalPages: Math.ceil(total / limit)
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalReturns: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+        limit
+      }
     });
+
   } catch (error) {
-    console.error('Error in getReturnRequests:', error);
-    res.status(500).json({
-      message: "Failed to fetch return requests",
-      error: error.message
+    console.error('Error fetching returns:', error);
+    res.status(500).json({ 
+      message: "Failed to fetch returns",
+      error: error.message 
     });
   }
 };
