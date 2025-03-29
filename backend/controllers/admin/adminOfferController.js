@@ -82,6 +82,7 @@ export const addOffer = async (req, res) => {
       return res.status(400).json({ message: 'Discount percentage cannot be greater than 100' });
     }
 
+
     // Create new offer
     const offer = new Offer({
       offerName,

@@ -306,7 +306,7 @@ function Orders() {
                           {new Date(order.createdAt).toLocaleDateString()}
                         </TableCell>
                         <TableCell>{order.user?.fullname || 'N/A'}</TableCell>
-                        <TableCell>${order.totalAmount?.toFixed(2)}</TableCell>
+                        <TableCell>₹{order.totalAmount?.toFixed(2)}</TableCell>
                         <TableCell>
                           <span className={`px-2 py-1 rounded-full text-xs ${
                             order.orderStatus === 'Delivered' ? 'bg-green-100 text-green-800' :
