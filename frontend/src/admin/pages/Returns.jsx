@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { api } from '../../lib/api';
 import { toast } from 'sonner';
@@ -28,43 +28,50 @@ import {
   PaginationPrevious,
 } from "../../ui/Pagination";
 import { useSearchParams } from 'react-router-dom';
+import { debounce } from 'lodash';
 
 export default function Returns() {
   const [returns, setReturns] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(2);
   const [searchParams, setSearchParams] = useSearchParams();
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [itemsPerPage] = useState(parseInt(searchParams.get('limit')) || 5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [filterStatus, setFilterStatus] = useState(searchParams.get('status') || 'all');
+
+  // Add debounced search
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      const params = new URLSearchParams(searchParams);
+      params.set('search', value);
+      params.set('page', '1');
+      setSearchParams(params);
+    }, 500),
+    [searchParams, setSearchParams]
+  );
 
   const fetchReturns = async () => {
     try {
       setLoading(true);
       
       // Build query parameters
-      const params = new URLSearchParams();
-      params.set('page', currentPage.toString());
-      params.set('limit', itemsPerPage.toString());
-      if (searchQuery.trim()) {
-        params.set('search', searchQuery.trim());
-      }
-      if (filterStatus !== 'all') {
-        params.set('status', filterStatus);
-      }
-
-      // Update URL parameters
-      setSearchParams(params);
+      const params = new URLSearchParams(searchParams);
+      
+      // Ensure required parameters are set
+      if (!params.has('page')) params.set('page', currentPage.toString());
+      if (!params.has('limit')) params.set('limit', itemsPerPage.toString());
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+      if (filterStatus !== 'all') params.set('status', filterStatus);
 
       const response = await axios.get(`${api}/admin/orders/returns?${params}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
+        withCredentials: true
       });
 
       setReturns(response.data.returns);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
-      console.error('Fetch error:', error);
+      console.error('Error fetching returns:', error);
       toast.error('Failed to fetch return requests');
     } finally {
       setLoading(false);
@@ -77,11 +84,22 @@ export default function Returns() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1);
+    debouncedSearch(searchQuery);
+  };
+
+  const handlePageChange = (newPage) => {
     const params = new URLSearchParams(searchParams);
-    params.set('search', searchQuery);
+    params.set('page', newPage.toString());
+    setSearchParams(params);
+    setCurrentPage(newPage);
+  };
+
+  const handleFilterChange = (status) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('status', status);
     params.set('page', '1');
     setSearchParams(params);
+    setFilterStatus(status);
   };
 
   const handleReturnAction = async (orderId, itemId, action) => {
@@ -142,6 +160,19 @@ export default function Returns() {
             </div>
           ) : (
             <>
+              <div className="mb-4">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => handleFilterChange(e.target.value)}
+                  className="border rounded p-2"
+                >
+                  <option value="all">All Status</option>
+                  <option value="Return Pending">Pending</option>
+                  <option value="Return Approved">Approved</option>
+                  <option value="Return Rejected">Rejected</option>
+                </select>
+              </div>
+
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -227,21 +258,20 @@ export default function Returns() {
                 </TableBody>
               </Table>
 
-              {/* Pagination */}
               <div className="mt-4 flex justify-center">
                 <Pagination>
-                  <PaginationContent className="flex flex-wrap justify-center gap-2">
+                  <PaginationContent>
                     <PaginationItem>
-                      <PaginationPrevious 
-                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      <PaginationPrevious
+                        onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
                       />
                     </PaginationItem>
-                    
+
                     {[...Array(totalPages)].map((_, index) => (
                       <PaginationItem key={index + 1}>
                         <PaginationLink
-                          onClick={() => setCurrentPage(index + 1)}
+                          onClick={() => handlePageChange(index + 1)}
                           isActive={currentPage === index + 1}
                         >
                           {index + 1}
@@ -251,7 +281,7 @@ export default function Returns() {
 
                     <PaginationItem>
                       <PaginationNext
-                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages}
                       />
                     </PaginationItem>

@@ -19,29 +19,16 @@ const Brand = () => {
   const [newBrand, setNewBrand] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [itemsPerPage] = useState(parseInt(searchParams.get('limit')) || 5);
   const [totalPages, setTotalPages] = useState(0);
   const [totalBrands, setTotalBrands] = useState(0);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [filter, setFilter] = useState(searchParams.get('filter') || 'all');
   const [loading, setLoading] = useState(false);
-  const [filteredBrands, setFilteredBrands] = useState([]);
-  const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     fetchBrands();
   }, [searchParams]);
-
-  useEffect(() => {
-    if (brands.length > 0) {
-      const filtered = brands
-        .filter(brand =>
-          brand.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      setFilteredBrands(filtered);
-    }
-  }, [brands, searchQuery]);
 
   const fetchBrands = async () => {
     try {
@@ -164,49 +151,29 @@ const Brand = () => {
     }
   };
 
-  // Add pagination calculation
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentBrands = filteredBrands.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Add pagination controls component
-  const Pagination = () => (
-    <div className="flex justify-center gap-2 mt-4">
-      <button
-        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
-      >
-        Previous
-      </button>
-      <span className="px-3 py-1">
-        Page {currentPage} of {totalPages}
-      </span>
-      <button
-        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-        disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
-      >
-        Next
-      </button>
-    </div>
-  );
-
   // Add debounced search handler
   const debouncedSearch = useCallback(
     debounce((value) => {
       setSearchQuery(value);
-      setCurrentPage(1);
+      // Reset to first page when searching
       const params = new URLSearchParams(searchParams);
       params.set('search', value);
       params.set('page', '1');
       setSearchParams(params);
     }, 500),
-    []
+    [searchParams]
   );
 
   const handleSearchChange = (e) => {
     debouncedSearch(e.target.value);
+  };
+
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    setSearchParams(params);
   };
 
   return (
@@ -241,36 +208,65 @@ const Brand = () => {
             </tr>
           </thead>
           <tbody>
-            {currentBrands.map((brand) => (
-              <tr key={brand._id} className="border-b border-gray-300">
-                <td className="p-3">{brand.name}</td>
-                <td className="p-3">
-                  {new Date(brand.createdAt).toLocaleString()}
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                    onClick={() => openModal(brand)}
-                  >
-                    Edit
-                  </button>
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className={`${brand.status === 'listed'
-                      ? 'bg-red-500 hover:bg-red-700'
-                      : 'bg-green-500 hover:bg-green-700'
-                      } text-white px-4 py-2 rounded`}
-                    onClick={() => openConfirmModal(brand)}
-                  >
-                    {brand.status === 'listed' ? 'Block' : 'Unblock'}
-                  </button>
-                </td>
+            {loading ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4">Loading...</td>
               </tr>
-            ))}
+            ) : brands.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4">No brands found</td>
+              </tr>
+            ) : (
+              brands.map((brand) => (
+                <tr key={brand._id} className="border-b border-gray-300">
+                  <td className="p-3">{brand.name}</td>
+                  <td className="p-3">
+                    {new Date(brand.createdAt).toLocaleString()}
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                      onClick={() => openModal(brand)}
+                    >
+                      Edit
+                    </button>
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      className={`${brand.status === 'listed'
+                        ? 'bg-red-500 hover:bg-red-700'
+                        : 'bg-green-500 hover:bg-green-700'
+                        } text-white px-4 py-2 rounded`}
+                      onClick={() => openConfirmModal(brand)}
+                    >
+                      {brand.status === 'listed' ? 'Block' : 'Unblock'}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-        <Pagination />
+
+        <div className="flex justify-center gap-2 mt-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Edit Brand Modal */}

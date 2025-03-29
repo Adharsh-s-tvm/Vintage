@@ -21,10 +21,9 @@ const Category = () => {
   const [newCategory, setNewCategory] = useState("");
   const [categoryToToggle, setCategoryToToggle] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredCategories, setFilteredCategories] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(5);
   const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [itemsPerPage] = useState(parseInt(searchParams.get('limit')) || 5);
   const [totalPages, setTotalPages] = useState(0);
   const [totalCategories, setTotalCategories] = useState(0);
   const [filter, setFilter] = useState(searchParams.get('filter') || 'all');
@@ -64,19 +63,6 @@ const Category = () => {
     fetchCategories();
   }, []);
 
-  // Add this useEffect to handle search and sorting
-  useEffect(() => {
-    if (categories.length > 0) {
-      const filtered = categories
-        .filter(category =>
-          category.name.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-      setFilteredCategories(filtered);
-    }
-  }, [categories, searchQuery]);
-
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -85,6 +71,7 @@ const Category = () => {
       const params = new URLSearchParams();
       params.set('page', currentPage.toString());
       params.set('limit', itemsPerPage.toString());
+      
       if (searchQuery.trim()) {
         params.set('search', searchQuery.trim());
       }
@@ -96,6 +83,7 @@ const Category = () => {
       setSearchParams(params);
 
       const response = await axios.get(`${API_BASE_URL}/categories?${params}`);
+      
       setCategories(response.data.categories);
       setTotalPages(response.data.pagination.totalPages);
       setTotalCategories(response.data.pagination.totalCategories);
@@ -115,17 +103,21 @@ const Category = () => {
   const debouncedSearch = useCallback(
     debounce((value) => {
       setSearchQuery(value);
-      setCurrentPage(1);
+      // Reset to first page when searching
       const params = new URLSearchParams(searchParams);
       params.set('search', value);
       params.set('page', '1');
       setSearchParams(params);
     }, 500),
-    []
+    [searchParams]
   );
 
-  const handleSearchChange = (e) => {
-    debouncedSearch(e.target.value);
+  // Handle page change
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    setSearchParams(params);
   };
 
   // Update Category
@@ -189,34 +181,6 @@ const Category = () => {
     }
   };
 
-  // Add pagination calculation
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentCategories = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
-
-  // Add pagination controls component
-  const Pagination = () => (
-    <div className="flex justify-center gap-2 mt-4">
-      <button
-        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-        disabled={currentPage === 1}
-        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
-      >
-        Previous
-      </button>
-      <span className="px-3 py-1">
-        Page {currentPage} of {totalPages}
-      </span>
-      <button
-        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-        disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
-      >
-        Next
-      </button>
-    </div>
-  );
-
   return (
     <div className={`container mx-auto p-6 ${isOpen || isAddOpen ? "backdrop-blur-sm" : ""}`}>
       <div className="flex justify-between items-center mb-4">
@@ -226,7 +190,10 @@ const Category = () => {
             type="text"
             placeholder="Search categories..."
             value={searchQuery}
-            onChange={handleSearchChange}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              handlePageChange(1);
+            }}
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
@@ -249,36 +216,64 @@ const Category = () => {
             </tr>
           </thead>
           <tbody>
-            {currentCategories.map((category) => (
-              <tr key={category._id} className="border-b border-gray-300">
-                <td className="p-3">{category.name}</td>
-                <td className="p-3">
-                  {new Date(category.createdAt).toLocaleString()}
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded"
-                    onClick={() => openModal(category)}
-                  >
-                    Edit
-                  </button>
-                </td>
-                <td className="p-3 text-center">
-                  <button
-                    className={`${category.status === 'listed'
-                      ? 'bg-red-500 hover:bg-red-700'
-                      : 'bg-green-500 hover:bg-green-700'
-                      } text-white px-4 py-2 rounded`}
-                    onClick={() => openConfirmModal(category)}
-                  >
-                    {category.status === 'listed' ? 'Block' : 'Unblock'}
-                  </button>
-                </td>
+            {loading ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4">Loading...</td>
               </tr>
-            ))}
+            ) : categories.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="text-center py-4">No categories found</td>
+              </tr>
+            ) : (
+              categories.map((category) => (
+                <tr key={category._id} className="border-b border-gray-300">
+                  <td className="p-3">{category.name}</td>
+                  <td className="p-3">
+                    {new Date(category.createdAt).toLocaleString()}
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      className="bg-blue-500 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                      onClick={() => openModal(category)}
+                    >
+                      Edit
+                    </button>
+                  </td>
+                  <td className="p-3 text-center">
+                    <button
+                      className={`${category.status === 'listed'
+                        ? 'bg-red-500 hover:bg-red-700'
+                        : 'bg-green-500 hover:bg-green-700'
+                        } text-white px-4 py-2 rounded`}
+                      onClick={() => openConfirmModal(category)}
+                    >
+                      {category.status === 'listed' ? 'Block' : 'Unblock'}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
-        <Pagination />
+        <div className="flex justify-center gap-2 mt-4">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+          >
+            Previous
+          </button>
+          <span className="px-3 py-1">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
+          >
+            Next
+          </button>
+        </div>
       </div>
 
       {/* Edit Category Modal */}

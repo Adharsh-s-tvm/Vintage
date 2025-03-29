@@ -171,6 +171,9 @@ export const getReturnRequests = async (req, res) => {
       filterQuery['items.returnStatus'] = status;
     }
 
+    // Calculate skip value
+    const skip = (page - 1) * limit;
+
     // Get total count for pagination
     const total = await Order.countDocuments(filterQuery);
 
@@ -182,9 +185,10 @@ export const getReturnRequests = async (req, res) => {
         select: 'name images'
       })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip(skip)
       .limit(limit);
 
+    // Send response with pagination metadata
     res.json({
       returns,
       pagination: {
@@ -200,6 +204,7 @@ export const getReturnRequests = async (req, res) => {
   } catch (error) {
     console.error('Error fetching returns:', error);
     res.status(500).json({ 
+      success: false,
       message: "Failed to fetch returns",
       error: error.message 
     });

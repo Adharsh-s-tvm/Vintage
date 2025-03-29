@@ -228,12 +228,16 @@ export const getAllCategories = async (req, res) => {
     // Get total count for pagination
     const total = await Category.countDocuments(filterQuery);
 
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
     // Fetch categories with filters and pagination
     const categories = await Category.find(filterQuery)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip(skip)
       .limit(limit);
 
+    // Send response with pagination metadata
     res.json({
       categories,
       pagination: {
@@ -241,14 +245,18 @@ export const getAllCategories = async (req, res) => {
         totalPages: Math.ceil(total / limit),
         totalCategories: total,
         hasNextPage: page * limit < total,
-        hasPrevPage: page > 0,
+        hasPrevPage: page > 1,
         limit
       }
     });
 
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ message: 'Error fetching categories' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching categories',
+      error: error.message 
+    });
   }
 };
 
@@ -349,12 +357,16 @@ export const getAllBrands = async (req, res) => {
     // Get total count for pagination
     const total = await Brand.countDocuments(filterQuery);
 
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
     // Fetch brands with filters and pagination
     const brands = await Brand.find(filterQuery)
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
+      .skip(skip)
       .limit(limit);
 
+    // Send response with pagination metadata
     res.json({
       brands,
       pagination: {
@@ -362,14 +374,18 @@ export const getAllBrands = async (req, res) => {
         totalPages: Math.ceil(total / limit),
         totalBrands: total,
         hasNextPage: page * limit < total,
-        hasPrevPage: page > 0,
+        hasPrevPage: page > 1,
         limit
       }
     });
 
   } catch (error) {
     console.error('Error fetching brands:', error);
-    res.status(500).json({ message: 'Error fetching brands' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching brands',
+      error: error.message 
+    });
   }
 };
 
