@@ -28,6 +28,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import { useSearchParams } from 'react-router-dom';
 
 const API_BASE_URL = 'http://localhost:7000/api/admin';
 
@@ -105,6 +106,11 @@ const Products = () => {
     sub2: null,
     sub3: null
   });
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+
+  // Add searchParams hook
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     fetchCategories();
@@ -157,9 +163,21 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/products`);
-      console.log('Products data:', response.data);
-      setProducts(response.data);
+      
+      // Update URL with current parameters
+      const params = new URLSearchParams(searchParams);
+      params.set('page', page.toString());
+      params.set('limit', rowsPerPage.toString());
+      if (searchQuery) params.set('search', searchQuery);
+      setSearchParams(params);
+
+      // Make API request with params
+      const response = await axios.get(`${API_BASE_URL}/products?${params}`);
+      
+      setProducts(response.data.products);
+      setTotalPages(response.data.totalPages);
+      setTotalProducts(response.data.totalProducts);
+      setFilteredProducts(response.data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to fetch products');
@@ -167,6 +185,59 @@ const Products = () => {
       setLoading(false);
     }
   };
+
+  // Update page change handler
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    setSearchParams(params);
+  };
+
+  // Update rows per page handler
+  const handleChangeRowsPerPage = (event) => {
+    const newLimit = parseInt(event.target.value, 10);
+    setRowsPerPage(newLimit);
+    setPage(0);
+    const params = new URLSearchParams(searchParams);
+    params.set('limit', newLimit.toString());
+    params.set('page', '0');
+    setSearchParams(params);
+  };
+
+  // Update search handler
+  const handleSearch = (value) => {
+    setSearchQuery(value);
+    setPage(0);
+    const params = new URLSearchParams(searchParams);
+    params.set('search', value);
+    params.set('page', '0');
+    setSearchParams(params);
+  };
+
+  // Initialize from URL params on component mount
+  useEffect(() => {
+    const pageParam = searchParams.get('page');
+    const limitParam = searchParams.get('limit');
+    const searchParam = searchParams.get('search');
+
+    if (pageParam) setPage(parseInt(pageParam));
+    if (limitParam) setRowsPerPage(parseInt(limitParam));
+    if (searchParam) setSearchQuery(searchParam);
+  }, []);
+
+  // Update products when URL params change
+  useEffect(() => {
+    fetchProducts();
+  }, [searchParams]);
+
+  // Remove the old useEffect that was watching page, rowsPerPage, and searchQuery
+  // since we're now using searchParams
+
+  // Remove client-side filtering effect since we're doing server-side filtering
+  useEffect(() => {
+    setFilteredProducts(products);
+  }, [products]);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -191,15 +262,6 @@ const Products = () => {
       console.error('Error adding product:', error);
       toast.error(error.response?.data?.message || 'Failed to add product');
     }
-  };
-
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
   };
 
   const handleVariantChange = (e) => {
@@ -561,25 +623,15 @@ const Products = () => {
   );
 
   const Pagination = () => (
-    <div className="flex justify-center gap-2 mt-4">
-      <button
-        onClick={() => setPage(prev => Math.max(prev - 1, 0))}
-        disabled={page === 0}
-        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
-      >
-        Previous
-      </button>
-      <span className="px-3 py-1">
-        Page {page + 1} of {Math.ceil(filteredProducts.length / rowsPerPage)}
-      </span>
-      <button
-        onClick={() => setPage(prev => Math.min(prev + 1, Math.ceil(filteredProducts.length / rowsPerPage) - 1))}
-        disabled={page >= Math.ceil(filteredProducts.length / rowsPerPage) - 1}
-        className="px-3 py-1 rounded bg-blue-500 text-white disabled:bg-gray-300"
-      >
-        Next
-      </button>
-    </div>
+    <TablePagination
+      component="div"
+      count={totalProducts}
+      page={page}
+      onPageChange={handleChangePage}
+      rowsPerPage={rowsPerPage}
+      onRowsPerPageChange={handleChangeRowsPerPage}
+      rowsPerPageOptions={[5, 10, 25]}
+    />
   );
 
   // Function to handle initial image selection
@@ -795,7 +847,7 @@ const Products = () => {
           size="small"
           placeholder="Search products..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(e) => handleSearch(e.target.value)}
           sx={{
             backgroundColor: "rgba(255, 255, 255, 0.9)",
             borderRadius: '8px',
@@ -871,268 +923,266 @@ const Products = () => {
                 <TableCell colSpan={6} align="center">No products found</TableCell>
               </TableRow>
             ) : (
-              filteredProducts
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((product, index) => (
-                  <React.Fragment key={product._id}>
-                    <TableRow
-                      sx={{
-                        background: index % 2 === 0 ? '#ffffff' : '#f8fafc',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          background: 'linear-gradient(to right, #f0f7ff, #e6f3ff)',
-                          transform: 'translateY(-2px)',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                        },
-                        '& td': {
-                          padding: '20px 16px',
-                          border: 'none',
-                          borderBottom: '1px solid rgba(224, 224, 224, 0.4)'
-                        }
-                      }}
-                    >
-                      <TableCell>{product.name}</TableCell>
-                      <TableCell>
-                        {typeof product.category === 'object'
-                          ? product.category?.name
-                          : categories.find(cat => cat._id === product.category)?.name || 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        {typeof product.brand === 'object'
-                          ? product.brand?.name
-                          : brands.find(brand => brand._id === product.brand)?.name || 'N/A'}
-                      </TableCell>
-                      <TableCell align="center">
-                        <Chip
-                          label={product.isBlocked ? 'Blocked' : 'Active'}
-                          color={product.isBlocked ? 'error' : 'success'}
-                          size="small"
-                          sx={{
-                            fontWeight: 'bold',
-                            minWidth: '80px',
-                            background: product.isBlocked
-                              ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
-                              : 'linear-gradient(45deg, #2e7d32 30%, #43a047 90%)',
-                            color: 'white',
-                            '& .MuiChip-label': {
-                              color: 'white'
-                            }
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{
-                          display: 'flex',
-                          gap: 1,
-                          justifyContent: 'center',
-                          '& .MuiButton-root': {
-                            minWidth: '100px',
-                            fontWeight: 'bold',
-                            textTransform: 'none',
-                            boxShadow: 2
+              filteredProducts.map((product, index) => (
+                <React.Fragment key={product._id}>
+                  <TableRow
+                    sx={{
+                      background: index % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        background: 'linear-gradient(to right, #f0f7ff, #e6f3ff)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                      },
+                      '& td': {
+                        padding: '20px 16px',
+                        border: 'none',
+                        borderBottom: '1px solid rgba(224, 224, 224, 0.4)'
+                      }
+                    }}
+                  >
+                    <TableCell>{product.name}</TableCell>
+                    <TableCell>
+                      {typeof product.category === 'object'
+                        ? product.category?.name
+                        : categories.find(cat => cat._id === product.category)?.name || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {typeof product.brand === 'object'
+                        ? product.brand?.name
+                        : brands.find(brand => brand._id === product.brand)?.name || 'N/A'}
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={product.isBlocked ? 'Blocked' : 'Active'}
+                        color={product.isBlocked ? 'error' : 'success'}
+                        size="small"
+                        sx={{
+                          fontWeight: 'bold',
+                          minWidth: '80px',
+                          background: product.isBlocked
+                            ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                            : 'linear-gradient(45deg, #2e7d32 30%, #43a047 90%)',
+                          color: 'white',
+                          '& .MuiChip-label': {
+                            color: 'white'
                           }
-                        }}>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setShowVariantModal(true);
-                            }}
-                            sx={{
-                              background: 'linear-gradient(45deg, #0ea5e9 30%, #38bdf8 90%)',
-                              color: 'white',
-                              boxShadow: '0 3px 5px 2px rgba(14, 165, 233, .3)',
-                              '&:hover': {
-                                background: 'linear-gradient(45deg, #0284c7 30%, #0ea5e9 90%)',
-                                transform: 'translateY(-1px)'
-                              },
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            Add Variant
-                          </Button>
-                          <Button
-                            variant="contained"
-                            size="small"
-                            onClick={() => {
-                              setSelectedProduct(product);
-                              setFormData({
-                                name: product.name,
-                                category: product.category._id,
-                                brand: product.brand._id,
-                                description: product.description
-                              });
-                              setEditMode(true);
-                              setShowProductModal(true);
-                            }}
-                            sx={{
-                              background: 'linear-gradient(45deg, #8b5cf6 30%, #a78bfa 90%)',
-                              color: 'white',
-                              boxShadow: '0 3px 5px 2px rgba(139, 92, 246, .3)',
-                              '&:hover': {
-                                background: 'linear-gradient(45deg, #7c3aed 30%, #8b5cf6 90%)',
-                                transform: 'translateY(-1px)'
-                              },
-                              transition: 'all 0.2s'
-                            }}
-                          >
-                            Edit
-                          </Button>
-                          <ProductActionButton product={product} />
-                        </Box>
-                      </TableCell>
-                      <TableCell align="center">
-                        <IconButton
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Box sx={{
+                        display: 'flex',
+                        gap: 1,
+                        justifyContent: 'center',
+                        '& .MuiButton-root': {
+                          minWidth: '100px',
+                          fontWeight: 'bold',
+                          textTransform: 'none',
+                          boxShadow: 2
+                        }
+                      }}>
+                        <Button
+                          variant="contained"
                           size="small"
-                          onClick={() => handleRowExpand(product._id)}
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setShowVariantModal(true);
+                          }}
                           sx={{
-                            backgroundColor: expandedRows[product._id] ? '#e3f2fd' : 'transparent',
+                            background: 'linear-gradient(45deg, #0ea5e9 30%, #38bdf8 90%)',
+                            color: 'white',
+                            boxShadow: '0 3px 5px 2px rgba(14, 165, 233, .3)',
                             '&:hover': {
-                              backgroundColor: '#bbdefb'
-                            }
+                              background: 'linear-gradient(45deg, #0284c7 30%, #0ea5e9 90%)',
+                              transform: 'translateY(-1px)'
+                            },
+                            transition: 'all 0.2s'
                           }}
                         >
-                          {expandedRows[product._id] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
-                        <Collapse in={expandedRows[product._id]} timeout="auto" unmountOnExit>
-                          <Box sx={{
-                            margin: '16px 24px',
-                            backgroundColor: '#ffffff',
-                            borderRadius: '12px',
-                            p: 3,
-                            boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
-                          }}>
-                            <Typography
-                              variant="h6"
-                              gutterBottom
-                              component="div"
-                              sx={{
-                                color: '#1e40af',
-                                fontWeight: '600',
-                                marginBottom: 3,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1
-                              }}
-                            >
-                              <span role="img" aria-label="variants"></span> Product Variants
-                            </Typography>
-                            
-                            <Table
-                              size="small"
-                              sx={{
-                                backgroundColor: 'white',
-                                borderRadius: '8px',
-                                overflow: 'hidden',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                          Add Variant
+                        </Button>
+                        <Button
+                          variant="contained"
+                          size="small"
+                          onClick={() => {
+                            setSelectedProduct(product);
+                            setFormData({
+                              name: product.name,
+                              category: product.category._id,
+                              brand: product.brand._id,
+                              description: product.description
+                            });
+                            setEditMode(true);
+                            setShowProductModal(true);
+                          }}
+                          sx={{
+                            background: 'linear-gradient(45deg, #8b5cf6 30%, #a78bfa 90%)',
+                            color: 'white',
+                            boxShadow: '0 3px 5px 2px rgba(139, 92, 246, .3)',
+                            '&:hover': {
+                              background: 'linear-gradient(45deg, #7c3aed 30%, #8b5cf6 90%)',
+                              transform: 'translateY(-1px)'
+                            },
+                            transition: 'all 0.2s'
+                          }}
+                        >
+                          Edit
+                        </Button>
+                        <ProductActionButton product={product} />
+                      </Box>
+                    </TableCell>
+                    <TableCell align="center">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRowExpand(product._id)}
+                        sx={{
+                          backgroundColor: expandedRows[product._id] ? '#e3f2fd' : 'transparent',
+                          '&:hover': {
+                            backgroundColor: '#bbdefb'
+                          }
+                        }}
+                      >
+                        {expandedRows[product._id] ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                      </IconButton>
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+                      <Collapse in={expandedRows[product._id]} timeout="auto" unmountOnExit>
+                        <Box sx={{
+                          margin: '16px 24px',
+                          backgroundColor: '#ffffff',
+                          borderRadius: '12px',
+                          p: 3,
+                          boxShadow: '0 2px 12px rgba(0,0,0,0.08)'
+                        }}>
+                          <Typography
+                            variant="h6"
+                            gutterBottom
+                            component="div"
+                            sx={{
+                              color: '#1e40af',
+                              fontWeight: '600',
+                              marginBottom: 3,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
+                          >
+                            <span role="img" aria-label="variants"></span> Product Variants
+                          </Typography>
+                          
+                          <Table
+                            size="small"
+                            sx={{
+                              backgroundColor: 'white',
+                              borderRadius: '8px',
+                              overflow: 'hidden',
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                              '& .MuiTableCell-root': {
+                                padding: '16px',
+                                fontSize: '0.9rem'
+                              },
+                              '& .MuiTableHead-root': {
+                                backgroundColor: '#1e40af',
                                 '& .MuiTableCell-root': {
-                                  padding: '16px',
-                                  fontSize: '0.9rem'
-                                },
-                                '& .MuiTableHead-root': {
-                                  backgroundColor: '#1e40af',
-                                  '& .MuiTableCell-root': {
-                                    color: 'white',
-                                    fontWeight: '600'
-                                  }
+                                  color: 'white',
+                                  fontWeight: '600'
                                 }
-                              }}
-                            >
-                              <TableHead>
-                                <TableRow sx={{
-                                  backgroundColor: '#1976d2',
-                                  '& th': {
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                    fontSize: '0.9rem'
-                                  }
-                                }}>
-                                  <TableCell width="20%">Size</TableCell>
-                                  <TableCell width="20%">Color</TableCell>
-                                  <TableCell width="15%">Stock</TableCell>
-                                  <TableCell width="15%">Price</TableCell>
-                                  <TableCell width="30%" align="center">Actions</TableCell>
+                              }
+                            }}
+                          >
+                            <TableHead>
+                              <TableRow sx={{
+                                backgroundColor: '#1976d2',
+                                '& th': {
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                  fontSize: '0.9rem'
+                                }
+                              }}>
+                                <TableCell width="20%">Size</TableCell>
+                                <TableCell width="20%">Color</TableCell>
+                                <TableCell width="15%">Stock</TableCell>
+                                <TableCell width="15%">Price</TableCell>
+                                <TableCell width="30%" align="center">Actions</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {product.variants.map((variant) => (
+                                <TableRow
+                                  key={variant._id}
+                                  sx={{
+                                    '&:hover': {
+                                      backgroundColor: '#f5f5f5',
+                                      transform: 'scale(1.001)',
+                                      transition: 'all 0.2s ease'
+                                    }
+                                  }}
+                                >
+                                  <TableCell>{variant.size}</TableCell>
+                                  <TableCell>{variant.color}</TableCell>
+                                  <TableCell>{variant.stock}</TableCell>
+                                  <TableCell>₹{variant.price}</TableCell>
+                                  <TableCell align="center">
+                                    <Box sx={{
+                                      display: 'flex',
+                                      gap: 1,
+                                      alignItems: 'center',
+                                      justifyContent: 'center'
+                                    }}>
+                                      <Chip
+                                        label={variant.isBlocked ? 'Blocked' : 'Active'}
+                                        color={variant.isBlocked ? 'error' : 'success'}
+                                        size="small"
+                                        sx={{
+                                          fontWeight: 'bold',
+                                          minWidth: '80px',
+                                          background: variant.isBlocked
+                                            ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
+                                            : 'linear-gradient(45deg, #2e7d32 30%, #43a047 90%)',
+                                          color: 'white'
+                                        }}
+                                      />
+                                      <Button
+                                        variant="contained"
+                                        size="small"
+                                        sx={{
+                                          background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
+                                          color: 'white',
+                                          '&:hover': {
+                                            background: 'linear-gradient(45deg, #0d47a1 30%, #1565c0 90%)',
+                                            transform: 'translateY(-2px)'
+                                          },
+                                          transition: 'all 0.2s'
+                                        }}
+                                        onClick={() => {
+                                          setSelectedVariant(variant);
+                                          setVariantFormData({
+                                            size: variant.size,
+                                            color: variant.color,
+                                            stock: variant.stock,
+                                            price: variant.price
+                                          });
+                                          setShowEditVariantModal(true);
+                                        }}
+                                      >
+                                        Edit
+                                      </Button>
+                                      <VariantActionButton variant={variant} />
+                                    </Box>
+                                  </TableCell>
                                 </TableRow>
-                              </TableHead>
-                              <TableBody>
-                                {product.variants.map((variant) => (
-                                  <TableRow
-                                    key={variant._id}
-                                    sx={{
-                                      '&:hover': {
-                                        backgroundColor: '#f5f5f5',
-                                        transform: 'scale(1.001)',
-                                        transition: 'all 0.2s ease'
-                                      }
-                                    }}
-                                  >
-                                    <TableCell>{variant.size}</TableCell>
-                                    <TableCell>{variant.color}</TableCell>
-                                    <TableCell>{variant.stock}</TableCell>
-                                    <TableCell>₹{variant.price}</TableCell>
-                                    <TableCell align="center">
-                                      <Box sx={{
-                                        display: 'flex',
-                                        gap: 1,
-                                        alignItems: 'center',
-                                        justifyContent: 'center'
-                                      }}>
-                                        <Chip
-                                          label={variant.isBlocked ? 'Blocked' : 'Active'}
-                                          color={variant.isBlocked ? 'error' : 'success'}
-                                          size="small"
-                                          sx={{
-                                            fontWeight: 'bold',
-                                            minWidth: '80px',
-                                            background: variant.isBlocked
-                                              ? 'linear-gradient(45deg, #d32f2f 30%, #f44336 90%)'
-                                              : 'linear-gradient(45deg, #2e7d32 30%, #43a047 90%)',
-                                            color: 'white'
-                                          }}
-                                        />
-                                        <Button
-                                          variant="contained"
-                                          size="small"
-                                          sx={{
-                                            background: 'linear-gradient(45deg, #1565c0 30%, #1976d2 90%)',
-                                            color: 'white',
-                                            '&:hover': {
-                                              background: 'linear-gradient(45deg, #0d47a1 30%, #1565c0 90%)',
-                                              transform: 'translateY(-2px)'
-                                            },
-                                            transition: 'all 0.2s'
-                                          }}
-                                          onClick={() => {
-                                            setSelectedVariant(variant);
-                                            setVariantFormData({
-                                              size: variant.size,
-                                              color: variant.color,
-                                              stock: variant.stock,
-                                              price: variant.price
-                                            });
-                                            setShowEditVariantModal(true);
-                                          }}
-                                        >
-                                          Edit
-                                        </Button>
-                                        <VariantActionButton variant={variant} />
-                                      </Box>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                              </TableBody>
-                            </Table>
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </React.Fragment>
-                ))
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </Box>
+                      </Collapse>
+                    </TableCell>
+                  </TableRow>
+                </React.Fragment>
+              ))
             )}
           </TableBody>
         </Table>

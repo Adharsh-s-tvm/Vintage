@@ -23,17 +23,92 @@ export const addProduct = async (req, res) => {
   }
 };
 
-// @desc    Get all products
+// @desc    Get all products with pagination
 // @route   GET /api/products
 // @access  Public
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find()
-      .populate('category', 'name')
-      .populate('brand', 'name')
-      .populate('variants');
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
 
-    res.json(products);
+    // Create aggregation pipeline
+    const aggregationPipeline = [
+      // Lookup for populating relationships
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'category',
+          foreignField: '_id',
+          as: 'category'
+        }
+      },
+      {
+        $lookup: {
+          from: 'brands',
+          localField: 'brand',
+          foreignField: '_id',
+          as: 'brand'
+        }
+      },
+      {
+        $lookup: {
+          from: 'variants',
+          localField: 'variants',
+          foreignField: '_id',
+          as: 'variants'
+        }
+      },
+      // Unwind the populated arrays
+      {
+        $unwind: '$category'
+      },
+      {
+        $unwind: '$brand'
+      },
+      // Add search query if provided
+      ...(search ? [{
+        $match: {
+          $or: [
+            { name: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } },
+            { 'brand.name': { $regex: search, $options: 'i' } },
+            { 'category.name': { $regex: search, $options: 'i' } }
+          ]
+        }
+      }] : []),
+      // Sort by creation date
+      {
+        $sort: { createdAt: -1 }
+      }
+    ];
+
+    // Get total count for pagination (before applying skip and limit)
+    const totalProducts = await Product.aggregate([
+      ...aggregationPipeline,
+      { $count: 'total' }
+    ]);
+
+    const total = totalProducts[0]?.total || 0;
+
+    // Add pagination to pipeline
+    aggregationPipeline.push(
+      { $skip: page * limit },
+      { $limit: limit }
+    );
+
+    // Execute the aggregation pipeline
+    const products = await Product.aggregate(aggregationPipeline);
+
+    res.json({
+      products,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      totalProducts: total,
+      hasNextPage: (page + 1) * limit < total,
+      hasPrevPage: page > 0
+    });
+
   } catch (error) {
     console.error('Error fetching products:', error);
     res.status(500).json({ message: 'Error fetching products' });

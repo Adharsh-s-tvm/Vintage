@@ -54,7 +54,7 @@ export function BarChartCard({ title, data, className }) {
                         <YAxis yAxisId="right" orientation="right" />
                         <Tooltip 
                             content={<CustomTooltip />} 
-                            cursor={{ fill: 'rgba(0, 0, 0, 0.02)' }}
+                            cursor={{ fill: 'rgba(0, 0, 0, 0.01)' }}
                         />
                         <Legend />
                         <Bar yAxisId="left" dataKey="Sales" fill="#4F46E5" />
