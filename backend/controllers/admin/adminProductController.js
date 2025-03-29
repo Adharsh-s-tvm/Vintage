@@ -206,8 +206,50 @@ export const addCategory = async (req, res) => {
 // @route   GET /api/products/categories
 // @access  Public
 export const getAllCategories = async (req, res) => {
-  const categories = await Category.find().sort({ createdAt: -1 });
-  res.status(200).json(categories);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const filter = req.query.filter || 'all';
+
+    // Build filter query
+    let filterQuery = {};
+    
+    // Add search conditions if search query exists
+    if (search) {
+      filterQuery.name = { $regex: search, $options: 'i' };
+    }
+
+    // Add status filter if not 'all'
+    if (filter !== 'all') {
+      filterQuery.status = filter;
+    }
+
+    // Get total count for pagination
+    const total = await Category.countDocuments(filterQuery);
+
+    // Fetch categories with filters and pagination
+    const categories = await Category.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      categories,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalCategories: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 0,
+        limit
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ message: 'Error fetching categories' });
+  }
 };
 
 // @desc    Update category status
@@ -285,8 +327,50 @@ export const addBrand = async (req, res) => {
 };
 
 export const getAllBrands = async (req, res) => {
-  const brands = await Brand.find().sort({ createdAt: -1 });
-  res.status(200).json(brands);
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const filter = req.query.filter || 'all';
+
+    // Build filter query
+    let filterQuery = {};
+    
+    // Add search conditions if search query exists
+    if (search) {
+      filterQuery.name = { $regex: search, $options: 'i' };
+    }
+
+    // Add status filter if not 'all'
+    if (filter !== 'all') {
+      filterQuery.status = filter;
+    }
+
+    // Get total count for pagination
+    const total = await Brand.countDocuments(filterQuery);
+
+    // Fetch brands with filters and pagination
+    const brands = await Brand.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      brands,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalBrands: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 0,
+        limit
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching brands:', error);
+    res.status(500).json({ message: 'Error fetching brands' });
+  }
 };
 
 export const updateBrandStatus = async (req, res) => {

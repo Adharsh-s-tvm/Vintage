@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
+import { debounce } from 'lodash';
 
 const API_BASE_URL = 'http://localhost:7000/api/admin/products';
 
@@ -15,14 +17,19 @@ const Brand = () => {
   const [brandToToggle, setBrandToToggle] = useState(null);
   const [updatedName, setUpdatedName] = useState("");
   const [newBrand, setNewBrand] = useState("");
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalBrands, setTotalBrands] = useState(0);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [filter, setFilter] = useState(searchParams.get('filter') || 'all');
+  const [loading, setLoading] = useState(false);
   const [filteredBrands, setFilteredBrands] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
 
   useEffect(() => {
     fetchBrands();
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (brands.length > 0) {
@@ -38,10 +45,30 @@ const Brand = () => {
 
   const fetchBrands = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/brands`);
-      setBrands(response.data);
+      setLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', itemsPerPage.toString());
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (filter !== 'all') {
+        params.set('filter', filter);
+      }
+
+      // Update URL
+      setSearchParams(params);
+
+      const response = await axios.get(`${API_BASE_URL}/brands?${params}`);
+      setBrands(response.data.brands);
+      setTotalPages(response.data.pagination.totalPages);
+      setTotalBrands(response.data.pagination.totalBrands);
     } catch (error) {
       toast.error('Failed to fetch brands');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,7 +168,6 @@ const Brand = () => {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentBrands = filteredBrands.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredBrands.length / itemsPerPage);
 
   // Add pagination controls component
   const Pagination = () => (
@@ -166,6 +192,23 @@ const Brand = () => {
     </div>
   );
 
+  // Add debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      setSearchQuery(value);
+      setCurrentPage(1);
+      const params = new URLSearchParams(searchParams);
+      params.set('search', value);
+      params.set('page', '1');
+      setSearchParams(params);
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    debouncedSearch(e.target.value);
+  };
+
   return (
     <div className={`container mx-auto p-6 ${isOpen || isAddOpen || isConfirmOpen ? "backdrop-blur-sm" : ""}`}>
       <div className="flex justify-between items-center mb-4">
@@ -175,7 +218,7 @@ const Brand = () => {
             type="text"
             placeholder="Search brands..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button

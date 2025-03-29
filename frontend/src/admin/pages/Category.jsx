@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
+import { debounce } from 'lodash';
 
 const initialCategories = [
 ];
@@ -22,6 +24,11 @@ const Category = () => {
   const [filteredCategories, setFilteredCategories] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(5);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalCategories, setTotalCategories] = useState(0);
+  const [filter, setFilter] = useState(searchParams.get('filter') || 'all');
+  const [loading, setLoading] = useState(false);
 
   // Open & Close Modals
   function closeModal() {
@@ -72,11 +79,53 @@ const Category = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/categories`);
-      setCategories(response.data);
+      setLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', itemsPerPage.toString());
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (filter !== 'all') {
+        params.set('filter', filter);
+      }
+
+      // Update URL
+      setSearchParams(params);
+
+      const response = await axios.get(`${API_BASE_URL}/categories?${params}`);
+      setCategories(response.data.categories);
+      setTotalPages(response.data.pagination.totalPages);
+      setTotalCategories(response.data.pagination.totalCategories);
     } catch (error) {
       toast.error('Failed to fetch categories');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Update useEffect to watch for search params changes
+  useEffect(() => {
+    fetchCategories();
+  }, [searchParams]);
+
+  // Add debounced search handler
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      setSearchQuery(value);
+      setCurrentPage(1);
+      const params = new URLSearchParams(searchParams);
+      params.set('search', value);
+      params.set('page', '1');
+      setSearchParams(params);
+    }, 500),
+    []
+  );
+
+  const handleSearchChange = (e) => {
+    debouncedSearch(e.target.value);
   };
 
   // Update Category
@@ -144,7 +193,6 @@ const Category = () => {
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentCategories = filteredCategories.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredCategories.length / itemsPerPage);
 
   // Add pagination controls component
   const Pagination = () => (
@@ -178,7 +226,7 @@ const Category = () => {
             type="text"
             placeholder="Search categories..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
