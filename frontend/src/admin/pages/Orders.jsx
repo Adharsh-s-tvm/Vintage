@@ -109,7 +109,6 @@ function Orders() {
   // Update useEffect to include new dependencies
   useEffect(() => {
     fetchOrders();
-    fetchPendingReturns();
   }, [currentPage, searchQuery, sortField, sortOrder, filterStatus]);
 
   const handleSearch = (e) => {
@@ -155,43 +154,7 @@ function Orders() {
   };
 
   // Add these state variables
-  const [pendingReturns, setPendingReturns] = useState([]);
-  const [returnDialogOpen, setReturnDialogOpen] = useState(false);
-  const [selectedReturn, setSelectedReturn] = useState(null);
 
-  // Add this function to fetch pending returns
-  const fetchPendingReturns = async () => {
-    try {
-      const response = await axios.get(`${api}/admin/returns/pending`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
-      setPendingReturns(response.data.returns || []);
-    } catch (error) {
-      console.error('Error fetching pending returns:', error);
-    }
-  };
-
-  // Add this to your existing useEffect
-  useEffect(() => {
-    fetchOrders();
-    fetchPendingReturns(); // Add this line
-  }, [currentPage, searchQuery]);
-
-  // Add these handler functions
-  const handleReturnAction = async (returnId, action) => {
-    try {
-      await axios.patch(
-        `${api}/admin/returns/${returnId}/${action}`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
-      );
-      toast.success(`Return request ${action}ed successfully`);
-      fetchPendingReturns();
-      setReturnDialogOpen(false);
-    } catch (error) {
-      toast.error(`Failed to ${action} return request`);
-    }
-  };
 
   // Add this JSX right after the CardHeader closing tag
   return (
@@ -203,14 +166,7 @@ function Orders() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-4">
                 <CardTitle>Orders Management</CardTitle>
-                {pendingReturns.length > 0 && (
-                  <div className="relative cursor-pointer" onClick={() => setReturnDialogOpen(true)}>
-                    <Bell className="h-6 w-6 text-gray-600" />
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {pendingReturns.length}
-                    </span>
-                  </div>
-                )}
+               
               </div>
             </div>
 
@@ -419,46 +375,7 @@ function Orders() {
       </Card>
 
       {/* Add this Dialog component before the CardContent */}
-      <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Pending Return Requests</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 my-4">
-            {pendingReturns.map((returnRequest) => (
-              <div key={returnRequest._id} className="border rounded-lg p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <p className="font-medium">Order #{returnRequest.orderId}</p>
-                    <p className="text-sm text-gray-600">
-                      Reason: {returnRequest.reason}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      Details: {returnRequest.additionalDetails}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-4">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    onClick={() => handleReturnAction(returnRequest._id, 'accept')}
-                  >
-                    Accept Return
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleReturnAction(returnRequest._id, 'reject')}
-                  >
-                    Reject Return
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+    
     </div>
   );
 }
