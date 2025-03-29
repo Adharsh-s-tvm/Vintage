@@ -104,13 +104,54 @@ export const addOffer = async (req, res) => {
 
 export const getAllOffers = async (req, res) => {
   try {
-    const offers = await Offer.find()
-      .populate('items', 'name')
-      .sort({ createdAt: -1 });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const filter = req.query.filter || 'all';
+
+    // Build filter query
+    let filterQuery = {};
     
-    res.status(200).json(offers);
+    // Add search conditions if search query exists
+    if (search) {
+      filterQuery.$or = [
+        { offerName: { $regex: search, $options: 'i' } },
+        { offerType: { $regex: search, $options: 'i' } },
+        { discountPercentage: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Add status filter if not 'all'
+    if (filter !== 'all') {
+      filterQuery.isActive = filter === 'active';
+    }
+
+    // Get total count for pagination
+    const total = await Offer.countDocuments(filterQuery);
+
+    // Fetch offers with filters and pagination
+    const offers = await Offer.find(filterQuery)
+      .populate('items', 'name')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      offers,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalOffers: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+        limit
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      message: "Failed to fetch offers",
+      error: error.message 
+    });
   }
 };
 

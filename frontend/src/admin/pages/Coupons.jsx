@@ -3,6 +3,8 @@ import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuIte
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
+import { api } from '../../lib/api';
 
 function Coupons() {
   const [showModal, setShowModal] = useState(false);
@@ -20,19 +22,44 @@ function Coupons() {
   const [editCouponId, setEditCouponId] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-
-  useEffect(() => {
-    fetchCoupons();
-  }, []);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [filter, setFilter] = useState(searchParams.get('filter') || 'all');
+  const [loading, setLoading] = useState(false);
 
   const fetchCoupons = async () => {
     try {
-      const response = await axios.get('http://localhost:7000/api/admin/coupons');
-      setCoupons(response.data);
+      setLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', rowsPerPage.toString());
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (filter !== 'all') {
+        params.set('filter', filter);
+      }
+
+      // Update URL parameters
+      setSearchParams(params);
+
+      const response = await axios.get(`${api}/admin/coupons?${params}`);
+      setCoupons(response.data.coupons);
+      setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
+      console.error('Error fetching coupons:', error);
       toast.error('Failed to fetch coupons');
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCoupons();
+  }, [searchParams]);
 
   const generateCouponCode = () => {
     const prefix = 'SHOP';
@@ -104,17 +131,14 @@ function Coupons() {
     setPage(0);
   };
 
-  const filteredCoupons = coupons.filter(coupon =>
-    coupon.couponCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    coupon.discountType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    coupon.discountValue.toString().includes(searchQuery) ||
-    coupon.minOrderAmount.toString().includes(searchQuery)
-  );
-
-  const paginatedCoupons = filteredCoupons.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    const params = new URLSearchParams(searchParams);
+    params.set('search', searchQuery);
+    params.set('page', '1');
+    setSearchParams(params);
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -265,7 +289,7 @@ function Coupons() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedCoupons.map((coupon) => (
+            {coupons.map((coupon) => (
               <TableRow key={coupon._id}>
                 <TableCell>{coupon.couponCode}</TableCell>
                 <TableCell>{coupon.discountType}</TableCell>
@@ -319,9 +343,9 @@ function Coupons() {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={filteredCoupons.length}
+          count={totalPages * rowsPerPage}
           rowsPerPage={rowsPerPage}
-          page={page}
+          page={currentPage - 1}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />

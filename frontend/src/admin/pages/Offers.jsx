@@ -3,6 +3,7 @@ import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuIte
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { useSearchParams } from 'react-router-dom';
 
 function Offers() {
   const [showModal, setShowModal] = useState(false);
@@ -23,6 +24,11 @@ function Offers() {
   const [editOfferId, setEditOfferId] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [filter, setFilter] = useState(searchParams.get('filter') || 'all');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -54,10 +60,30 @@ function Offers() {
 
   const fetchOffers = async () => {
     try {
-      const response = await axios.get('http://localhost:7000/api/admin/offers');
-      setOffers(response.data);
+      setLoading(true);
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      params.set('page', currentPage.toString());
+      params.set('limit', rowsPerPage.toString());
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim());
+      }
+      if (filter !== 'all') {
+        params.set('filter', filter);
+      }
+
+      // Update URL parameters
+      setSearchParams(params);
+
+      const response = await axios.get(`http://localhost:7000/api/admin/offers?${params}`);
+      setOffers(response.data.offers);
+      setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
+      console.error('Error fetching offers:', error);
       toast.error('Failed to fetch offers');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -168,16 +194,14 @@ function Offers() {
     setPage(0);
   };
 
-  const filteredOffers = offers.filter(offer => 
-    offer.offerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    offer.offerType.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    offer.discountPercentage.toString().includes(searchQuery)
-  );
-
-  const paginatedOffers = filteredOffers.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const handleSearch = (e) => {
+    e.preventDefault();
+    setCurrentPage(1);
+    const params = new URLSearchParams(searchParams);
+    params.set('search', searchQuery);
+    params.set('page', '1');
+    setSearchParams(params);
+  };
 
   return (
     <Box sx={{ p: 3 }}>
@@ -325,7 +349,7 @@ function Offers() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {paginatedOffers.map((offer) => (
+            {offers.map((offer) => (
               <TableRow key={offer._id}>
                 <TableCell>{offer.offerName}</TableCell>
                 <TableCell>{offer.offerType}</TableCell>
@@ -374,9 +398,9 @@ function Offers() {
         <TablePagination
           rowsPerPageOptions={[5, 10, 25]}
           component="div"
-          count={filteredOffers.length}
+          count={totalPages * rowsPerPage}
           rowsPerPage={rowsPerPage}
-          page={page}
+          page={currentPage - 1}
           onPageChange={handleChangePage}
           onRowsPerPageChange={handleChangeRowsPerPage}
         />

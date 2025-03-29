@@ -50,10 +50,53 @@ export const addCoupon = async (req, res) => {
 
 export const getAllCoupons = async (req, res) => {
   try {
-    const coupons = await Coupon.find().sort({ createdAt: -1 });
-    res.status(200).json(coupons);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const search = req.query.search || '';
+    const filter = req.query.filter || 'all';
+
+    // Build filter query
+    let filterQuery = {};
+    
+    // Add search conditions if search query exists
+    if (search) {
+      filterQuery.$or = [
+        { couponCode: { $regex: search, $options: 'i' } },
+        { discountType: { $regex: search, $options: 'i' } },
+        { discountValue: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Add status filter if not 'all'
+    if (filter !== 'all') {
+      filterQuery.isExpired = filter === 'expired';
+    }
+
+    // Get total count for pagination
+    const total = await Coupon.countDocuments(filterQuery);
+
+    // Fetch coupons with filters and pagination
+    const coupons = await Coupon.find(filterQuery)
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.json({
+      coupons,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalCoupons: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+        limit
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      message: "Failed to fetch coupons",
+      error: error.message 
+    });
   }
 };
 
