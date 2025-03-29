@@ -33,8 +33,8 @@ function Offers() {
   const fetchProducts = async () => {
     try {
       const response = await axios.get('http://localhost:7000/api/admin/products');
-      console.log('Fetched products:', response.data);
-      setProducts(response.data);
+      console.log('Fetched products:', response.data.products);
+      setProducts(response.data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to fetch products');

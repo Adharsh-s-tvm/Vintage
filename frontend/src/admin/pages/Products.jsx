@@ -143,7 +143,7 @@ const Products = () => {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/products/categories`);
-      setCategories(response.data);
+      setCategories(response.data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to fetch categories');
@@ -153,7 +153,7 @@ const Products = () => {
   const fetchBrands = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/products/brands`);
-      setBrands(response.data);
+      setBrands(response.data.brands);
     } catch (error) {
       console.error('Error fetching brands:', error);
       toast.error('Failed to fetch brands');
