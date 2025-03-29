@@ -5,7 +5,8 @@ import path from 'path';
 
 export const getSalesReport = async (req, res) => {
     try {
-        const { range, startDate, endDate } = req.query;
+        const { range, startDate, endDate, page = 1, limit = 10 } = req.query;
+        const skip = (page - 1) * limit;
         let dateFilter = {};
 
         // Set date filter based on range
@@ -229,13 +230,16 @@ export const getSalesReport = async (req, res) => {
         ]);
         
 
-        // Get recent transactions
+        // Get total count for transactions pagination
+        const totalTransactions = await Order.countDocuments(dateFilter);
+
+        // Get paginated transactions
         const transactions = await Order.find(dateFilter)
             .select('orderId totalAmount payment createdAt orderStatus items.status items.returnStatus')
             .sort('-createdAt')
-            .limit(10);
+            .skip(skip)
+            .limit(parseInt(limit));
 
-        // Send response with default values if no stats found
         res.json({
             stats: stats[0] || {
                 totalRevenue: 0,
@@ -260,7 +264,15 @@ export const getSalesReport = async (req, res) => {
                     item.returnStatus === 'Return Approved'
                 ) ? 'Returned' : t.orderStatus,
                 createdAt: t.createdAt
-            }))
+            })),
+            pagination: {
+                currentPage: parseInt(page),
+                totalPages: Math.ceil(totalTransactions / limit),
+                totalTransactions,
+                hasNextPage: page * limit < totalTransactions,
+                hasPrevPage: page > 1,
+                limit: parseInt(limit)
+            }
         });
 
     } catch (error) {

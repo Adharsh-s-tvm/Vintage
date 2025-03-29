@@ -32,6 +32,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "../../ui/Pagination";
+import { useSearchParams } from 'react-router-dom';
 
 const visitsData = [
     { name: 'North America', value: 35, color: '#4E80EE' },
@@ -64,50 +65,40 @@ export default function Dashboard() {
     const [salesData, setSalesData] = useState([]);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
     const [totalPages, setTotalPages] = useState(1);
-    const [itemsPerPage] = useState(10);
+    const [itemsPerPage] = useState(5);
     const [isDownloading, setIsDownloading] = useState(false);
-
-    useEffect(() => {
-        fetchSalesData();
-    }, [dateRange, customStartDate, customEndDate, currentPage]);
 
     const fetchSalesData = async () => {
         try {
             setLoading(true);
-            let params = { 
-                range: dateRange,
-                page: currentPage,
-                limit: itemsPerPage
-            };
+            
+            // Build query parameters
+            const params = new URLSearchParams();
+            params.set('range', dateRange);
+            params.set('page', currentPage.toString());
+            params.set('limit', itemsPerPage.toString());
+            
             if (dateRange === 'custom') {
-                params.startDate = customStartDate.toISOString();
-                params.endDate = customEndDate.toISOString();
+                params.set('startDate', customStartDate.toISOString());
+                params.set('endDate', customEndDate.toISOString());
             }
 
-            console.log('Fetching sales data with params:', params);
-            const response = await axios.get(`${api}/admin/sales-report`, {
-                params,
+            // Update URL parameters
+            setSearchParams(params);
+
+            const response = await axios.get(`${api}/admin/sales-report?${params}`, {
                 headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
             });
 
-            console.log('API Response:', response.data);
-
             if (response.data) {
-                const { stats, salesData, transactions, totalPages: total } = response.data;
-                console.log('Received stats:', stats);
-                setStats(stats || {
-                    totalRevenue: 0,
-                    totalOrders: 0,
-                    pendingOrders: 0,
-                    processingOrders: 0,
-                    cancelledOrders: 0,
-                    totalDiscounts: 0
-                });
-                setSalesData(salesData || []);
-                setTransactions(transactions || []);
-                setTotalPages(total || 1);
+                const { stats, salesData, transactions, pagination } = response.data;
+                setStats(stats);
+                setSalesData(salesData);
+                setTransactions(transactions);
+                setTotalPages(pagination.totalPages);
             }
         } catch (error) {
             console.error('Error details:', error.response || error);
@@ -116,6 +107,10 @@ export default function Dashboard() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchSalesData();
+    }, [searchParams, dateRange, customStartDate, customEndDate]);
 
     const handleDownloadPDF = async () => {
         try {
@@ -190,6 +185,13 @@ export default function Dashboard() {
             console.error('Download error:', error);
             toast.error('Failed to download report');
         }
+    };
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        const params = new URLSearchParams(searchParams);
+        params.set('page', newPage.toString());
+        setSearchParams(params);
     };
 
     return (
@@ -359,7 +361,7 @@ export default function Dashboard() {
                                     <PaginationContent>
                                         <PaginationItem>
                                             <PaginationPrevious 
-                                                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                                                 disabled={currentPage === 1}
                                             />
                                         </PaginationItem>
@@ -367,7 +369,7 @@ export default function Dashboard() {
                                         {[...Array(totalPages)].map((_, index) => (
                                             <PaginationItem key={index + 1}>
                                                 <PaginationLink
-                                                    onClick={() => setCurrentPage(index + 1)}
+                                                    onClick={() => handlePageChange(index + 1)}
                                                     isActive={currentPage === index + 1}
                                                 >
                                                     {index + 1}
@@ -377,7 +379,7 @@ export default function Dashboard() {
 
                                         <PaginationItem>
                                             <PaginationNext
-                                                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                                                onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages))}
                                                 disabled={currentPage === totalPages}
                                             />
                                         </PaginationItem>
