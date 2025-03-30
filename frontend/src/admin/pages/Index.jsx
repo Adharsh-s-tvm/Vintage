@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Layout } from '../layout/Layout';
 import { StatsCard } from '../dashboard/StatsCard';
 import { PieChartCard } from '../dashboard/PieChartCard';

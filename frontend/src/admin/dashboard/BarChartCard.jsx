@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
     BarChart,
     Bar,
@@ -11,7 +11,8 @@ import {
 } from 'recharts';
 import { cn } from '../../lib/util';
 
-const CustomTooltip = ({ active, payload, label }) => {
+// Memoize the CustomTooltip component
+const CustomTooltip = React.memo(({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white p-3 border border-gray-100 shadow-sm rounded-lg">
@@ -25,18 +26,19 @@ const CustomTooltip = ({ active, payload, label }) => {
         );
     }
     return null;
-};
+});
 
-export function BarChartCard({ title, data, className }) {
-    // Transform data for the chart
-    const chartData = data.map(item => ({
+// Memoize the entire BarChartCard component
+export const BarChartCard = React.memo(({ title, data, className }) => {
+    // Memoize the data transformation
+    const chartData = useMemo(() => data.map(item => ({
         date: new Date(item.date).toLocaleDateString('en-IN', { 
             day: 'numeric',
             month: 'short'
         }),
         Sales: item.sales,
         Orders: item.orders
-    }));
+    })), [data]);
 
     return (
         <div className={cn(
@@ -64,4 +66,6 @@ export function BarChartCard({ title, data, className }) {
             </div>
         </div>
     );
-} 
+});
+
+BarChartCard.displayName = 'BarChartCard'; 
