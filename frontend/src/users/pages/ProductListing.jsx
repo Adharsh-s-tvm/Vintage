@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Layout } from '../layout/Layout';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
@@ -37,6 +37,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../../ui/dialog";
+import { debounce } from 'lodash';
 
 // Add this constant at the top of your file, outside the component
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL'];
@@ -89,11 +90,31 @@ const ProductListing = () => {
   const dispatch = useDispatch();
 
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const [searchedProducts, setSearchedProducts] = useState([]);
+
+  // Add these states for global search
+  const [globalSearch, setGlobalSearch] = useState("");
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const searchInputRef = useRef(null);
+
+  const handleSearch = async () => {
+    if (!search) return;
+
+    try {
+      const { data } = await axios.get(`/api/products/search?keyword=${search}`);
+      setSearchedProducts(data.products);
+    } catch (error) {
+      console.error("Error fetching search results:", error);
+    }
+  };
+
 
   const fetchProducts = async (params) => {
     try {
       const queryParams = new URLSearchParams(params);
-      queryParams.set('page', currentPage);
+      queryParams.set('page', currentPage); 
       queryParams.set('limit', itemsPerPage);
 
       // Add search query if it exists
@@ -696,33 +717,167 @@ const ProductListing = () => {
     );
   };
 
+  // Add debounced search function
+  const handleGlobalSearch = useCallback(
+    debounce(async (searchTerm) => {
+      if (!searchTerm.trim()) {
+        setSearchedProducts([]);
+        return;
+      }
+
+      try {
+        const { data } = await axios.get(`${api}/products/search?keyword=${searchTerm}`);
+        if (data.success && Array.isArray(data.products)) {
+          // Filter out products with no variants or blocked products
+          const validProducts = data.products.filter(product => 
+            product.variants && 
+            product.variants.length > 0 && 
+            !product.isBlocked
+          );
+          setSearchedProducts(validProducts);
+        }
+      } catch (error) {
+        console.error("Search error:", error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch search results",
+          duration: 2000,
+        });
+      }
+    }, 300),
+    []
+  );
+
+  // Update search when input changes
+  useEffect(() => {
+    handleGlobalSearch(globalSearch);
+  }, [globalSearch]);
+
+  // Focus input when search bar opens
+  useEffect(() => {
+    if (showSearchBar && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [showSearchBar]);
+
+  // Handle click outside to close search
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.search-container')) {
+        setShowSearchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Handle search item click
+  const handleSearchItemClick = (productId) => {
+    navigate(`/products/${productId}`);
+    setShowSearchBar(false);
+    setShowSearchDropdown(false);
+    setGlobalSearch('');
+  };
+
   return (
     <Layout showSidebar={true} sidebarContent={sidebarContent}>
+      {/* Search Icon Button */}
       <div className="fixed top-4 right-4 z-50">
-        <Dialog open={isGlobalSearchOpen} onOpenChange={setIsGlobalSearchOpen}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px] bg-white border-none shadow-xl">
-            <DialogHeader>
-              <DialogTitle className="text-xl font-semibold mb-4">Search Products</DialogTitle>
-            </DialogHeader>
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="Type to search anything..."
-                className="w-full pr-12 text-lg py-6 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-300 transition-all duration-200"
-              />
-              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+        <Button
+          variant="outline"
+          size="icon"
+          className="rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200"
+          onClick={() => setShowSearchBar(true)}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Animated Search Container */}
+      <div
+        className={cn(
+          "fixed inset-0 bg-black/20 z-50 transition-all duration-300",
+          showSearchBar ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        )}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) {
+            setShowSearchBar(false);
+            setShowSearchDropdown(false);
+            setGlobalSearch('');
+          }
+        }}
+      >
+        <div
+          className={cn(
+            "absolute top-0 left-0 right-0 bg-white shadow-lg transition-all duration-300 transform",
+            showSearchBar ? "translate-y-0" : "-translate-y-full"
+          )}
+        >
+          <div className="container mx-auto px-4 py-4">
+            <div className="search-container relative max-w-2xl mx-auto">
+              <div className="relative flex items-center">
+                <Input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search for products..."
+                  className="w-full pr-12 pl-4 py-6 text-lg border-gray-200 focus:border-gray-300 focus:ring-gray-300"
+                  value={globalSearch}
+                  onChange={(e) => {
+                    setGlobalSearch(e.target.value);
+                    setShowSearchDropdown(true);
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2"
+                  onClick={() => {
+                    setShowSearchBar(false);
+                    setShowSearchDropdown(false);
+                    setGlobalSearch('');
+                  }}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {/* Search Results Dropdown */}
+              {showSearchDropdown && globalSearch.trim() && (
+                <div className="absolute w-full bg-white mt-1 rounded-lg shadow-lg border border-gray-200 max-h-[60vh] overflow-y-auto">
+                  {searchedProducts.length > 0 ? (
+                    <div className="py-2">
+                      {searchedProducts.map((product) => (
+                        <div
+                          key={product._id}
+                          className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleSearchItemClick(product._id)}
+                        >
+                          <img
+                            src={product.variants[0]?.mainImage}
+                            alt={product.name}
+                            className="w-12 h-12 object-cover rounded-md"
+                          />
+                          <div>
+                            <h3 className="font-medium text-sm">{product.name}</h3>
+                            <p className="text-xs text-gray-500">{product.category.name}</p>
+                            <p className="text-sm font-medium mt-1">
+                              ₹{Math.min(...product.variants.map(v => v.price))}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 text-center text-gray-500">
+                      No products found for "{globalSearch}"
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </div>
       </div>
 
       <div className="container mx-auto px-4 py-8">

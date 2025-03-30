@@ -268,3 +268,68 @@ export const getProductById = async (req, res) => {
         });
     }
 };
+
+export const searchProducts = async (req, res) => {
+    try {
+        const { keyword } = req.query;
+
+        if (!keyword) {
+            return res.status(400).json({ success: false, message: "Keyword is required" });
+        }
+
+        const aggregationPipeline = [
+            {
+                $lookup: {
+                    from: 'variants',
+                    localField: 'variants',
+                    foreignField: '_id',
+                    as: 'variants'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'categories',
+                    localField: 'category',
+                    foreignField: '_id',
+                    as: 'category'
+                }
+            },
+            {
+                $lookup: {
+                    from: 'brands',
+                    localField: 'brand',
+                    foreignField: '_id',
+                    as: 'brand'
+                }
+            },
+            {
+                $unwind: '$category'
+            },
+            {
+                $unwind: '$brand'
+            },
+            {
+                $match: {
+                    $and: [
+                        {
+                            $or: [
+                                { name: { $regex: keyword, $options: "i" } },
+                                { description: { $regex: keyword, $options: "i" } },
+                                { 'brand.name': { $regex: keyword, $options: "i" } },
+                                { 'category.name': { $regex: keyword, $options: "i" } }
+                            ]
+                        },
+                        { isBlocked: { $ne: true } },
+                        { 'variants.isBlocked': { $ne: true } }
+                    ]
+                }
+            }
+        ];
+
+        const products = await Product.aggregate(aggregationPipeline);
+
+        res.status(200).json({ success: true, products });
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
