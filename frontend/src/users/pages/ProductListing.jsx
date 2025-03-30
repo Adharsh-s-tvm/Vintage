@@ -30,7 +30,13 @@ import {
 import { toast } from '../../hooks/useToast';
 import { useDispatch } from 'react-redux';
 import { addToWishlist } from '../../redux/slices/wishlistSlice';
-
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../../ui/dialog";
 
 // Add this constant at the top of your file, outside the component
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL'];
@@ -81,6 +87,8 @@ const ProductListing = () => {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
   const dispatch = useDispatch();
+
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
 
   const fetchProducts = async (params) => {
     try {
@@ -690,6 +698,33 @@ const ProductListing = () => {
 
   return (
     <Layout showSidebar={true} sidebarContent={sidebarContent}>
+      <div className="fixed top-4 right-4 z-50">
+        <Dialog open={isGlobalSearchOpen} onOpenChange={setIsGlobalSearchOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="icon"
+              className="rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px] bg-white border-none shadow-xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold mb-4">Search Products</DialogTitle>
+            </DialogHeader>
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Type to search anything..."
+                className="w-full pr-12 text-lg py-6 bg-gray-50 border-gray-200 focus:border-gray-300 focus:ring-gray-300 transition-all duration-200"
+              />
+              <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <div className="relative">

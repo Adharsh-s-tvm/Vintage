@@ -201,7 +201,7 @@ export function Navbar() {
                   className="p-2 text-gray-500 hover:text-primary"
                   onClick={() => setSearchOpen(!searchOpen)}
                 >
-                  <Search className="h-5 w-5" />
+                  {/* <Search className="h-5 w-5" /> */}
                 </button>
 
                 <Link to="/wishlist" className="p-2 text-gray-500 hover:text-primary relative">
@@ -266,9 +266,11 @@ export function Navbar() {
                 </DropdownMenu>
               </div>
             ) : (
+              <>
               <Button onClick={() => navigate('/login')} variant="outline">
                 Sign In
               </Button>
+              </>
             )}
           </div>
         </div>

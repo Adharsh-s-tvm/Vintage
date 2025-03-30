@@ -19,8 +19,8 @@ Repeat Pendings...
 <!-- issue in update product -->
 <!-- implement backend pagination in product -->
 <!-- issue in coupon validation -->
-implement backend pagination in coupon
-implement backend pagination in offer
+<!-- implement backend pagination in coupon -->
+<!-- implement backend pagination in offer -->
 <!-- Issue in payment gateway integration -->
 cancel order need refund
 wallet need pagination
