@@ -344,9 +344,11 @@ export const getOrderById = asyncHandler(async (req, res) => {
 
 // Cancel order
 export const cancelOrder = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
+    await session.startTransaction();
     const { id } = req.params;
-    const { reason } = req.body; // Get reason from request body
+    const { reason } = req.body;
     const userId = req.user._id;
 
     const order = await Order.findOne({ 
@@ -366,50 +368,69 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    try {
-      // Start a session for transaction
-      const session = await mongoose.startSession();
-      await session.withTransaction(async () => {
-        // Update order status and reason
-        order.orderStatus = 'Cancelled';
-        order.reason = reason; // Save cancellation reason
-        
-        // Update all items status to cancelled and restore stock
-        order.items = order.items.map(item => ({
-          ...item,
-          status: 'Cancelled',
-          cancellationReason: reason // Save reason for each item
-        }));
+    // Find or create wallet for refund if payment method was online
+    if (order.payment.method === 'online' && order.payment.status === 'completed') {
+      let wallet = await Wallet.findOne({ userId }).session(session);
+      
+      if (!wallet) {
+        wallet = await Wallet.create([{
+          userId,
+          balance: 0,
+          transactions: []
+        }], { session });
+        wallet = wallet[0];
+      }
 
-        // Restore stock for each variant
-        for (const item of order.items) {
-          await Variant.findByIdAndUpdate(
-            item.sizeVariant._id,
-            { $inc: { stock: item.quantity } },
-            { session }
-          );
-        }
-
-        await order.save({ session });
+      // Add refund to wallet
+      wallet.balance += order.payment.amount;
+      wallet.transactions.push({
+        userId,
+        type: 'credit',
+        amount: order.payment.amount,
+        description: `Refund for cancelled order #${order.orderId}`,
+        date: new Date()
       });
 
-      await session.endSession();
-
-      res.json({ 
-        message: 'Order cancelled successfully',
-        order 
-      });
-    } catch (error) {
-      console.error('Transaction error:', error);
-      throw new Error('Failed to cancel order and restore stock');
+      await wallet.save({ session });
     }
 
+    // Update order status and reason
+    order.orderStatus = 'Cancelled';
+    order.reason = reason;
+    
+    // Update all items status to cancelled and restore stock
+    order.items = order.items.map(item => ({
+      ...item,
+      status: 'Cancelled',
+      cancellationReason: reason
+    }));
+
+    // Restore stock for each variant
+    for (const item of order.items) {
+      await Variant.findByIdAndUpdate(
+        item.sizeVariant._id,
+        { $inc: { stock: item.quantity } },
+        { session }
+      );
+    }
+
+    await order.save({ session });
+    await session.commitTransaction();
+
+    res.json({ 
+      message: 'Order cancelled successfully',
+      order 
+    });
+
   } catch (error) {
+    await session.abortTransaction();
     console.error('Cancel order error:', error);
     res.status(500).json({ 
       message: 'Error cancelling order',
       error: error.message 
     });
+  } finally {
+    session.endSession();
   }
 };
 
