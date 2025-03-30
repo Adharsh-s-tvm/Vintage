@@ -22,7 +22,7 @@ Repeat Pendings...
 <!-- implement backend pagination in coupon -->
 <!-- implement backend pagination in offer -->
 <!-- Issue in payment gateway integration -->
-cancel order need refund
+<!-- cancel order need refund -->
 <!-- wallet need pagination -->
 <!-- keep same currency throught application -->
 <!-- order listing need pagination -->

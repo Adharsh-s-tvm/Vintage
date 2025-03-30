@@ -1,17 +1,33 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-const initialState = {
-  cartItems: [],
-  subtotal: 0,
-  shipping: 0,
-  total: 0,
-  loading: false,
-  error: null
+// Load initial state from localStorage
+const loadInitialState = () => {
+  try {
+    const savedCart = localStorage.getItem('cart');
+    return savedCart ? JSON.parse(savedCart) : {
+      cartItems: [],
+      subtotal: 0,
+      shipping: 0,
+      total: 0,
+      loading: false,
+      error: null
+    };
+  } catch (error) {
+    console.error('Error loading cart from localStorage:', error);
+    return {
+      cartItems: [],
+      subtotal: 0,
+      shipping: 0,
+      total: 0,
+      loading: false,
+      error: null
+    };
+  }
 };
 
 const cartSlice = createSlice({
   name: 'cart',
-  initialState,
+  initialState: loadInitialState(),
   reducers: {
     setCartItems: (state, action) => {
       state.cartItems = action.payload.items;
@@ -25,6 +41,16 @@ const cartSlice = createSlice({
       }, 0);
       state.shipping = action.payload.shipping || 0;
       state.total = state.subtotal + state.shipping;
+      
+      // Save to localStorage
+      localStorage.setItem('cart', JSON.stringify({
+        cartItems: state.cartItems,
+        subtotal: state.subtotal,
+        shipping: state.shipping,
+        total: state.total,
+        loading: state.loading,
+        error: state.error
+      }));
     },
     setLoading: (state, action) => {
       state.loading = action.payload;

@@ -21,6 +21,7 @@ import { Separator } from '../../ui/Separator';
 import { MapPin, CreditCard, Shield, RefreshCw, Truck, Plus } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/Dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
+import { setCartItems } from '../../redux/slices/cartSlice';
 
 
 
@@ -159,10 +160,18 @@ function Checkout() {
   const [walletBalance, setWalletBalance] = useState(0);
 
   useEffect(() => {
+    // If cart is empty but exists in localStorage, load it
+    if ((!cartItems || cartItems.length === 0) && localStorage.getItem('cart')) {
+      const savedCart = JSON.parse(localStorage.getItem('cart'));
+      if (savedCart.cartItems && savedCart.cartItems.length > 0) {
+        dispatch(setCartItems(savedCart));
+      }
+    }
+    
     fetchAddresses();
     fetchAvailableCoupons();
     fetchWalletBalance();
-  }, []);
+  }, [dispatch, cartItems]);
 
   const fetchAddresses = async () => {
     try {
@@ -366,10 +375,16 @@ function Checkout() {
   };
 
   if (loading) {
-    return <Layout>Loading...</Layout>;
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      </Layout>
+    );
   }
 
-  if (!cartItems?.length) {
+  if (!cartItems || cartItems.length === 0) {
     return (
       <Layout>
         <div className="max-w-3xl mx-auto p-4">
@@ -379,7 +394,7 @@ function Checkout() {
                 <h2 className="text-xl font-semibold mb-2">Your cart is empty</h2>
                 <p className="text-gray-600 mb-4">Add items to your cart to checkout</p>
                 <Button asChild>
-                  <Link to="/products">Continue Shopping</Link>
+                  <Link to="/cart">Go to Cart</Link>
                 </Button>
               </div>
             </CardContent>
