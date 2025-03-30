@@ -23,7 +23,7 @@ Repeat Pendings...
 <!-- implement backend pagination in offer -->
 <!-- Issue in payment gateway integration -->
 cancel order need refund
-wallet need pagination
+<!-- wallet need pagination -->
 <!-- keep same currency throught application -->
 <!-- order listing need pagination -->
 never call api from component
