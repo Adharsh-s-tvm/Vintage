@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShoppingBag, Person } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -9,17 +9,25 @@ import { Layout } from '../layout/Layout';
 
 function Wallet() {
   const [wallet, setWallet] = useState(null);
+  const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
 
   useEffect(() => {
     fetchWalletDetails();
-  }, []);
+  }, [searchParams]); // Depend on searchParams for refetching
 
   const fetchWalletDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${api}/user/profile/wallet`, {
+      const params = new URLSearchParams(searchParams);
+      if (!params.has('page')) params.set('page', currentPage.toString());
+
+      const response = await axios.get(`${api}/user/profile/wallet?${params}`, {
         headers: { 
           Authorization: `Bearer ${localStorage.getItem('jwt')}`,
         },
@@ -27,7 +35,10 @@ function Wallet() {
       });
       
       if (response.data) {
-        setWallet(response.data);
+        setWallet(response.data.wallet);
+        setTransactions(response.data.transactions);
+        setTotalPages(response.data.pagination.totalPages);
+        setTotalTransactions(response.data.pagination.totalTransactions);
       } else {
         toast.error('No wallet data received');
       }
@@ -37,6 +48,14 @@ function Wallet() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (newPage) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', newPage.toString());
+    setSearchParams(params);
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (loading) {
@@ -84,39 +103,91 @@ function Wallet() {
           </Typography>
         </Paper>
 
-        {/* Transaction History */}
-        <Typography variant="h6" className="text-blue-400 mb-2">
-          Transaction History
-        </Typography>
+        {/* Transaction History Section */}
+        <div className="space-y-4">
+          <Typography variant="h6" className="text-blue-400">
+            Transaction History ({totalTransactions} transactions)
+          </Typography>
 
-        <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-          <Table stickyHeader size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell align="right">Amount</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {wallet?.transactions.map((transaction) => (
-                <TableRow key={transaction._id}>
-                  <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                  <TableCell>{transaction.description}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={transaction.type}
-                      color={transaction.type === 'credit' ? 'success' : 'error'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell align="right">₹{transaction.amount}</TableCell>
+          <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
+            <Table stickyHeader size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Date</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell align="right">Amount</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {transactions.map((transaction) => (
+                  <TableRow key={transaction._id}>
+                    <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                    <TableCell>{transaction.description}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={transaction.type}
+                        color={transaction.type === 'credit' ? 'success' : 'error'}
+                        size="small"
+                      />
+                    </TableCell>
+                    <TableCell align="right">₹{transaction.amount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-4 px-2">
+              <div className="text-sm text-gray-600">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      // Show first page, last page, current page, and pages around current page
+                      return page === 1 || 
+                             page === totalPages || 
+                             Math.abs(currentPage - page) <= 1;
+                    })
+                    .map((page, index, array) => (
+                      <React.Fragment key={page}>
+                        {index > 0 && array[index - 1] !== page - 1 && (
+                          <span className="px-2">...</span>
+                        )}
+                        <Button
+                          variant={currentPage === page ? "contained" : "outlined"}
+                          size="small"
+                          onClick={() => handlePageChange(page)}
+                        >
+                          {page}
+                        </Button>
+                      </React.Fragment>
+                    ))}
+                </div>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </Layout>
   );

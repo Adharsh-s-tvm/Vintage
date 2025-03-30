@@ -6,10 +6,16 @@ import mongoose from 'mongoose';
 // Get wallet details
 export const getWalletDetails = asyncHandler(async (req, res) => {
   try {
-    let wallet = await Wallet.findOne({ userId: req.user._id })
-      .populate('userId', 'username email')
-      .sort({ 'transactions.date': -1 }); // Sort transactions by date descending
+    // Validate and sanitize limit parameter
+    let limit = parseInt(req.query.limit) || 10;
+    // Ensure limit is within acceptable range
+    limit = Math.min(Math.max(limit, 5), 50); // Min 5, Max 50
+    
+    const page = parseInt(req.query.page) || 1;
 
+    // Find or create wallet
+    let wallet = await Wallet.findOne({ userId: req.user._id });
+    
     if (!wallet) {
       wallet = await Wallet.create({
         userId: req.user._id,
@@ -18,10 +24,42 @@ export const getWalletDetails = asyncHandler(async (req, res) => {
       });
     }
 
-    res.json(wallet);
+    // Get total count of transactions
+    const totalTransactions = wallet.transactions.length;
+
+    // Calculate pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
+
+    // Get paginated transactions
+    const paginatedTransactions = wallet.transactions
+      .sort((a, b) => b.date - a.date) // Sort by date descending
+      .slice(startIndex, endIndex);
+
+    res.json({
+      wallet: {
+        _id: wallet._id,
+        userId: wallet.userId,
+        balance: wallet.balance
+      },
+      transactions: paginatedTransactions,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalTransactions / limit),
+        totalTransactions,
+        hasNextPage: endIndex < totalTransactions,
+        hasPrevPage: page > 1,
+        limit,
+        itemsPerPage: limit // Include current items per page in response
+      }
+    });
   } catch (error) {
     console.error('Wallet fetch error:', error);
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to fetch wallet details",
+      error: error.message 
+    });
   }
 });
 
