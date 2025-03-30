@@ -25,7 +25,7 @@ Repeat Pendings...
 cancel order need refund
 wallet need pagination
 <!-- keep same currency throught application -->
-order listing need pagination
+<!-- order listing need pagination -->
 never call api from component
 create sevice or custom hook
 use axios interceptor

@@ -37,15 +37,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Input } from '../../ui/Input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../../ui/Pagination';
 import { debounce } from 'lodash';
+import { useSearchParams } from 'react-router-dom';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
+  const [itemsPerPage] = useState(parseInt(searchParams.get('limit')) || 5);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(5);
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
+  const [selectedOrder, setSelectedOrder] = useState(null);
   
   // Add returnReasons constant here
   const returnReasons = [
@@ -80,25 +82,30 @@ export default function Orders() {
 
   // Create debounced search function
   const debouncedSearch = useCallback(
-    debounce((term) => {
-      fetchOrders(currentPage, term);
+    debounce((value) => {
+      const params = new URLSearchParams(searchParams);
+      params.set('search', value);
+      params.set('page', '1');
+      setSearchParams(params);
     }, 500),
-    [currentPage]
+    [searchParams, setSearchParams]
   );
 
   useEffect(() => {
-    debouncedSearch(searchQuery);
-  }, [searchQuery, debouncedSearch]);
+    fetchOrders();
+  }, [searchParams]);
 
-  const fetchOrders = async (page = 1, search = '') => {
+  const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${api}/user/orders`, {
-        params: {
-          page,
-          limit: itemsPerPage,
-          search
-        },
+      
+      // Build query parameters
+      const params = new URLSearchParams(searchParams);
+      if (!params.has('page')) params.set('page', currentPage.toString());
+      if (!params.has('limit')) params.set('limit', itemsPerPage.toString());
+      if (searchQuery.trim()) params.set('search', searchQuery.trim());
+
+      const response = await axios.get(`${api}/user/orders?${params}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
           'Content-Type': 'application/json'
@@ -118,9 +125,17 @@ export default function Orders() {
   };
 
   const handlePageChange = (page) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('page', page.toString());
+    setSearchParams(params);
     setCurrentPage(page);
-    fetchOrders(page, searchQuery);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSearch = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    debouncedSearch(value);
   };
 
   const handleCancelClick = (orderId) => {
@@ -202,38 +217,6 @@ export default function Orders() {
     }
   };
 
-  const filteredOrders = orders.filter((order) => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      order.orderId.toLowerCase().includes(searchLower) ||
-      order.orderStatus.toLowerCase().includes(searchLower) ||
-      order.totalAmount.toString().includes(searchQuery) ||
-      new Date(order.createdAt).toLocaleDateString().includes(searchQuery)
-    );
-  });
-
-  const OrderItemPrice = ({ item }) => {
-    const hasDiscount = item.discountPrice && item.discountPrice < item.price;
-    
-    return (
-      <div className="text-right">
-        <div className="font-medium">
-          ₹{item.discountPrice}
-        </div>
-        {hasDiscount && (
-          <div className="text-sm">
-            <span className="text-gray-500 line-through">
-              ₹{item.price}
-            </span>
-            <span className="text-green-600 ml-2">
-              {Math.round((item.price - item.discountPrice) / item.price * 100)}% OFF
-            </span>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <Layout>
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -247,24 +230,24 @@ export default function Orders() {
         </div>
 
         <div className="mb-6">
-          {/* <div className="relative">
+          <div className="relative">
             <Input
               type="text"
               placeholder="Search orders by ID, status, amount, or date..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={handleSearch}
               className="pl-10 w-full md:w-96"
             />
-          </div> */}
+          </div>
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
           </div>
-        ) : filteredOrders.length > 0 ? (
+        ) : orders.length > 0 ? (
           <div className="space-y-4">
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <div
                 key={order._id}
                 className="bg-white rounded-lg shadow-sm overflow-hidden p-4"
@@ -335,17 +318,6 @@ export default function Orders() {
                 </div>
               </div>
             ))}
-          </div>
-        ) : searchQuery ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500">No orders found matching your search</p>
-            <Button 
-              variant="link" 
-              className="mt-2"
-              onClick={() => setSearchQuery('')}
-            >
-              Clear search
-            </Button>
           </div>
         ) : (
           <div className="text-center py-12">
