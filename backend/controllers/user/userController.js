@@ -8,6 +8,8 @@ import jwt from "jsonwebtoken";
 import dotenv from 'dotenv'
 import { oauth2client } from "../../utils/googleConfig.js";
 import crypto from 'crypto';
+import mongoose from 'mongoose';
+import Wallet from "../../models/walletModel.js";
 
 
 dotenv.config()
@@ -16,8 +18,6 @@ dotenv.config()
 
 const createUser = asyncHandler(async (req, res) => {
     const { firstname, lastname, email, password, referralCode } = req.body;
-
-    console.log(firstname, lastname, email, password, referralCode)
 
     if (!firstname || !lastname || !email || !password) {
         res.status(400);
@@ -30,52 +30,91 @@ const createUser = asyncHandler(async (req, res) => {
         throw new Error("User already exists");
     }
 
-    const referralUser = await User.findOne({ referralCode });
-    if (referralUser) {
-        console.log("Referral user found");
-    }
-
-    console.log("Referal User : ", referralCode, referralUser );
-    
-
-    // Generate a unique username
-    const baseUsername = `${firstname.toLowerCase()}_${lastname.toLowerCase()}`;
-    let username = baseUsername;
-    let counter = 1;
-
-    // Check if username exists and generate a unique one if needed
-    while (await User.findOne({ username })) {
-        username = `${baseUsername}${counter}`;
-        counter++;
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-    const newUser = new User({
-        firstname,
-        lastname,
-        username, // Add the generated username
-        email,
-        password: hashedPassword
-    });
+    // Start a MongoDB session for transaction
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
     try {
-        await newUser.save();
-        createToken(res, newUser._id);
+        // Check referral code and process bonus if valid
+        if (referralCode) {
+            const referralUser = await User.findOne({ referralCode });
+            if (referralUser) {
+                // Add bonus to referral user's wallet (1000)
+                let referrerWallet = await Wallet.findOne({ userId: referralUser._id }).session(session);
+                if (!referrerWallet) {
+                    referrerWallet = await Wallet.create([{
+                        userId: referralUser._id,
+                        balance: 0,
+                        transactions: []
+                    }], { session });
+                    referrerWallet = referrerWallet[0];
+                }
+                
+                referrerWallet.balance += 1000;
+                referrerWallet.transactions.push({
+                    userId: referralUser._id,
+                    type: 'credit',
+                    amount: 1000,
+                    description: `Referral bonus for inviting ${email}`,
+                    date: new Date()
+                });
+                await referrerWallet.save({ session });
+            }
+        }
+
+        // Create new user
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        const baseUsername = `${firstname.toLowerCase()}_${lastname.toLowerCase()}`;
+        let username = baseUsername;
+        let counter = 1;
+
+        while (await User.findOne({ username })) {
+            username = `${baseUsername}${counter}`;
+            counter++;
+        }
+
+        const newUser = await User.create([{
+            firstname,
+            lastname,
+            username,
+            email,
+            password: hashedPassword
+        }], { session });
+
+        // Create wallet for new user with signup bonus (200)
+        const newUserWallet = await Wallet.create([{
+            userId: newUser[0]._id,
+            balance: 200,
+            transactions: [{
+                userId: newUser[0]._id,
+                type: 'credit',
+                amount: 200,
+                description: 'Signup bonus',
+                date: new Date()
+            }]
+        }], { session });
+
+        await session.commitTransaction();
+        createToken(res, newUser[0]._id);
 
         res.status(201).json({
-            _id: newUser._id,
-            firstname: newUser.firstname,
-            lastname: newUser.lastname,
-            username: newUser.username,
-            email: newUser.email,
-            isAdmin: newUser.isAdmin,
+            _id: newUser[0]._id,
+            firstname: newUser[0].firstname,
+            lastname: newUser[0].lastname,
+            username: newUser[0].username,
+            email: newUser[0].email,
+            isAdmin: newUser[0].isAdmin,
         });
+
     } catch (error) {
+        await session.abortTransaction();
         console.error('Save error:', error);
         res.status(400);
         throw new Error("Invalid user data");
+    } finally {
+        session.endSession();
     }
 });
 
