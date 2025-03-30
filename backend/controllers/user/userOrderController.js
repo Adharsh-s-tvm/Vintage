@@ -247,15 +247,26 @@ export const createOrder = asyncHandler(async (req, res) => {
     }
 });
 
-// Get all orders for a user with pagination and sorting
-// Get user orders with efficient pagination and sorting
+// Get user orders with pagination and search
 export const getOrders = asyncHandler(async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
     const userId = req.user._id;
 
     try {
-        const orders = await Order.find({ user: userId })
+        // Build search query
+        const searchQuery = {
+            user: userId,
+            $or: [
+                { orderId: { $regex: search, $options: 'i' } },
+                { orderStatus: { $regex: search, $options: 'i' } },
+                { 'shipping.address.fullName': { $regex: search, $options: 'i' } },
+                { 'payment.amount': search ? Number(search) || -1 : -1 }
+            ]
+        };
+
+        const orders = await Order.find(searchQuery)
             .populate({
                 path: 'items.product',
                 select: 'name images brand category',
@@ -277,16 +288,22 @@ export const getOrders = asyncHandler(async (req, res) => {
             .skip((page - 1) * limit)
             .limit(limit);
 
-        const total = await Order.countDocuments({ user: userId });
+        const total = await Order.countDocuments(searchQuery);
 
         res.json({
+            success: true,
             orders,
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalOrders: total
+            pagination: {
+                currentPage: page,
+                totalPages: Math.ceil(total / limit),
+                totalOrders: total,
+                hasNextPage: page < Math.ceil(total / limit),
+                hasPrevPage: page > 1
+            }
         });
     } catch (error) {
         res.status(500).json({ 
+            success: false,
             message: "Failed to fetch orders",
             error: error.message 
         });

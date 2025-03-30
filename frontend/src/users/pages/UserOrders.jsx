@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { ArrowRight, Download, Package, Truck, Check, Search } from 'lucide-react';
@@ -35,12 +35,17 @@ import { Label } from "../../ui/Label";
 import { Textarea } from "../../ui/Textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/Select";
 import { Input } from '../../ui/Input';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../../ui/Pagination';
+import { debounce } from 'lodash';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage] = useState(5);
   
   // Add returnReasons constant here
   const returnReasons = [
@@ -73,30 +78,49 @@ export default function Orders() {
   });
   const [cancelReason, setCancelReason] = useState('');
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  // Create debounced search function
+  const debouncedSearch = useCallback(
+    debounce((term) => {
+      fetchOrders(currentPage, term);
+    }, 500),
+    [currentPage]
+  );
 
-  const fetchOrders = async () => {
+  useEffect(() => {
+    debouncedSearch(searchQuery);
+  }, [searchQuery, debouncedSearch]);
+
+  const fetchOrders = async (page = 1, search = '') => {
     try {
+      setLoading(true);
       const response = await axios.get(`${api}/user/orders`, {
+        params: {
+          page,
+          limit: itemsPerPage,
+          search
+        },
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
           'Content-Type': 'application/json'
         }
       });
       
-      // Ensure orders are properly sorted by date
-      const sortedOrders = (response.data.orders || []).sort((a, b) => 
-        new Date(b.createdAt) - new Date(a.createdAt)
-      );
-      
-      setOrders(sortedOrders);
+      if (response.data.success) {
+        setOrders(response.data.orders);
+        setCurrentPage(response.data.pagination.currentPage);
+        setTotalPages(response.data.pagination.totalPages);
+      }
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to fetch orders');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    fetchOrders(page, searchQuery);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCancelClick = (orderId) => {
@@ -516,6 +540,39 @@ export default function Orders() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </Layout>
   );
