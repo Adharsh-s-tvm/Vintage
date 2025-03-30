@@ -247,7 +247,7 @@ export default function Orders() {
         </div>
 
         <div className="mb-6">
-          <div className="relative">
+          {/* <div className="relative">
             <Input
               type="text"
               placeholder="Search orders by ID, status, amount, or date..."
@@ -255,7 +255,7 @@ export default function Orders() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 w-full md:w-96"
             />
-          </div>
+          </div> */}
         </div>
 
         {loading ? (
