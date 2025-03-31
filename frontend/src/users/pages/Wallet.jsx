@@ -16,18 +16,20 @@ function Wallet() {
   const [currentPage, setCurrentPage] = useState(parseInt(searchParams.get('page')) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalTransactions, setTotalTransactions] = useState(0);
+  const [itemsPerPage] = useState(5); // Set a fixed number of items per page
 
   useEffect(() => {
     fetchWalletDetails();
-  }, [searchParams]); // Depend on searchParams for refetching
+  }, [currentPage]); // Changed to depend on currentPage instead of searchParams
 
   const fetchWalletDetails = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams(searchParams);
-      if (!params.has('page')) params.set('page', currentPage.toString());
-
-      const response = await axios.get(`${api}/user/profile/wallet?${params}`, {
+      const response = await axios.get(`${api}/user/profile/wallet`, {
+        params: {
+          page: currentPage,
+          limit: itemsPerPage
+        },
         headers: { 
           Authorization: `Bearer ${localStorage.getItem('jwt')}`,
         },
@@ -39,6 +41,11 @@ function Wallet() {
         setTransactions(response.data.transactions);
         setTotalPages(response.data.pagination.totalPages);
         setTotalTransactions(response.data.pagination.totalTransactions);
+        
+        // Update URL with current page
+        const params = new URLSearchParams(searchParams);
+        params.set('page', currentPage.toString());
+        setSearchParams(params);
       } else {
         toast.error('No wallet data received');
       }
@@ -51,11 +58,9 @@ function Wallet() {
   };
 
   const handlePageChange = (newPage) => {
-    const params = new URLSearchParams(searchParams);
-    params.set('page', newPage.toString());
-    setSearchParams(params);
-    setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
   };
 
   if (loading) {
@@ -109,8 +114,8 @@ function Wallet() {
             Transaction History ({totalTransactions} transactions)
           </Typography>
 
-          <TableContainer component={Paper} sx={{ maxHeight: 400 }}>
-            <Table stickyHeader size="small">
+          <Paper className="overflow-hidden">
+            <Table>
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
@@ -120,23 +125,31 @@ function Wallet() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {transactions.map((transaction) => (
-                  <TableRow key={transaction._id}>
-                    <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={transaction.type}
-                        color={transaction.type === 'credit' ? 'success' : 'error'}
-                        size="small"
-                      />
+                {transactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">
+                      No transactions found
                     </TableCell>
-                    <TableCell align="right">₹{transaction.amount}</TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  transactions.map((transaction) => (
+                    <TableRow key={transaction._id}>
+                      <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                      <TableCell>{transaction.description}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={transaction.type}
+                          color={transaction.type === 'credit' ? 'success' : 'error'}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell align="right">₹{transaction.amount}</TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
-          </TableContainer>
+          </Paper>
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
@@ -156,7 +169,6 @@ function Wallet() {
                 <div className="flex items-center gap-1">
                   {Array.from({ length: totalPages }, (_, i) => i + 1)
                     .filter(page => {
-                      // Show first page, last page, current page, and pages around current page
                       return page === 1 || 
                              page === totalPages || 
                              Math.abs(currentPage - page) <= 1;
