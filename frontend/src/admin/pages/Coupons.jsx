@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper, TablePagination } from '@mui/material';
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
-import { api } from '../../lib/apiCall';
+import { addCouponApi, fetchCouponsApi, updateCouponApi, toggleCouponStatusApi } from '../../services/api/adminApis/couponApi';
 
 function Coupons() {
   const [showModal, setShowModal] = useState(false);
@@ -46,7 +45,7 @@ function Coupons() {
       // Update URL parameters
       setSearchParams(params);
 
-      const response = await axios.get(`${api}/admin/coupons?${params}`);
+      const response = await fetchCouponsApi(params);
       setCoupons(response.data.coupons);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
@@ -84,10 +83,10 @@ function Coupons() {
 
       let response;
       if (isEditMode) {
-        response = await axios.put(`http://localhost:7000/api/admin/coupons/${editCouponId}`, formattedData);
+        response = await updateCouponApi(editCouponId, formattedData);
         toast.success('Coupon updated successfully');
       } else {
-        response = await axios.post('http://localhost:7000/api/admin/coupons', formattedData);
+        response = await addCouponApi(formattedData);
         toast.success('Coupon added successfully');
       }
 
@@ -101,7 +100,7 @@ function Coupons() {
 
   const handleBlockCoupon = async (couponId) => {
     try {
-      await axios.patch(`http://localhost:7000/api/admin/coupons/${couponId}/toggle-status`);
+      await toggleCouponStatusApi(couponId);
       toast.success('Coupon status updated successfully');
       fetchCoupons();
     } catch (error) {

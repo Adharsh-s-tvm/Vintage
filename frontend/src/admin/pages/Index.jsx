@@ -4,8 +4,6 @@ import { StatsCard } from '../dashboard/StatsCard';
 import { PieChartCard } from '../dashboard/PieChartCard';
 import { BarChartCard } from '../dashboard/BarChartCard';
 import { ShoppingBag, ShoppingCart, Clock, XCircle, Tag } from 'lucide-react';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 import {
   Select,
@@ -33,6 +31,7 @@ import {
   PaginationPrevious,
 } from "../../ui/Pagination";
 import { useSearchParams } from 'react-router-dom';
+import { downloadSalesReportApi, fetchSalesDataApi } from '../../services/api/adminApis/indexApi';
 
 const visitsData = [
     { name: 'North America', value: 35, color: '#4E80EE' },
@@ -89,10 +88,7 @@ export default function Dashboard() {
             // Update URL parameters
             setSearchParams(params);
 
-            const response = await axios.get(`${api}/admin/sales-report?${params}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            });
-
+            const response = await fetchSalesDataApi(params);
             if (response.data) {
                 const { stats, salesData, transactions, pagination } = response.data;
                 setStats(stats);
@@ -124,16 +120,7 @@ export default function Dashboard() {
                 params.endDate = customEndDate.toISOString();
             }
 
-            const response = await axios({
-                url: `${api}/admin/sales-report/download`,
-                method: 'GET',
-                params,
-                responseType: 'blob',
-                headers: { 
-                    Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-                    'Accept': 'application/pdf'
-                }
-            });
+            const response = await downloadSalesReportApi(params);
 
             // Create blob link to download
             const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
@@ -162,13 +149,7 @@ export default function Dashboard() {
                 params.endDate = customEndDate.toISOString();
             }
 
-            const response = await axios({
-                url: `${api}/admin/sales-report/download`,
-                method: 'GET',
-                params,
-                responseType: 'blob',
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            });
+            const response = await downloadSalesReportApi(params);
 
             // Create blob link to download
             const url = window.URL.createObjectURL(new Blob([response.data]));
