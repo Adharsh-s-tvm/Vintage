@@ -24,11 +24,11 @@ import {
 } from "@mui/material";
 import { ExpandMore, Search, Add, KeyboardArrowDown, KeyboardArrowUp } from "@mui/icons-material";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import axios from 'axios';
 import { toast } from 'sonner';
 import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useSearchParams } from 'react-router-dom';
+import { fetchProductCategoriesApi, fetchProductBrandsApi, fetchProductApi, addProductApi, addProductVariantApi, blockProductApi, blockProductVariantApi, toggleProductStatusApi, updateProductVariantApi, updateProductApi } from '../../services/api/adminApis/productsApi';
 
 const API_BASE_URL = 'http://localhost:7000/api/admin';
 
@@ -142,7 +142,7 @@ const Products = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/products/categories`);
+      const response = await fetchProductCategoriesApi();
       setCategories(response.data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -152,7 +152,7 @@ const Products = () => {
 
   const fetchBrands = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/products/brands`);
+      const response = await fetchProductBrandsApi();
       setBrands(response.data.brands);
     } catch (error) {
       console.error('Error fetching brands:', error);
@@ -172,7 +172,7 @@ const Products = () => {
       setSearchParams(params);
 
       // Make API request with params
-      const response = await axios.get(`${API_BASE_URL}/products?${params}`);
+      const response = await fetchProductApi(params);
       
       setProducts(response.data.products);
       setTotalPages(response.data.totalPages);
@@ -248,7 +248,7 @@ const Products = () => {
 
   const handleSubmit = async () => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/products/add`, formData);
+      const response = await addProductApi(formData);
       toast.success('Product added successfully');
       setShowProductModal(false);
       setFormData({
@@ -360,15 +360,7 @@ const Products = () => {
         console.log(pair[0], pair[1]);
       }
 
-      const response = await axios.post(
-        `${API_BASE_URL}/products/variant/add`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
-      );
+      const response = await addProductVariantApi(formData);
 
       if (response.data.success) {
         // Update products state
@@ -406,15 +398,7 @@ const Products = () => {
       // Log the request details for debugging
       console.log('Updating product:', selectedProduct._id, formData);
 
-      const response = await axios.put(
-        `${API_BASE_URL}/products/${selectedProduct._id}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      const response = await updateProductApi(selectedProduct._id, formData);
 
       // Check if the update was successful
       if (response.data) {
@@ -463,9 +447,7 @@ const Products = () => {
 
   const handleBlockProduct = async (productId, currentStatus) => {
     try {
-      await axios.put(`${API_BASE_URL}/products/product/${productId}/block`, {
-        isBlocked: !currentStatus
-      });
+      await blockProductApi(productId, { isBlocked: !currentStatus });
       toast.success(`Product ${currentStatus ? 'unblocked' : 'blocked'} successfully`);
       fetchProducts();
     } catch (error) {
@@ -475,9 +457,7 @@ const Products = () => {
 
   const handleBlockVariant = async (variantId, currentStatus) => {
     try {
-      await axios.put(`${API_BASE_URL}/products/variant/${variantId}/block`, {
-        isBlocked: !currentStatus
-      });
+      await blockProductVariantApi(variantId, { isBlocked: !currentStatus });
       toast.success(`Variant ${currentStatus ? 'unblocked' : 'blocked'} successfully`);
       fetchProducts();
     } catch (error) {
@@ -487,9 +467,7 @@ const Products = () => {
 
   const handleToggleProductStatus = async (productId, currentStatus) => {
     try {
-      await axios.put(`${API_BASE_URL}/products/${productId}/status`, {
-        isListed: !currentStatus
-      });
+      await toggleProductStatusApi(productId, { isActive: !currentStatus });
       toast.success('Product status updated successfully');
       fetchProducts();
     } catch (error) {
@@ -520,15 +498,7 @@ const Products = () => {
         });
       }
 
-      await axios.put(
-        `${API_BASE_URL}/products/variant/${selectedVariant._id}`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          }
-        }
-      );
+      const response = await updateProductVariantApi(selectedVariant.Id, formData);
       
       toast.success('Variant updated successfully');
       setShowEditVariantModal(false);

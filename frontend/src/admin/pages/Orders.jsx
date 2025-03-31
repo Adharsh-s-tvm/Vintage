@@ -39,7 +39,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../../ui/Dialog";
-import { fetchOrdersApi, updateOrderStatusApi } from '@/services/api/adminApis/orderApi';
+import { fetchOrdersApi, updateOrderStatusApi } from '../../services/api/adminApis/orderApi';
 
 function Orders() {
   const [orders, setOrders] = useState([]);
