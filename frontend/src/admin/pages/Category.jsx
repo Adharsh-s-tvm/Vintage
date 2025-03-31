@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
+import { addCategoryApi, changeStatusApi, fetchCategoriesApi, updateCategoryApi } from "../../services/api/categoryApi";
 
 const initialCategories = [
 ];
@@ -82,7 +82,7 @@ const Category = () => {
       // Update URL
       setSearchParams(params);
 
-      const response = await axios.get(`${API_BASE_URL}/categories?${params}`);
+      const response = await fetchCategoriesApi(params);
       
       setCategories(response.data.categories);
       setTotalPages(response.data.pagination.totalPages);
@@ -125,10 +125,7 @@ const Category = () => {
     if (!selectedCategory || updatedName.trim() === "") return;
 
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}/category/${selectedCategory._id}`,
-        { name: updatedName }
-      );
+      const response = await updateCategoryApi(selectedCategory._id, { name: updatedName });
 
       setCategories(prevCategories =>
         prevCategories.map(cat =>
@@ -150,9 +147,7 @@ const Category = () => {
     if (newCategory.trim() === "") return;
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/category/add`, {
-        name: newCategory
-      });
+      const response = await addCategoryApi({ name: newCategory });
 
       setCategories(prevCategories => [...prevCategories, response.data]);
       toast.success('Category added successfully');
@@ -165,9 +160,7 @@ const Category = () => {
   // Modify the status change handler
   const handleStatusChange = async (categoryId, newStatus) => {
     try {
-      await axios.put(`${API_BASE_URL}/category/${categoryId}/status`, {
-        status: newStatus
-      });
+      await changeStatusApi(categoryId, { status: newStatus });
 
       setCategories(prevCategories =>
         prevCategories.map(cat =>
