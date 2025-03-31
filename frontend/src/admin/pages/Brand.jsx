@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
-import { fetchBrandsApi, updateBandApi } from "../../services/api/brandApi";
+import { addBrandApi, changeStatusApi, fetchBrandsApi, updateBrandApi } from "../../services/api/brandApi";
 
 const API_BASE_URL = 'http://localhost:7000/api/admin/products';
 
@@ -96,7 +95,7 @@ const Brand = () => {
     if (!selectedBrand || updatedName.trim() === "") return;
 
     try {
-      const response = await updateBandApi(selectedBrand._id, { name: updatedName });
+      const response = await updateBrandApi(selectedBrand._id, { name: updatedName });
 
       setBrands(prevBrands =>
         prevBrands.map(brand =>
@@ -118,9 +117,7 @@ const Brand = () => {
     if (newBrand.trim() === "") return;
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/brand/add`, {
-        name: newBrand
-      });
+      const response = await addBrandApi({ name: newBrand });
 
       setBrands(prevBrands => [...prevBrands, response.data]);
       toast.success('Brand added successfully');
@@ -133,9 +130,7 @@ const Brand = () => {
   // Handle Status Change
   const handleStatusChange = async (brandId, newStatus) => {
     try {
-      await axios.put(`${API_BASE_URL}/brand/${brandId}/status`, {
-        status: newStatus
-      });
+      await changeStatusApi(brandId, { status: newStatus });
 
       setBrands(prevBrands =>
         prevBrands.map(brand =>
