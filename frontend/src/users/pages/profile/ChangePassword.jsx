@@ -6,7 +6,7 @@ import { Label } from '../../../ui/Label';
 import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { api } from '../../../lib/api';
+import { api } from '../../../lib/apiCall';
 import { useNavigate } from 'react-router-dom';
 
 function ChangePassword() {

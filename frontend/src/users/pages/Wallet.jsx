@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShoppingBag, Person } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import { Layout } from '../layout/Layout';
 
 function Wallet() {

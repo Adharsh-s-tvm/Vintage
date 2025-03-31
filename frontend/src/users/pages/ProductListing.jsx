@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '../../ui/select';
 import { useSearchParams, useNavigate } from 'react-router';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import axios from 'axios';
 import { Categories } from '../layout/Categories';
 import { Slider } from "../../ui/slider";

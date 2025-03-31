@@ -5,7 +5,7 @@ import { XCircle, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 
 export default function OrderFailed() {
   const navigate = useNavigate();

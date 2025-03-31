@@ -9,7 +9,7 @@ import { setUserInfo, updateUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../../lib/api';
+import { api } from '../../../lib/apiCall';
 
 function UserProfile() {
   const dispatch = useDispatch();

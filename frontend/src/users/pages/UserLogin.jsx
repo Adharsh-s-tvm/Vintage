@@ -11,7 +11,7 @@ import { setUserInfo } from '../../redux/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
 import { googleAuth } from '../../utils/apiGoogle';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 
 export default function SignIn() {
   const dispatch = useDispatch();

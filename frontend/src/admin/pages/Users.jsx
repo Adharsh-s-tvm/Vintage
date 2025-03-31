@@ -5,7 +5,7 @@ import { UserFormModal } from '../usersData/UserFormModal';
 import { DeleteUserModal } from '../usersData/DeleteUserModal';
 import { useToast } from '../../hooks/useToast';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import { useSearchParams } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 import {

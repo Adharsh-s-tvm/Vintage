@@ -4,7 +4,7 @@ import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { Package, Truck, Check, ArrowLeft, Download } from 'lucide-react';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 
 export default function OrderDetails() {

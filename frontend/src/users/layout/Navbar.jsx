@@ -21,7 +21,7 @@ import {
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 
 const LogoutConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;

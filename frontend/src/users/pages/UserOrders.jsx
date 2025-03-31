@@ -4,7 +4,7 @@ import { Button } from '../../ui/Button';
 import { ArrowRight, Download, Package, Truck, Check, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 import {
   Dialog,

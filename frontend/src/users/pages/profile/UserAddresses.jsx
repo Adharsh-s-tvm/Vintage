@@ -5,7 +5,7 @@ import { Input } from '../../../ui/Input';
 import { Label } from '../../../ui/Label';
 import { Edit, Plus, Trash, MapPin } from 'lucide-react';
 import axios from 'axios';
-import { api } from '../../../lib/api';
+import { api } from '../../../lib/apiCall';
 import { toast } from 'sonner';
 
 function UserAddresses() {

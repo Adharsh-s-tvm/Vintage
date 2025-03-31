@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { ToastContainer } from 'react-toastify';
 import axios from 'axios';
 import { setUserInfo } from '../../redux/slices/authSlice';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import OtpModal from './otpModal';
 
 function UserSignUp() {

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux'; // Add this import
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';

@@ -1,4 +1,4 @@
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import axios from 'axios';
 
 const API_URL = `${api}/admin`;

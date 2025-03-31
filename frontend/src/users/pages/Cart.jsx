@@ -13,7 +13,7 @@ import {
 import { Button } from '../../ui/Button';
 import { Trash, Plus, Minus } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import axios from 'axios';
 import { toast } from '../../hooks/useToast';
 

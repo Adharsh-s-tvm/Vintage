@@ -5,7 +5,7 @@ import { PieChartCard } from '../dashboard/PieChartCard';
 import { BarChartCard } from '../dashboard/BarChartCard';
 import { ShoppingBag, ShoppingCart, Clock, XCircle, Tag } from 'lucide-react';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 import {
   Select,

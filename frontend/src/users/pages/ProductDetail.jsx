@@ -21,7 +21,7 @@ import {
 import { RadioGroup, RadioGroupItem } from '../../ui/RadioGroup';
 import { Separator } from '../../ui/Separator';
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import {
   Accordion,
   AccordionContent,

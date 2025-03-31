@@ -4,7 +4,7 @@ import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 
 function Coupons() {
   const [showModal, setShowModal] = useState(false);

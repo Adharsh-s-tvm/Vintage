@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { removeFromWishlist, setWishlistItems } from '../../redux/slices/wishlistSlice';
 import { setCartItems } from '../../redux/slices/cartSlice'; // Add this import
 import axios from 'axios';
-import { api } from '../../lib/api';
+import { api } from '../../lib/apiCall';
 import {
   AlertDialog,
   AlertDialogAction,
