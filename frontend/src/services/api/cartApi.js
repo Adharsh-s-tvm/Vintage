@@ -1,5 +1,5 @@
-import API from './api';
+import { privateAPI } from './api';
 
-export const fetchCartApi = () => API.get('/user/cart');
-export const updateQuantityApi = (variantId, quantity) => API.put(`/user/cart/update`, { variantId, quantity });
-export const confirmRemoveApi = (variantId) => API.delete(`/user/cart/remove/${variantId}`, { variantId });
+export const fetchCartApi = () => privateAPI.get('/user/cart');
+export const updateQuantityApi = (variantId, quantity) => privateAPI.put(`/user/cart/update`, { variantId, quantity });
+export const confirmRemoveApi = (variantId) => privateAPI.delete(`/user/cart/remove/${variantId}`, { variantId });

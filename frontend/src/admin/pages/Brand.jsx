@@ -5,6 +5,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
+import { fetchBrandsApi, UpdateBandApi } from "../../services/api/brandApi";
 
 const API_BASE_URL = 'http://localhost:7000/api/admin/products';
 
@@ -48,7 +49,7 @@ const Brand = () => {
       // Update URL
       setSearchParams(params);
 
-      const response = await axios.get(`${API_BASE_URL}/brands?${params}`);
+      const response = await fetchBrandsApi(params);
       setBrands(response.data.brands);
       setTotalPages(response.data.pagination.totalPages);
       setTotalBrands(response.data.pagination.totalBrands);
@@ -95,10 +96,7 @@ const Brand = () => {
     if (!selectedBrand || updatedName.trim() === "") return;
 
     try {
-      const response = await axios.put(
-        `${API_BASE_URL}/brand/${selectedBrand._id}`,
-        { name: updatedName }
-      );
+      const response = await UpdateBandApi(selectedBrand._id, { name: updatedName });
 
       setBrands(prevBrands =>
         prevBrands.map(brand =>
