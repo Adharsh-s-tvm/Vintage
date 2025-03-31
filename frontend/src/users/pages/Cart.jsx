@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../lib/apiCall';
 import axios from 'axios';
 import { toast } from '../../hooks/useToast';
+import { confirmRemoveApi, fetchCartApi, updateQuantityApi } from '../../services/api/cartApi';
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
@@ -99,18 +100,18 @@ export default function Cart() {
     dispatch(setLoading(true));
     try {
       // Simulate loading for 2 seconds
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const response = await axios.get(`${api}/user/cart`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchCartApi();
       dispatch(setCartItems(response.data));
     } catch (error) {
       dispatch(setError(error.response?.data?.message || 'Failed to fetch cart'));
-      toast.error(error.response?.data?.message || 'Failed to fetch cart');
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || 'Failed to fetch cart',
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
     } finally {
       dispatch(setLoading(false));
     }
@@ -130,16 +131,7 @@ export default function Cart() {
       }
 
       try {
-        const response = await axios.put(
-          `${api}/user/cart/update`,
-          { variantId, quantity },
-          {
-            withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        const response = await updateQuantityApi(variantId, quantity);
 
         if (response.data) {
           dispatch(setCartItems(response.data));
@@ -163,15 +155,7 @@ export default function Cart() {
   const confirmRemove = async () => {
     if (deleteModal.itemId) {
       try {
-        const response = await axios.delete(
-          `${api}/user/cart/remove/${deleteModal.itemId}`,
-          {
-            withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
+        const response = await confirmRemoveApi(deleteModal.itemId);
 
         if (response.data) {
           dispatch(setCartItems(response.data));
