@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 import { Input } from "../../ui/Input";
 import { Button } from "../../ui/Button";
@@ -41,6 +39,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../../ui/Dialog";
+import { fetchOrdersApi, updateOrderStatusApi } from '@/services/api/adminApis/orderApi';
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -74,9 +73,7 @@ function Orders() {
       // Update URL parameters
       setSearchParams(params);
 
-      const response = await axios.get(`${api}/admin/orders?${params}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      const response = await fetchOrdersApi(params);
 
       setOrders(response.data.orders);
       setTotalPages(response.data.pagination.totalPages);
@@ -122,11 +119,7 @@ function Orders() {
 
   const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await axios.patch(
-        `${api}/admin/orders/${orderId}/status`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
-      );
+      await updateOrderStatusApi(orderId, newStatus);
       
       fetchOrders(); // Refresh orders after status change
       toast.success('Order status updated successfully');

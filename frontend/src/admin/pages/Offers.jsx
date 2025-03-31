@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuItem, Typography, TableContainer, Table, TableHead, TableBody, TableRow, TableCell, Chip, IconButton, Paper, TablePagination } from '@mui/material';
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { addOfferApi, fetchAffectedProductsApi, fetchOffersApi, offerFetchCategoriesApi, offerFetchProductsApi, toggleOfferStatusApi, updateOfferApi, fetchAffectedCategoriesApi } from '../../services/api/adminApis/offerApi';
