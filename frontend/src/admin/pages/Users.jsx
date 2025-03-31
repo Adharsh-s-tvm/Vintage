@@ -4,8 +4,6 @@ import { UsersTable } from '../usersData/UserTable';
 import { UserFormModal } from '../usersData/UserFormModal';
 import { DeleteUserModal } from '../usersData/DeleteUserModal';
 import { useToast } from '../../hooks/useToast';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import { useSearchParams } from 'react-router-dom';
 import debounce from 'lodash/debounce';
 import {
@@ -16,6 +14,7 @@ import {
 } from '../../ui/DropDownMenu';
 import { Button } from '../../ui/Button';
 import { Filter } from 'lucide-react';
+import { deleteUserApi, fetchUsersApi } from '../../services/api/adminApis/usersListApi';
 
 export default function Users() {
     const [users, setUsers] = useState([]);
@@ -52,10 +51,7 @@ export default function Users() {
             }
 
             // Make API request
-            const response = await axios.get(`${api}/admin/users?${params}`, {
-                headers: { "Content-Type": "application/json" },
-                withCredentials: true,
-            });
+            const response = await fetchUsersApi(params);
 
             setUsers(response.data.users);
             setTotalPages(response.data.pagination.totalPages);
@@ -164,9 +160,7 @@ export default function Users() {
         // Implement delete user functionality
         if (window.confirm(`Are you sure you want to delete ${user.firstname} ${user.lastname}?`)) {
             try {
-                await axios.delete(`${api}/admin/users/${user._id}`, {
-                    withCredentials: true
-                });
+                await deleteUserApi(user._id);
                 toast.success('User deleted successfully');
                 fetchUsers(); // Refresh the user list
             } catch (err) {

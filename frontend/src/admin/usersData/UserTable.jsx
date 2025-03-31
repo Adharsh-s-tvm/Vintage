@@ -22,7 +22,6 @@ import {
     Search,
 } from 'lucide-react';
 import { cn } from '../../lib/util';
-import axios from 'axios';
 import { toast } from 'sonner'; // Assuming you're using sonner for toast notifications
 import {
     AlertDialog,
@@ -34,6 +33,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from '../../ui/AlertDialog';
+import { updateUserStatusApi } from '../../services/api/adminApis/usersListApi';
 
 // Define the API base URL - replace with your actual API URL
 const API_BASE_URL = 'http://localhost:7000/api'; // Adjust this to match your backend URL
@@ -50,14 +50,7 @@ export function UsersTable({ users, onUserUpdated }) {
     const handleStatusChange = async (userId, newStatus) => {
         setIsLoading(true);
         try {
-            await axios.put(
-                `${API_BASE_URL}/admin/users/${userId}/status`,
-                { status: newStatus },
-                {
-                    headers: { "Content-Type": "application/json" },
-                    withCredentials: true
-                }
-            );
+            await updateUserStatusApi(userId, { status: newStatus });
 
             // Show success message
             toast.success(`User ${newStatus === 'active' ? 'activated' : 'banned'} successfully`);
