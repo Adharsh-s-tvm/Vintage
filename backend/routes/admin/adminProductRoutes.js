@@ -4,7 +4,7 @@ import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, 
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { handleUpload } from "../../middlewares/multer.js";
 
-const router = express.Router();
+const   router = express.Router();
 
 
 

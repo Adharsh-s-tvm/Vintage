@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 import { Input } from "../../ui/Input";
 import { Button } from "../../ui/Button";
@@ -29,6 +27,7 @@ import {
 } from "../../ui/Pagination";
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
+import { fetchReturnsApi, updateReturnApi } from '../../services/api/adminApis/returnApi';
 
 export default function Returns() {
   const [returns, setReturns] = useState([]);
@@ -64,9 +63,7 @@ export default function Returns() {
       if (searchQuery.trim()) params.set('search', searchQuery.trim());
       if (filterStatus !== 'all') params.set('status', filterStatus);
 
-      const response = await axios.get(`${api}/admin/orders/returns?${params}`, {
-        withCredentials: true
-      });
+      const response = await fetchReturnsApi(params);
 
       setReturns(response.data.returns);
       setTotalPages(response.data.pagination.totalPages);
@@ -104,11 +101,7 @@ export default function Returns() {
 
   const handleReturnAction = async (orderId, itemId, action) => {
     try {
-      const response = await axios.put(
-        `${api}/admin/orders/${orderId}/items/${itemId}/return`,
-        { action },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
-      );
+      const response = await updateReturnApi(orderId, itemId, { returnStatus: action });
       
       if (response.data) {
         toast.success(`Return request ${action}ed successfully`);
