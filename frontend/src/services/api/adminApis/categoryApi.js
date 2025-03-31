@@ -1,4 +1,4 @@
-import { privateAPI } from './api';
+import { privateAPI } from '../api';
 
 export const fetchCategoriesApi = (params) => privateAPI.get(`/admin/products/categories?${params}`);
 export const updateCategoryApi = (id, data) => privateAPI.put(`/admin/products/category/${id}`, data);

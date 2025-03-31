@@ -1,4 +1,4 @@
-import { privateAPI } from './api';
+import { privateAPI } from '../api';
 
 export const fetchCartApi = () => privateAPI.get('/user/cart');
 export const updateQuantityApi = (variantId, quantity) => privateAPI.put(`/user/cart/update`, { variantId, quantity });

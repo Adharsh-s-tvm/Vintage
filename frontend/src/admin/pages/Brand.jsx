@@ -4,7 +4,7 @@ import { Fragment } from "react";
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
-import { addBrandApi, changeStatusApi, fetchBrandsApi, updateBrandApi } from "../../services/api/brandApi";
+import { addBrandApi, changeStatusApi, fetchBrandsApi, updateBrandApi } from "../../services/api/adminApis/brandApi";
 
 const API_BASE_URL = 'http://localhost:7000/api/admin/products';
 

@@ -16,7 +16,7 @@ import { Link } from 'react-router-dom';
 import { api } from '../../lib/apiCall';
 import axios from 'axios';
 import { toast } from '../../hooks/useToast';
-import { confirmRemoveApi, fetchCartApi, updateQuantityApi } from '../../services/api/cartApi';
+import { confirmRemoveApi, fetchCartApi, updateQuantityApi } from '../../services/api/userApis/cartApi';
 
 const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;

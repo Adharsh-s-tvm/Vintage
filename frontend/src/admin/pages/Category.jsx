@@ -4,7 +4,7 @@ import { Fragment } from "react";
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
-import { addCategoryApi, changeStatusApi, fetchCategoriesApi, updateCategoryApi } from "../../services/api/categoryApi";
+import { addCategoryApi, changeStatusApi, fetchCategoriesApi, updateCategoryApi } from "../../services/api/adminApis/categoryApi";
 
 const initialCategories = [
 ];
