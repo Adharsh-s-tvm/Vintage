@@ -5,7 +5,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
 import { debounce } from 'lodash';
-import { fetchBrandsApi, updateBrandApi } from "../../services/api/brandApi";
+import { fetchBrandsApi, updateBandApi } from "../../services/api/brandApi";
 
 const API_BASE_URL = 'http://localhost:7000/api/admin/products';
 
@@ -96,12 +96,12 @@ const Brand = () => {
     if (!selectedBrand || updatedName.trim() === "") return;
 
     try {
-      const response = await updateBrandApi(selectedBrand._id, { name: updatedName });
+      const response = await updateBandApi(selectedBrand._id, { name: updatedName });
 
       setBrands(prevBrands =>
         prevBrands.map(brand =>
           brand._id === selectedBrand._id
-            ? { ...brand, ...response.data }
+            ? { ...brand, name: response.data.name }
             : brand
         )
       );
@@ -109,7 +109,6 @@ const Brand = () => {
       toast.success('Brand updated successfully');
       closeModal();
     } catch (error) {
-      console.error('Update error:', error);
       toast.error(error.response?.data?.message || 'Failed to update brand');
     }
   };
