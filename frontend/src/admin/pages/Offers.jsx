@@ -4,6 +4,7 @@ import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
+import { addOfferApi, fetchAffectedProductsApi, fetchOffersApi, offerFetchCategoriesApi, offerFetchProductsApi, toggleOfferStatusApi, updateOfferApi, fetchAffectedCategoriesApi } from '../../services/api/adminApis/offerApi';
 
 function Offers() {
   const [showModal, setShowModal] = useState(false);
@@ -38,7 +39,7 @@ function Offers() {
 
   const fetchProducts = async () => {
     try {
-      const response = await axios.get('http://localhost:7000/api/admin/products');
+      const response = await offerFetchProductsApi();
       console.log('Fetched products:', response.data.products);
       setProducts(response.data.products);
     } catch (error) {
@@ -49,9 +50,9 @@ function Offers() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get('http://localhost:7000/api/admin/products/categories');
-      console.log('Fetched categories:', response.data);
-      setCategories(response.data);
+      const response = await offerFetchCategoriesApi();
+      console.log('Fetched categories:', response.data.categories);
+      setCategories(response.data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
       toast.error('Failed to fetch categories');
@@ -76,7 +77,7 @@ function Offers() {
       // Update URL parameters
       setSearchParams(params);
 
-      const response = await axios.get(`http://localhost:7000/api/admin/offers?${params}`);
+      const response = await fetchOffersApi(params);
       setOffers(response.data.offers);
       setTotalPages(response.data.pagination.totalPages);
     } catch (error) {
@@ -101,10 +102,10 @@ function Offers() {
 
       let response;
       if (isEditMode) {
-        response = await axios.put(`http://localhost:7000/api/admin/offers/${editOfferId}`, formattedData);
+        response = await updateOfferApi(editOfferId, formattedData);
         toast.success('Offer updated successfully');
       } else {
-        response = await axios.post('http://localhost:7000/api/admin/offers', formattedData);
+        response = await addOfferApi(formattedData);
         toast.success('Offer added successfully');
       }
 
@@ -139,9 +140,9 @@ function Offers() {
 
   const handleEditOffer = async (offerId, updatedData) => {
     try {
-      const response = await axios.put(`http://localhost:7000/api/admin/offers/${offerId}`, updatedData);
+      const response = await updateOfferApi(offerId, updatedData);
       toast.success('Offer updated successfully');
-      fetchOffers(); // Refresh the offers list
+      fetchOffers();
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update offer');
     }
@@ -149,7 +150,7 @@ function Offers() {
 
   const handleBlockOffer = async (offerId) => {
     try {
-      const response = await axios.patch(`http://localhost:7000/api/admin/offers/${offerId}/toggle-status`);
+      const response = await toggleOfferStatusApi(offerId);
       toast.success('Offer status updated successfully');
       fetchOffers(); // Refresh the offers list
     } catch (error) {
@@ -158,25 +159,27 @@ function Offers() {
   };
 
   const OfferDetails = ({ offer }) => {
-    const [affectedProducts, setAffectedProducts] = useState([]);
+    const [affectedItems, setAffectedItems] = useState([]);
     
     useEffect(() => {
-      const fetchAffectedProducts = async () => {
+      const fetchAffectedItems = async () => {
         try {
-          const response = await axios.get(`http://localhost:7000/api/admin/offers/${offer._id}/affected-products`);
-          setAffectedProducts(response.data);
+          const response = offer.offerType === 'product' 
+            ? await fetchAffectedProductsApi(offer._id)
+            : await fetchAffectedCategoriesApi(offer._id);
+          setAffectedItems(response.data);
         } catch (error) {
-          console.error('Error fetching affected products:', error);
+          console.error('Error fetching affected items:', error);
         }
       };
       
-      fetchAffectedProducts();
-    }, [offer._id]);
+      fetchAffectedItems();
+    }, [offer._id, offer.offerType]);
 
     return (
       <Box sx={{ p: 2 }}>
         <Typography variant="subtitle2" gutterBottom>
-          Applied to {affectedProducts.length} products
+          Applied to {affectedItems.length} {offer.offerType === 'category' ? 'categories' : 'products'}
         </Typography>
         <Typography variant="body2" color="text.secondary">
           {offer.offerType === 'category' ? 'Category-wide offer' : 'Product-specific offer'}
@@ -369,13 +372,34 @@ function Offers() {
                       onClick={() => {
                         setIsEditMode(true);
                         setEditOfferId(offer._id);
+                        
+                        console.log('Editing offer:', offer);
+                        
+                        // Handle items based on offer type
+                        let formattedItems;
+                        if (offer.offerType === 'category') {
+                          formattedItems = offer.items.map(item => {
+                            console.log('Processing category item:', item);
+                            if (typeof item === 'string') return item;
+                            return item.category || item._id || item.categoryId;
+                          });
+                        } else {
+                          formattedItems = offer.items.map(item => {
+                            console.log('Processing product item:', item);
+                            if (typeof item === 'string') return item;
+                            return item._id || item.productId;
+                          });
+                        }
+                        
+                        console.log('Final formatted items:', formattedItems);
+                        
                         setFormData({
                           offerName: offer.offerName,
                           offerType: offer.offerType,
                           discountPercentage: offer.discountPercentage,
                           startDate: offer.startDate.split('T')[0],
                           endDate: offer.endDate.split('T')[0],
-                          items: offer.items.map(item => item._id)
+                          items: formattedItems
                         });
                         setShowModal(true);
                       }}

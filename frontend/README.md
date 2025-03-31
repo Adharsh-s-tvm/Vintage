@@ -1,3 +1,11 @@
+Selected Category not showing in offer page while editing offer
+---------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
 Pending
 -remove cartId from order schema
 -save address as string or object in order schema instead of objectId

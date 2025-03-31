@@ -9,7 +9,6 @@ import { addCategoryApi, changeStatusApi, fetchCategoriesApi, updateCategoryApi 
 const initialCategories = [
 ];
 
-const API_BASE_URL = 'http://localhost:7000/api/admin/products'; // Adjust this to match your backend URL
 
 const Category = () => {
   const [categories, setCategories] = useState(initialCategories);
