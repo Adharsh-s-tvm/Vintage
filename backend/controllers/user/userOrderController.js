@@ -369,7 +369,7 @@ export const cancelOrder = async (req, res) => {
     }
 
     // Find or create wallet for refund if payment method was online
-    if (order.payment.method === 'online' && order.payment.status === 'completed') {
+    if (order.payment.method === 'online' || order.payment.method === 'wallet' && order.payment.status === 'completed') {
       let wallet = await Wallet.findOne({ userId }).session(session);
       
       if (!wallet) {
