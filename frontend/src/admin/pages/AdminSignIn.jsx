@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAdminInfo } from '../../redux/slices/adminSlice';
 import { loginAdmin } from '../../redux/api/adminApi';
+import { useAdminAuthNavigation } from '../../hooks/useAdminNavigation';
 
 export default function SignIn() {
     const [email, setEmail] = useState('');
@@ -15,7 +16,6 @@ export default function SignIn() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useDispatch();
-    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -43,14 +43,7 @@ export default function SignIn() {
         }
     };
 
-    const admin = useSelector(state => state.admin.data)
-    useEffect(() => {
-        if (!admin) {
-            navigate('/admin/signin');
-        } else {
-            navigate('/admin')
-        }
-    }, [admin, navigate]);
+    const { navigate } = useAdminAuthNavigation();
 
 
     return (

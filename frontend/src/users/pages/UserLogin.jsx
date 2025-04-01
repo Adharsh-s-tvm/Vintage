@@ -10,10 +10,10 @@ import { useDispatch } from 'react-redux';
 import { setUserInfo } from '../../redux/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
 import { checkEmailApi, resetPasswordApi, responseGoogleApi, sendOtpApi, verifyOtpApi } from '../../services/api/userApis/userAuthApi';
+import { useUserAuthNavigation } from '../../hooks/useAuthNavigation';
 
 export default function SignIn() {
   const dispatch = useDispatch();
-  const navigate = useNavigate();
   const [isAuthenticated, setIsAuthenticated] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -63,18 +63,7 @@ export default function SignIn() {
     flow: 'auth-code'
   });
 
-  useEffect(() => {
-    // Check for both JWT token and userInfo
-    const token = localStorage.getItem('jwt');
-    const userInfo = localStorage.getItem('userInfo');
-
-    if (token && userInfo) {
-      navigate('/');
-      toast.info('You are already logged in');
-    } else {
-      setIsAuthenticated(false);
-    }
-  }, [navigate]);
+  const { navigate } = useUserAuthNavigation();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
