@@ -14,8 +14,6 @@ import {
   SelectValue,
 } from '../../ui/select';
 import { useSearchParams, useNavigate } from 'react-router';
-import { api } from '../../lib/apiCall';
-import axios from 'axios';
 import { Categories } from '../layout/Categories';
 import { Slider } from "../../ui/slider";
 import {
@@ -29,7 +27,6 @@ import {
 } from '../../ui/pagination';
 import { toast } from '../../hooks/useToast';
 import { useDispatch } from 'react-redux';
-import { addToWishlist } from '../../redux/slices/wishlistSlice';
 import {
   Dialog,
   DialogContent,
@@ -38,6 +35,7 @@ import {
   DialogTrigger,
 } from "../../ui/dialog";
 import { debounce } from 'lodash';
+import { globalSearchApi, productsListfetchBrands, productsListfetchCategories, productsListfetchProducts, productsListHandleSearch } from '../../services/api/userApis/userProductApi';
 
 // Add this constant at the top of your file, outside the component
 const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL'];
@@ -103,7 +101,7 @@ const ProductListing = () => {
     if (!search) return;
 
     try {
-      const { data } = await axios.get(`/api/products/search?keyword=${search}`);
+      const { data } = await productsListHandleSearch(search)
       setSearchedProducts(data.products);
     } catch (error) {
       console.error("Error fetching search results:", error);
@@ -122,7 +120,7 @@ const ProductListing = () => {
         queryParams.set('search', searchQuery.trim());
       }
 
-      const response = await axios.get(`${api}/products?${queryParams}`);
+      const response = await productsListfetchProducts(queryParams)
       console.log("Products fetched ", response.data);
 
       setProducts(response.data.products || []);
@@ -231,7 +229,7 @@ const ProductListing = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`${api}/products/categories`);
+      const response = await productsListfetchCategories()
       console.log("Category fetched :", response.data)
       const categoriesData = response.data.categories || response.data;
       // Filter out blocked categories and not listed categories
@@ -246,7 +244,7 @@ const ProductListing = () => {
 
   const fetchBrands = async () => {
     try {
-      const response = await axios.get(`${api}/admin/products/brands`);
+      const response = await productsListfetchBrands()
       console.log('Brands response:', response.data);
       const brandsData = response.data.brands || response.data;
       // Filter out blocked brands and brands with 'Not listed' status
@@ -623,76 +621,10 @@ const ProductListing = () => {
     return stars;
   };
 
-  const handleAddToCart = async (variant) => {
-    try {
-      const response = await axios.post(
-        `${api}/user/cart/add`,
-        {
-          variantId: variant._id,
-          quantity: 1
-        },
-        { withCredentials: true }
-      );
-
-      toast({
-        title: "Success",
-        description: "Product added to cart",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to add to cart",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
-    }
-  };
+  
 
   // Add this function to handle wishlist
-  const handleAddToWishlist = async (e, product) => {
-    e.stopPropagation(); // Prevent navigation when clicking the heart icon
-
-    // Get the first available variant
-    if (!product.variants || product.variants.length === 0) {
-      toast({
-        title: "Error",
-        description: "No variants available for this product",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
-      return;
-    }
-
-    const variantId = product.variants[0]._id;
-
-    try {
-      await axios.post(
-        `${api}/user/wishlist`,
-        {
-          productId: product._id,
-          variantId: variantId
-        },
-        { withCredentials: true }
-      );
-
-      dispatch(addToWishlist(product));
-      toast({
-        title: "Success",
-        description: "Added to wishlist",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to add to wishlist",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
-    }
-  };
+  
 
   // Modify the price display in the product card
   const PriceDisplay = ({ originalPrice, discountPrice }) => {
@@ -726,7 +658,7 @@ const ProductListing = () => {
       }
 
       try {
-        const { data } = await axios.get(`${api}/products/search?keyword=${searchTerm}`);
+        const { data } = await globalSearchApi(searchTerm)
         if (data.success && Array.isArray(data.products)) {
           // Filter out products with no variants or blocked products
           const validProducts = data.products.filter(product => 

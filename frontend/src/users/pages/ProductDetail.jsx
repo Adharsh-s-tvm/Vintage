@@ -20,8 +20,6 @@ import {
 } from '../../ui/Tabs';
 import { RadioGroup, RadioGroupItem } from '../../ui/RadioGroup';
 import { Separator } from '../../ui/Separator';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import {
   Accordion,
   AccordionContent,
@@ -32,6 +30,7 @@ import { ChevronDown } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { addToWishlist } from '../../redux/slices/wishlistSlice';
 import { cn } from '../../lib/util';
+import { addToCartApi, addToWishlistApi, fetchProductDetailApi, fetchRelatedProductsApi } from '../../services/api/userApis/userProductApi';
 
 // Mock product data
 
@@ -129,7 +128,7 @@ export default function ProductDetail() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await axios.get(`${api}/products/${id}`);
+        const response = await fetchProductDetailApi(id)
         const productData = response.data.product;
         console.log("Single product: ", productData);
 
@@ -254,7 +253,7 @@ export default function ProductDetail() {
   // Add this function to fetch related products
   const fetchRelatedProducts = async (product) => {
     try {
-      const response = await axios.get(`${api}/products`, {
+      const response = await fetchRelatedProductsApi( {
         params: {
           category: product.category._id,
           brand: product.brand._id,
@@ -310,17 +309,10 @@ export default function ProductDetail() {
     }
 
     try {
-      await axios.post(
-        `${api}/user/cart/add`,
+      await addToCartApi(
         {
           variantId: selectedVariant._id,
           quantity: quantity
-        },
-        {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
         }
       );
 
@@ -352,13 +344,11 @@ export default function ProductDetail() {
     }
 
     try {
-      await axios.post(
-        `${api}/user/wishlist`,
+      await addToWishlistApi(
         {
           productId: product._id,
           variantId: selectedVariant._id
-        },
-        { withCredentials: true }
+        }
       );
 
       dispatch(addToWishlist({ ...product, selectedVariant }));
