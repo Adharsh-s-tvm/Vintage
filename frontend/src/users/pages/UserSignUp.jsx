@@ -7,10 +7,9 @@ import { Link, useNavigate } from 'react-router';
 import { useDispatch } from 'react-redux';
 import { toast } from 'sonner';
 import { ToastContainer } from 'react-toastify';
-import axios from 'axios';
 import { setUserInfo } from '../../redux/slices/authSlice';
-import { api } from '../../lib/apiCall';
 import OtpModal from './otpModal';
+import { userSignupApi, userSignupOtpApi, userVerifyOtpApi } from '../../services/api/userApis/userAuthApi';
 
 function UserSignUp() {
 
@@ -118,7 +117,7 @@ function UserSignUp() {
             // Add artificial delay
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            const otpResponse = await axios.post("http://localhost:7000/api/user/otp/send", {
+            const otpResponse = await userSignupOtpApi( {
                 email: email.toLowerCase()
             });
 
@@ -137,7 +136,7 @@ function UserSignUp() {
     const verifyOtpAndSignup = async (otp) => {
         try {
             // First verify OTP
-            const verifyResponse = await axios.post("http://localhost:7000/api/user/otp/verify", {
+            const verifyResponse = await userVerifyOtpApi({
                 email: formData.email.toLowerCase(),
                 otp,
             });
@@ -152,12 +151,7 @@ function UserSignUp() {
                     referralCode: formData.referralCode // Add this line
                 };
 
-                const response = await axios.post("http://localhost:7000/api/signup", signupData, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    withCredentials: true
-                });
+                const response = await userSignupApi(signupData)
 
                 if (response.data) {
                     const userData = {
@@ -180,26 +174,6 @@ function UserSignUp() {
             toast.error(errorMessage, { position: "top-center" });
         }
     };
-
-    // const sendOtp = async () => {
-    //     try {
-    //         const { data } = await axios.post(`${api}/user/otp/send`, { email });
-    //         setOtpSent(true);
-    //         setMessage(data.message);
-    //         startTimer();
-    //     } catch (error) {
-    //         setMessage(error.response?.data?.message || "Error sending OTP");
-    //     }
-    // };
-
-    // const verifyOtp = async () => {
-    //     try {
-    //         const { data } = await axios.post(`${api}/user/otp/verify`, { email, otp });
-    //         setMessage(data.message);
-    //     } catch (error) {
-    //         setMessage(error.response?.data?.message || "Error verifying OTP");
-    //     }
-    // };
 
     const startTimer = () => {
         setTimer(60);

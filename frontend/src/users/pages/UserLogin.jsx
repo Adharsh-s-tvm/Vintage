@@ -9,7 +9,7 @@ import { loginUser } from '../../redux/api/userApi';
 import { useDispatch } from 'react-redux';
 import { setUserInfo } from '../../redux/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
-import { checkEmailApi, resetPasswordApi, responseGoogleApi, sendOtpApi, verifyOtpApi } from '../../services/api/userApis/userLoginApi';
+import { checkEmailApi, resetPasswordApi, responseGoogleApi, sendOtpApi, verifyOtpApi } from '../../services/api/userApis/userAuthApi';
 
 export default function SignIn() {
   const dispatch = useDispatch();

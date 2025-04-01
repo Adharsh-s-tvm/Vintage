@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "sonner";
+import { resendOtpApi } from "../../services/api/userApis/userAuthApi";
 
 const OtpModal = ({ formData, showOtpModal, setShowOtpModal, verifyOtpAndSignup }) => {
     const [otp, setOtp] = useState("");
@@ -24,7 +24,7 @@ const OtpModal = ({ formData, showOtpModal, setShowOtpModal, verifyOtpAndSignup 
 
     const handleResendOtp = async () => {
         try {
-            const response = await axios.post("http://localhost:7000/api/user/otp/send", {
+            const response = resendOtpApi( {
                 email: formData.email.toLowerCase()
             });
 
