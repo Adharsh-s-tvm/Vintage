@@ -9,9 +9,7 @@ import { loginUser } from '../../redux/api/userApi';
 import { useDispatch } from 'react-redux';
 import { setUserInfo } from '../../redux/slices/authSlice';
 import { useGoogleLogin } from '@react-oauth/google';
-import { googleAuth } from '../../utils/apiGoogle';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
+import { checkEmailApi, resetPasswordApi, responseGoogleApi, sendOtpApi, verifyOtpApi } from '../../services/api/userApis/userLoginApi';
 
 export default function SignIn() {
   const dispatch = useDispatch();
@@ -34,7 +32,7 @@ export default function SignIn() {
   const responseGoogle = async (authResult) => {
     try {
       if (authResult.code) {
-        const result = await axios.post('http://localhost:7000/api/google', {
+        const result = await responseGoogleApi( {
           code: authResult.code
         });
 
@@ -109,7 +107,7 @@ export default function SignIn() {
     try {
       setIsResetting(true);
       // First check if email exists
-      const checkEmailResponse = await axios.post(`${api}/check-email`, { email: resetEmail });
+      const checkEmailResponse = await checkEmailApi(resetEmail)
 
       if (!checkEmailResponse.data.exists) {
         toast.error('Email not found in our records');
@@ -117,7 +115,7 @@ export default function SignIn() {
       }
 
       // If email exists, send OTP
-      const response = await axios.post(`${api}/user/otp/send`, { email: resetEmail });
+      const response = await sendOtpApi(resetEmail)
       toast.success('OTP sent to your email!');
       setIsModalOpen(false);
       setOtpModalOpen(true);
@@ -133,7 +131,7 @@ export default function SignIn() {
 
     e.preventDefault();
     try {
-      const response = await axios.post(`${api}/user/otp/verify`, {
+      const response = await verifyOtpApi( {
         email: resetEmail,
         otp: otp
       });
@@ -156,7 +154,7 @@ export default function SignIn() {
     }
 
     try {
-      const response = await axios.post(`${api}/reset-password`, {
+      const response = await resetPasswordApi( {
         email: resetEmail,
         password: newPassword
       });
