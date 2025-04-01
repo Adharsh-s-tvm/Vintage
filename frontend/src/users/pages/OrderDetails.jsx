@@ -3,9 +3,8 @@ import { useParams, Link } from 'react-router-dom';
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { Package, Truck, Check, ArrowLeft, Download } from 'lucide-react';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
+import { downloadInvoiceApi, fetchOrderDetailsApi } from '../../services/api/userApis/userOrderApi';
 
 export default function OrderDetails() {
   const { orderId } = useParams();
@@ -18,12 +17,7 @@ export default function OrderDetails() {
 
   const fetchOrderDetails = async () => {
     try {
-      const response = await axios.get(`${api}/user/orders/${orderId}`, {
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchOrderDetailsApi(orderId)
       
       if (response.data.success) {
         setOrder(response.data.order);
@@ -68,14 +62,7 @@ export default function OrderDetails() {
 
   const handleDownloadInvoice = async () => {
     try {
-      const response = await axios({
-        url: `${api}/user/orders/${orderId}/invoice`,
-        method: 'GET',
-        responseType: 'blob',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
-        }
-      });
+      const response = await downloadInvoiceApi(orderId)
 
       const blob = new Blob([response.data], { type: 'application/pdf' });
       const url = window.URL.createObjectURL(blob);

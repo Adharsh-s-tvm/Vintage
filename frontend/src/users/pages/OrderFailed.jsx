@@ -4,8 +4,7 @@ import { Button } from '../../ui/Button';
 import { XCircle, RefreshCw, ShoppingBag } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
+import { retryPaymentResponseApi, verifyFailedPaymentAPi } from '../../services/api/userApis/userOrderApi';
 
 export default function OrderFailed() {
   const navigate = useNavigate();
@@ -23,13 +22,12 @@ export default function OrderFailed() {
       }
 
       // Create new Razorpay order with all required fields
-      const paymentResponse = await axios.post(`${api}/payments/create-order`, {
+      const paymentResponse = await retryPaymentResponseApi( {
         amount: parseFloat(amount),
         addressId: addressId,
         paymentMethod: paymentMethod
-      }, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      },
+      );
 
       if (!paymentResponse.data.success) {
         throw new Error(paymentResponse.data.message || 'Failed to create payment order');
@@ -44,7 +42,7 @@ export default function OrderFailed() {
         order_id: paymentResponse.data.order.id,
         handler: async function (response) {
           try {
-            const verifyResponse = await axios.post(`${api}/payments/verify`, {
+            const verifyResponse = await verifyFailedPaymentAPi( {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
@@ -52,8 +50,6 @@ export default function OrderFailed() {
               amount: parseFloat(amount),
               addressId: addressId,
               paymentMethod: paymentMethod
-            }, {
-              headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
             });
 
             if (verifyResponse.data.success) {
