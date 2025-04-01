@@ -20,8 +20,8 @@ import {
 } from '../../ui/DropdownMenu';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
+import { cartCountApi } from '../../services/api/userApis/cartApi';
+import { wishlistCountApi } from '../../services/api/userApis/wishlistApi';
 
 const LogoutConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
   if (!isOpen) return null;
@@ -79,12 +79,7 @@ export function Navbar() {
   const fetchCartCount = async () => {
     if (user || storedUser) {
       try {
-        const response = await axios.get(`${api}/user/cart`, {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+        const response = await cartCountApi();
 
         if (response.data && response.data.items) {
           // Calculate total quantity of all items in cart
@@ -101,12 +96,7 @@ export function Navbar() {
   const fetchWishlistCount = async () => {
     if (user || storedUser) {
       try {
-        const response = await axios.get(`${api}/user/wishlist`, {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        });
+        const response = await wishlistCountApi();
 
         if (response.data) {
           // Set the count of wishlist items
