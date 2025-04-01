@@ -4,9 +4,8 @@ import { Button } from '../../../ui/Button';
 import { Input } from '../../../ui/Input';
 import { Label } from '../../../ui/Label';
 import { Edit, Plus, Trash, MapPin } from 'lucide-react';
-import axios from 'axios';
-import { api } from '../../../lib/apiCall';
 import { toast } from 'sonner';
+import { addAddressApi, deleteAddressApi, fetchAddressesApi, setDefaultAddressApi, updateAddressApi } from '../../../services/api/userApis/profileApi';
 
 function UserAddresses() {
     const [addresses, setAddresses] = useState([]);
@@ -42,12 +41,7 @@ function UserAddresses() {
                 return;
             }
 
-            const response = await axios.get(`${api}/user/profile/address`, {
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await fetchAddressesApi()
             setAddresses(Array.isArray(response.data) ? response.data : []);
         } catch (error) {
             console.error('Error fetching addresses:', error);
@@ -86,28 +80,10 @@ function UserAddresses() {
 
             setLoading(true);
             if (isEditMode) {
-                await axios.put(
-                    `${api}/user/profile/address/${editAddressId}`, 
-                    formData,
-                    {
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
+                await updateAddressApi(editAddressId, formData)
                 toast.success('Address updated successfully');
             } else {
-                await axios.post(
-                    `${api}/user/profile/address`, 
-                    formData,
-                    {
-                        headers: { 
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    }
-                );
+                await addAddressApi(formData)
                 toast.success('Address added successfully');
             }
             setShowAddModal(false);
@@ -137,23 +113,23 @@ function UserAddresses() {
 
     const handleDelete = async () => {
         try {
-            await axios.delete(`${api}/user/profile/address/${deleteConfirmation.addressId}`, {
-                headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-            });
+            await deleteAddressApi(deleteConfirmation.addressId);
             toast.success('Address deleted successfully');
             fetchAddresses();
             setDeleteConfirmation({ show: false, addressId: null, addressDetails: null });
         } catch (error) {
-            toast.error('Failed to delete address');
+            console.error('Error deleting address:', error);
+            if (error.response?.status === 401) {
+                toast.error('Session expired. Please login again');
+            } else {
+                toast.error(error.response?.data?.message || 'Failed to delete address');
+            }
         }
     };
 
     const setDefaultAddress = async (addressId) => {
         try {
-            await axios.put(`${api}/user/profile/address/${addressId}`,
-                { isDefault: true },
-                { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
-            );
+            await setDefaultAddressApi(addressId)
             toast.success('Default address updated');
             fetchAddresses();
         } catch (error) {

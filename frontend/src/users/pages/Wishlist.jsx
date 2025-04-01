@@ -7,8 +7,6 @@ import { toast } from '../../hooks/useToast';
 import { useDispatch, useSelector } from 'react-redux';
 import { removeFromWishlist, setWishlistItems } from '../../redux/slices/wishlistSlice';
 import { setCartItems } from '../../redux/slices/cartSlice'; // Add this import
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../ui/AlertDialog";
+import { fetchWishlistApi, moveToCartApi, removeWishlistApi } from '../../services/api/userApis/wishlistApi';
 
 export default function Wishlist() {
   const dispatch = useDispatch();
@@ -32,9 +31,7 @@ export default function Wishlist() {
 
   const fetchWishlist = async () => {
     try {
-      const response = await axios.get(`${api}/user/wishlist`, {
-        withCredentials: true
-      });
+      const response = await fetchWishlistApi()
       dispatch(setWishlistItems(response.data));
     } catch (error) {
       toast({
@@ -55,9 +52,7 @@ export default function Wishlist() {
     if (!itemToRemove) return;
 
     try {
-      const response = await axios.delete(`${api}/user/wishlist/${itemToRemove.variant._id}`, {
-        withCredentials: true
-      });
+      const response = await removeWishlistApi(itemToRemove._id)
       
       if (response.data.success) {
         dispatch(setWishlistItems(response.data.items));
@@ -85,8 +80,8 @@ export default function Wishlist() {
 
   const moveToCart = async (item) => {
     try {
-      const response = await axios.post(
-        `${api}/user/cart/add`,
+      const response = await moveToCartApi
+      (
         {
           variantId: item.variant._id,
           quantity: 1,

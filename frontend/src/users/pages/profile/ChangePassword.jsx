@@ -5,9 +5,9 @@ import { Input } from '../../../ui/Input';
 import { Label } from '../../../ui/Label';
 import { Lock, Eye, EyeOff, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import axios from 'axios';
-import { api } from '../../../lib/apiCall';
 import { useNavigate } from 'react-router-dom';
+import { changePasswordApi, checkEmailApi } from '../../../services/api/userApis/profileApi';
+import { resetPasswordApi, sendOtpApi, verifyOtpApi } from '../../../services/api/userApis/userAuthApi';
 
 function ChangePassword() {
     const navigate = useNavigate();
@@ -55,8 +55,7 @@ function ChangePassword() {
 
         try {
             setLoading(true);
-            const response = await axios.put(
-                `${api}/user/profile/change-password`,
+            const response = await changePasswordApi(
                 {
                     oldPassword: formData.oldPassword,
                     newPassword: formData.newPassword
@@ -87,7 +86,7 @@ function ChangePassword() {
         try {
             setIsResetting(true);
             // Check if email exists
-            const checkEmailResponse = await axios.post(`${api}/check-email`, { email: resetEmail });
+            const checkEmailResponse = await checkEmailApi ({ email: resetEmail });
 
             if (!checkEmailResponse.data.exists) {
                 toast.error('Email not found in our records');
@@ -95,7 +94,7 @@ function ChangePassword() {
             }
 
             // If email exists, send OTP
-            const response = await axios.post(`${api}/user/otp/send`, { email: resetEmail });
+            const response = await sendOtpApi ({ email: resetEmail });
             toast.success('OTP sent to your email!');
             setIsModalOpen(false);
             setOtpModalOpen(true);
@@ -109,7 +108,7 @@ function ChangePassword() {
     const handleVerifyOTP = async (e) => {
         e.preventDefault();
         try {
-            const response = await axios.post(`${api}/user/otp/verify`, {
+            const response = await verifyOtpApi ({
                 email: resetEmail,
                 otp: otp
             });
@@ -132,7 +131,7 @@ function ChangePassword() {
         }
 
         try {
-            const response = await axios.post(`${api}/reset-password`, {
+            const response = await resetPasswordApi ({
                 email: resetEmail,
                 password: resetNewPassword
             });

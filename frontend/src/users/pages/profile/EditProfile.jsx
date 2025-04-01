@@ -7,9 +7,9 @@ import { Camera } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../../lib/apiCall';
+import { fetchUserDetailsApi, updateUserDetailsApi, uploadProfileImageApi } from '../../../services/api/userApis/profileApi';
+import { sendOtpApi, verifyOtpApi } from '../../../services/api/userApis/userAuthApi';
 
 function EditProfile() {
     const dispatch = useDispatch();
@@ -62,11 +62,7 @@ function EditProfile() {
                     return;
                 }
 
-                const response = await axios.get(`${api}/user/profile/details`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const response = await fetchUserDetailsApi()
 
                 if (response.data) {
                     // Pre-fill the form with current user data
@@ -101,15 +97,7 @@ function EditProfile() {
 
     const handleProfileUpdate = async () => {
         try {
-            const response = await axios.put(
-                `${api}/user/profile/details`,
-                formData,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem('jwt')}`
-                    }
-                }
-            );
+            const response = await updateUserDetailsApi(formData)
 
             // Update both Redux state and localStorage
             dispatch(setUserInfo(response.data));
@@ -130,12 +118,7 @@ function EditProfile() {
 
             try {
                 setLoading(true);
-                const response = await axios.post(`${api}/user/profile/upload-image`, formData, {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        Authorization: `Bearer ${localStorage.getItem('jwt')}`
-                    }
-                });
+                const response = await uploadProfileImageApi(formData)
 
                 setProfileImage(response.data.imageUrl);
                 setFormData(prev => ({ ...prev, image: response.data.imageUrl }));
@@ -156,10 +139,7 @@ function EditProfile() {
 
         try {
             setOtpLoading(true);
-            const response = await axios.post(
-                `${api}/user/otp/send`,
-                { email: newEmail }
-            );
+            const response = await sendOtpApi({ email: newEmail })
             
             setOtpSent(true);
             setTimer(60);
@@ -181,10 +161,7 @@ function EditProfile() {
         try {
             setOtpLoading(true);
             // First verify OTP
-            const response = await axios.post(
-                `${api}/user/otp/verify`,
-                { email: newEmail, otp }
-            );
+            const response = await verifyOtpApi({ email: newEmail, otp })
             
             if (response.data.success) {
                 setOtpVerified(true);
@@ -193,15 +170,8 @@ function EditProfile() {
                 // Update email in the database
                 try {
                     const token = localStorage.getItem('jwt');
-                    const updateResponse = await axios.put(
-                        `${api}/user/profile/details`,  // Using existing profile update endpoint
-                        { ...formData, email: newEmail },  // Send all form data with new email
-                        {
-                            headers: {
-                                Authorization: `Bearer ${token}`,
-                                'Content-Type': 'application/json'
-                            }
-                        }
+                    const updateResponse = await updateUserDetailsApi( 
+                        { ...formData, email: newEmail }  
                     );
                     
                     // Update form data with new email
@@ -239,10 +209,7 @@ function EditProfile() {
     const handleResendOtp = async () => {
         try {
             setOtpLoading(true);
-            const response = await axios.post(
-                `${api}/user/otp/send`,
-                { email: newEmail }
-            );
+            const response = await sendOtpApi({ email: newEmail })
             
             setTimer(60);
             setCanResend(false);

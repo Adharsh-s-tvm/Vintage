@@ -7,9 +7,8 @@ import { Camera, Edit, Plus, Trash, User, Package, MapPin, Heart, Ticket, Lock, 
 import { useSelector, useDispatch } from 'react-redux';
 import { setUserInfo, updateUserInfo } from '../../../redux/slices/authSlice';
 import { toast } from 'sonner';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../../../lib/apiCall';
+import { fetchAddressesApi, fetchUserDetailsApi } from '../../../services/api/userApis/profileApi';
 
 function UserProfile() {
   const dispatch = useDispatch();
@@ -28,12 +27,7 @@ function UserProfile() {
   const fetchUserDetails = async () => {
     try {
       console.log('Fetching user details...');
-      const response = await axios.get(`${api}/user/profile/details`, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchUserDetailsApi()
       console.log('User details response:', response.data);
       setUserDetails(response.data);
       
@@ -53,9 +47,7 @@ function UserProfile() {
 
   const fetchUserAddresses = async () => {
     try {
-      const response = await axios.get(`${api}/user/profile/address`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      const response = await fetchAddressesApi()
       setAddresses(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       toast.error('Failed to fetch addresses');

@@ -1,6 +1,7 @@
 Selected Category not showing in offer page while editing offer
 sales report download issue
-
+wishlist loaders
+wishlist remove still showing
 ---------------------------------------------------------------------------------------------------------------
 
 

@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button } from '@mui/material';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ShoppingBag, Person } from '@mui/icons-material';
-import axios from 'axios';
 import { toast } from 'sonner';
-import { api } from '../../lib/apiCall';
 import { Layout } from '../layout/Layout';
+import { fetchWalletDetailsApi } from '../../services/api/userApis/profileApi';
 
 function Wallet() {
   const [wallet, setWallet] = useState(null);
@@ -25,16 +24,12 @@ function Wallet() {
   const fetchWalletDetails = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${api}/user/profile/wallet`, {
+      const response = await fetchWalletDetailsApi( {
         params: {
           page: currentPage,
           limit: itemsPerPage
-        },
-        headers: { 
-          Authorization: `Bearer ${localStorage.getItem('jwt')}`,
-        },
-        withCredentials: true
-      });
+        }})
+    
       
       if (response.data) {
         setWallet(response.data.wallet);
