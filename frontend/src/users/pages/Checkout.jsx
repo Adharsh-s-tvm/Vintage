@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux'; // Add this import
 import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
-import { api } from '../../lib/apiCall';
-import axios from 'axios';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import {
@@ -22,6 +20,7 @@ import { MapPin, CreditCard, Shield, RefreshCw, Truck, Plus } from 'lucide-react
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../ui/Dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/Select';
 import { setCartItems } from '../../redux/slices/cartSlice';
+import { applyCouponApi, calculateCouponApi, checkoutAddressApi, fetchCheckoutAddressApi, fetchCheckoutCouponsApi, fetchCheckoutWalletBalanceApi, orderResponseApi, paymentResponseApi, verifyResponseApi } from '../../services/api/userApis/checkoutApi';
 
 
 
@@ -39,9 +38,7 @@ function AddressForm({ onAddressAdded, onClose }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post(`${api}/user/profile/address`, formData, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      const response = await checkoutAddressApi(formData);
 
       if (response.data) {
         toast.success('Address added successfully');
@@ -175,9 +172,7 @@ function Checkout() {
 
   const fetchAddresses = async () => {
     try {
-      const response = await axios.get(`${api}/user/profile/address`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      const response = await fetchCheckoutAddressApi();
       setAddresses(response.data);
       // Set default address if exists
       const defaultAddress = response.data.find(addr => addr.isDefault);
@@ -192,9 +187,7 @@ function Checkout() {
   const fetchAvailableCoupons = async () => {
     
     try {
-      const response = await axios.get(`${api}/user/coupons/available`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      const response = await fetchCheckoutCouponsApi();
       setAvailableCoupons(response.data);
       console.log("response.data ",response.data);
     } catch (error) {
@@ -204,9 +197,7 @@ function Checkout() {
 
   const fetchWalletBalance = async () => {
     try {
-      const response = await axios.get(`${api}/user/profile/wallet`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-      });
+      const response = await fetchCheckoutWalletBalanceApi()
       setWalletBalance(response.data.balance);
     } catch (error) {
       toast.error('Failed to fetch wallet balance');
@@ -237,30 +228,20 @@ function Checkout() {
           amount: finalAmount
         };
 
-        const orderResponse = await axios.post(
-          `${api}/user/orders`,
-          orderData,
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
-          }
-        );
+        const orderResponse = await orderResponseApi(orderData);
 
         toast.success('Order placed successfully!');
         navigate(`/success/${orderResponse.data.orderId}`);
       } 
       // For online payments (Razorpay)
       else if (selectedPaymentMethod === 'online') {
-        const paymentResponse = await axios.post(
-          `${api}/payments/create-order`,
+        const paymentResponse = await paymentResponseApi(
           {
             amount: finalAmount,
             addressId: selectedAddress,
             paymentMethod: selectedPaymentMethod,
             couponCode: selectedCoupon,
             discountAmount: couponDiscount
-          },
-          {
-            headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
           }
         );
 
@@ -277,8 +258,7 @@ function Checkout() {
           order_id: paymentResponse.data.order.id,
           handler: async function (response) {
             try {
-              const verifyResponse = await axios.post(
-                `${api}/payments/verify`,
+              const verifyResponse = await verifyResponseApi(
                 {
                   razorpay_order_id: response.razorpay_order_id,
                   razorpay_payment_id: response.razorpay_payment_id,
@@ -287,9 +267,6 @@ function Checkout() {
                   amount: finalAmount,
                   couponCode: selectedCoupon,
                   discountAmount: couponDiscount
-                },
-                {
-                  headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
                 }
               );
 
@@ -334,14 +311,10 @@ function Checkout() {
 
     try {
       // First, apply the coupon and get the discount amount
-      const applyResponse = await axios.post(
-        `${api}/user/coupons/apply`,
+      const applyResponse = await applyCouponApi(
         {
           couponCode,
           cartTotal: subtotal // Using subtotal from Redux state
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
         }
       );
 
@@ -350,14 +323,10 @@ function Checkout() {
       setCouponDiscount(applyResponse.data.discountAmount);
 
       // Calculate final prices with coupon
-      const calculateResponse = await axios.post(
-        `${api}/user/coupons/calculate-price`,
+      const calculateResponse = await calculateCouponApi(
         {
           couponCode,
           cartItems: cartItems // Using cartItems from Redux state
-        },
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` }
         }
       );
 
