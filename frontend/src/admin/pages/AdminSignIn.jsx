@@ -50,7 +50,7 @@ export default function SignIn() {
         } else {
             navigate('/admin')
         }
-    }, []);
+    }, [admin, navigate]);
 
 
     return (
