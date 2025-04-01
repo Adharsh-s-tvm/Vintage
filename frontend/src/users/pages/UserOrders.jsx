@@ -3,8 +3,6 @@ import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { ArrowRight, Download, Package, Truck, Check, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
-import { api } from '../../lib/apiCall';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -38,6 +36,7 @@ import { Input } from '../../ui/Input';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '../../ui/Pagination';
 import { debounce } from 'lodash';
 import { useSearchParams } from 'react-router-dom';
+import { userCancelOrderApi, userfetchOrdersApi, userReturnOrderApi } from '../../services/api/userApis/userOrderApi';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -105,12 +104,7 @@ export default function Orders() {
       if (!params.has('limit')) params.set('limit', itemsPerPage.toString());
       if (searchQuery.trim()) params.set('search', searchQuery.trim());
 
-      const response = await axios.get(`${api}/user/orders?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await userfetchOrdersApi(params)
       
       if (response.data.success) {
         setOrders(response.data.orders);
@@ -154,11 +148,7 @@ export default function Orders() {
     }
 
     try {
-      await axios.put(
-        `${api}/user/orders/${cancelDialog.orderId}/cancel`,
-        { reason: cancelReason },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('jwt')}` } }
-      );
+      await userCancelOrderApi(cancelDialog.orderId, cancelReason)
       toast.success('Order cancelled successfully');
       setCancelDialog({ open: false, orderId: null });
       setCancelReason('');
@@ -184,16 +174,8 @@ export default function Orders() {
     }
 
     try {
-      await axios.post(
-        `${api}/user/orders/${returnDialog.orderId}/return`,
-        returnForm,
-        { 
-          withCredentials: true,
-          headers: { 
-            'Content-Type': 'application/json'
-          } 
-        }
-      );
+      
+      await userReturnOrderApi(returnDialog.orderId, returnForm)
       
       toast.success('Return request submitted successfully');
       setReturnDialog({ open: false, orderId: null });
