@@ -42,7 +42,7 @@ const cartSlice = createSlice({
       state.shipping = action.payload.shipping || 0;
       state.total = state.subtotal + state.shipping;
       
-      // Save to localStorage
+      // Save to localStorage using the state object
       localStorage.setItem('cart', JSON.stringify({
         cartItems: state.cartItems,
         subtotal: state.subtotal,
@@ -63,6 +63,9 @@ const cartSlice = createSlice({
       state.subtotal = 0;
       state.shipping = 0;
       state.total = 0;
+      state.loading = false;
+      state.error = null;
+      localStorage.removeItem('cart');
     }
   }
 });

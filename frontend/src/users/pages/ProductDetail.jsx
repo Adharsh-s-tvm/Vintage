@@ -298,6 +298,19 @@ export default function ProductDetail() {
   const availableSizes = getAvailableSizes(product);
 
   const handleAddToCart = async () => {
+    // Check for authentication
+    const token = localStorage.getItem('jwt');
+    if (!token) {
+      toast({
+        title: "Authentication Required",
+        description: "Please login to add items to cart",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+      navigate('/login');
+      return;
+    }
+
     if (!selectedVariant) {
       toast({
         title: "Error",
