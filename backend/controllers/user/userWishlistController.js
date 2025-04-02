@@ -3,9 +3,7 @@ import Wishlist from '../../models/product/wishlistModel.js';
 import Product from '../../models/product/productModel.js'
 import Variant from '../../models/product/sizeVariantModel.js';
 
-// @desc    Get user's wishlist
-// @route   GET /api/user/wishlist
-// @access  Private
+
 const getWishlist = asyncHandler(async (req, res) => {
     let wishlist = await Wishlist.findOne({ user: req.user._id })
         .populate({
@@ -27,9 +25,7 @@ const getWishlist = asyncHandler(async (req, res) => {
     res.json(wishlist.items);
 });
 
-// @desc    Add to wishlist
-// @route   POST /api/user/wishlist
-// @access  Private
+
 const addToWishlist = asyncHandler(async (req, res) => {
     const { productId, variantId } = req.body;
 
@@ -83,9 +79,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
     res.status(200).json(addedItem);
 });
 
-// @desc    Remove from wishlist
-// @route   DELETE /api/user/wishlist/:variantId
-// @access  Private
+
 const removeFromWishlist = asyncHandler(async (req, res) => {
     const variantId = req.params.variantId;
 

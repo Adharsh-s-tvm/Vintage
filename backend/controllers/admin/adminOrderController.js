@@ -227,28 +227,30 @@ export const handleReturnRequest = async (req, res) => {
       throw new Error('Order not found');
     }
 
-    const item = order.items.id(itemId);
-    if (!item) {
+    // Find the specific item in the order
+    const itemIndex = order.items.findIndex(item => item._id.toString() === itemId);
+    if (itemIndex === -1) {
       throw new Error('Order item not found');
     }
 
+    const item = order.items[itemIndex];
+
     if (action === 'accept') {
-      item.returnStatus = 'Return Approved';
-      item.status = 'Returned';
+      // Update the specific item's status
+      order.items[itemIndex].returnStatus = 'Return Approved';
+      order.items[itemIndex].status = 'Returned';
       
       // Update inventory
       await Variant.findByIdAndUpdate(
-        item.sizeVariant,
+        item.sizeVariant._id, // Make sure to use _id from the populated sizeVariant
         { $inc: { stock: item.quantity } },
         { session }
       );
 
       // Process refund for online payments
-      if (order.payment.method) {
-        // Calculate refund amount for this item
-        const refundAmount = order.totalAmount; // Use the final price of the item
+      if (order.payment?.method) {
+        const refundAmount =  order.totalAmount;
         
-        // Process refund to wallet
         const refundSuccess = await processReturnRefund(
           order.orderId,
           order.user,
@@ -261,17 +263,18 @@ export const handleReturnRequest = async (req, res) => {
           throw new Error('Failed to process refund to wallet');
         }
 
-        item.returnProcessed = true;
-        item.returnStatus = 'Refunded';
+        order.items[itemIndex].returnProcessed = true;
+        order.items[itemIndex].returnStatus = 'Refunded';
       }
     } else if (action === 'reject') {
-      item.returnStatus = 'Return Rejected';
+      order.items[itemIndex].returnStatus = 'Return Rejected';
     }
 
     await order.save({ session });
     await session.commitTransaction();
 
     res.status(200).json({
+      success: true,
       message: `Return request ${action}ed successfully`,
       order
     });
@@ -281,6 +284,7 @@ export const handleReturnRequest = async (req, res) => {
     }
     console.error('Error in handleReturnRequest:', error);
     res.status(500).json({ 
+      success: false,
       message: "Failed to handle return request",
       error: error.message 
     });
