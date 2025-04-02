@@ -161,7 +161,7 @@ export default function Returns() {
                 >
                   <option value="all">All Status</option>
                   <option value="Return Pending">Pending</option>
-                  <option value="Return Approved">Approved</option>
+                  <option value="Refunded">Refunded</option>
                   <option value="Return Rejected">Rejected</option>
                 </select>
               </div>
