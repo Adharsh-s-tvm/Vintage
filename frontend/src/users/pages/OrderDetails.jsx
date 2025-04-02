@@ -249,10 +249,10 @@ export default function OrderDetails() {
           <div className="p-6">
             <h2 className="text-xl font-semibold mb-4">Discount Details</h2>
             <div className="space-y-3">
-              <div className="flex justify-between">
+              {/* <div className="flex justify-between">
                 <span>Original Total</span>
-                <span>₹{(order.totalAmount + order.totalDiscount).toFixed(2)}</span>
-              </div>
+                <span>₹{(order.totalAmount + ).toFixed(2)}</span>
+              </div> */}
               
               {order.totalDiscount > 0 && (
                 <div className="flex justify-between text-green-600">

@@ -196,8 +196,8 @@ export const verifyPayment = asyncHandler(async (req, res) => {
       razorpay_signature,
       tempOrderId,
       amount, // This is total-couponDiscount
-      couponCode, // Add this
-      discountAmount // Add this
+      couponCode, 
+      discountAmount 
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
