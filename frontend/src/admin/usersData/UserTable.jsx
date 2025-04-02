@@ -38,7 +38,7 @@ import { updateUserStatusApi } from '../../services/api/adminApis/usersListApi';
 // Define the API base URL - replace with your actual API URL
 const API_BASE_URL = 'http://localhost:7000/api'; // Adjust this to match your backend URL
 
-export function UsersTable({ users, onUserUpdated }) {
+export function UsersTable({ users, onUserUpdated , fetchUsers}) {
     const [isLoading, setIsLoading] = useState(false);
     const [confirmationDialog, setConfirmationDialog] = useState({
         isOpen: false,
@@ -51,6 +51,7 @@ export function UsersTable({ users, onUserUpdated }) {
         setIsLoading(true);
         try {
             await updateUserStatusApi(userId, { status: newStatus });
+            fetchUsers();
 
             // Show success message
             toast.success(`User ${newStatus === 'active' ? 'activated' : 'banned'} successfully`);

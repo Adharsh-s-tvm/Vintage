@@ -252,6 +252,7 @@ export default function Users() {
                     <>
                         <UsersTable
                             users={users}
+                            fetchUsers={fetchUsers}
                             onNewUser={handleNewUser}
                             onEditUser={handleEditUser}
                             onDeleteUser={handleDeleteUser}
