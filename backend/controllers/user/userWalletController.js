@@ -6,14 +6,11 @@ import mongoose from 'mongoose';
 // Get wallet details
 export const getWalletDetails = asyncHandler(async (req, res) => {
   try {
-    // Validate and sanitize limit parameter
-    let limit = parseInt(req.query.limit) || 10;
-    // Ensure limit is within acceptable range
-    limit = Math.min(Math.max(limit, 5), 50); // Min 5, Max 50
+    // Get page and limit from query params
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = 5; // Fixed limit of 5 items per page
     
-    const page = parseInt(req.query.page) || 1;
-
-    // Find or create wallet
+    // Find wallet
     let wallet = await Wallet.findOne({ userId: req.user._id });
     
     if (!wallet) {
@@ -24,41 +21,32 @@ export const getWalletDetails = asyncHandler(async (req, res) => {
       });
     }
 
-    // Get total count of transactions
-    const totalTransactions = wallet.transactions.length;
-
     // Calculate pagination
+    const totalTransactions = wallet.transactions.length;
+    const totalPages = Math.ceil(totalTransactions / limit);
     const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-
-    // Get paginated transactions
+    
+    // Get transactions for current page
     const paginatedTransactions = wallet.transactions
-      .sort((a, b) => b.date - a.date) // Sort by date descending
-      .slice(startIndex, endIndex);
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(startIndex, startIndex + limit);
 
     res.json({
+      success: true,
       wallet: {
-        _id: wallet._id,
-        userId: wallet.userId,
         balance: wallet.balance
       },
       transactions: paginatedTransactions,
       pagination: {
         currentPage: page,
-        totalPages: Math.ceil(totalTransactions / limit),
-        totalTransactions,
-        hasNextPage: endIndex < totalTransactions,
-        hasPrevPage: page > 1,
-        limit,
-        itemsPerPage: limit // Include current items per page in response
+        totalPages,
+        totalTransactions
       }
     });
   } catch (error) {
-    console.error('Wallet fetch error:', error);
     res.status(500).json({ 
       success: false,
-      message: "Failed to fetch wallet details",
-      error: error.message 
+      message: "Failed to fetch wallet details"
     });
   }
 });
@@ -121,4 +109,4 @@ export const processReturnRefund = async (orderId, userId, amount, description, 
     console.error('Return refund processing error:', error);
     return false;
   }
-}; 
+};

@@ -1,6 +1,9 @@
 import { privateAPI } from "../api";
 
-export const fetchWalletDetailsApi = (params) => privateAPI.get('/user/profile/wallet', { params })
+export const fetchWalletDetailsApi = (page = 1) => 
+  privateAPI.get('/user/profile/wallet', { 
+    params: { page }
+  });
 export const changePasswordApi = (data) => privateAPI.put('/user/profile/change-password', data)
 export const checkEmailApi = (data) => privateAPI.post('/check-email', data)
 
