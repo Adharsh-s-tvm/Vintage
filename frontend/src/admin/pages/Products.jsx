@@ -498,13 +498,14 @@ const Products = () => {
         });
       }
 
-      const response = await updateProductVariantApi(selectedVariant.Id, formData);
+      const response = await updateProductVariantApi(selectedVariant._id, formData);
       
       toast.success('Variant updated successfully');
       setShowEditVariantModal(false);
       fetchProducts();
     } catch (error) {
-      toast.error('Failed to update variant');
+      console.error('Error updating variant:', error);
+      toast.error(error.response?.data?.message || 'Failed to update variant');
     }
   };
 

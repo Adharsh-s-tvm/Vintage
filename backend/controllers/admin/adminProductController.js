@@ -3,9 +3,7 @@ import Variant from "../../models/product/sizeVariantModel.js";
 import Category from "../../models/product/categoryModel.js";
 import Brand from "../../models/product/brandModel.js";
 
-// @desc    Add a new product
-// @route   POST /api/products/add
-// @access  Admin
+
 export const addProduct = async (req, res) => {
   try {
     const product = new Product(req.body);
@@ -23,9 +21,6 @@ export const addProduct = async (req, res) => {
   }
 };
 
-// @desc    Get all products with pagination
-// @route   GET /api/products
-// @access  Public
 export const getAllProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 0;
@@ -177,9 +172,8 @@ export const addVariant = async (req, res) => {
   }
 };
 
-// @desc    Add a new category
-// @route   POST /api/products/category/add
-// @access  Admin
+
+
 export const addCategory = async (req, res) => {
   const { name } = req.body;
 
@@ -202,9 +196,8 @@ export const addCategory = async (req, res) => {
   res.status(201).json(savedCategory);
 };
 
-// @desc    Get all categories
-// @route   GET /api/products/categories
-// @access  Public
+
+
 export const getAllCategories = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -260,9 +253,8 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
-// @desc    Update category status
-// @route   PUT /api/products/category/:id/status
-// @access  Admin
+
+
 export const updateCategoryStatus = async (req, res) => {
   const { id } = req.params;
   const { status } = req.body;
@@ -281,9 +273,8 @@ export const updateCategoryStatus = async (req, res) => {
   res.status(200).json(updatedCategory);
 };
 
-// @desc    Update category name
-// @route   PUT /api/products/category/:id
-// @access  Admin
+
+
 export const updateCategory = async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
