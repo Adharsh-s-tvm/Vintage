@@ -27,7 +27,7 @@ import {
   AccordionTrigger,
 } from "../../ui/accordion";
 import { ChevronDown } from 'lucide-react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { addToWishlist } from '../../redux/slices/wishlistSlice';
 import { cn } from '../../lib/util';
 import { addToCartApi, addToWishlistApi, fetchProductDetailApi, fetchRelatedProductsApi } from '../../services/api/userApis/userProductApi';
@@ -124,6 +124,7 @@ export default function ProductDetail() {
   const [showRatingDetails, setShowRatingDetails] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState([]);
   const dispatch = useDispatch();
+  const { wishlistItems } = useSelector((state) => state.wishlist);
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -270,6 +271,12 @@ export default function ProductDetail() {
     } catch (error) {
       console.error('Error fetching related products:', error);
     }
+  };
+
+  // Update the isInWishlist function to handle undefined wishlistItems
+  const isInWishlist = (variantId) => {
+    if (!wishlistItems || !variantId) return false;
+    return wishlistItems.some(item => item?.variant?._id === variantId);
   };
 
   if (loading) {
@@ -625,8 +632,21 @@ export default function ProductDetail() {
                 variant="outline"
                 size="icon"
                 onClick={handleAddToWishlist}
+                className={cn(
+                  "transition-colors",
+                  selectedVariant && isInWishlist(selectedVariant._id) 
+                    ? "text-red-500 hover:text-red-600 border-red-500" 
+                    : "text-gray-500 hover:text-gray-600"
+                )}
               >
-                <Heart className="h-4 w-4" />
+                <Heart
+                  className={cn(
+                    "h-4 w-4",
+                    selectedVariant && isInWishlist(selectedVariant._id) 
+                      ? "fill-red-500 stroke-red-500" 
+                      : "stroke-current"
+                  )}
+                />
               </Button>
             </div>
 

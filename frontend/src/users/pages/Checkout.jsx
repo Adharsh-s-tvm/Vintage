@@ -430,12 +430,11 @@ function Checkout() {
                   Select Delivery Address
                 </CardTitle>
                 <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/profile/addresses')}>
                       <Plus className="h-4 w-4 mr-2" />
                       Add New Address
                     </Button>
-                  </DialogTrigger>
+               
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Add New Delivery Address</DialogTitle>

@@ -52,10 +52,10 @@ export default function Wishlist() {
     if (!itemToRemove) return;
 
     try {
-      const response = await removeWishlistApi(itemToRemove._id)
+      const response = await removeWishlistApi(itemToRemove.variant._id);
       
       if (response.data.success) {
-        dispatch(setWishlistItems(response.data.items));
+        dispatch(removeFromWishlist(itemToRemove.variant._id));
         
         toast({
           title: "Success",
@@ -80,8 +80,7 @@ export default function Wishlist() {
 
   const moveToCart = async (item) => {
     try {
-      const response = await moveToCartApi
-      (
+      const response = await moveToCartApi(
         {
           variantId: item.variant._id,
           quantity: 1,
@@ -98,23 +97,24 @@ export default function Wishlist() {
       // Update cart state with cart data
       if (response.data.cart) {
         dispatch(setCartItems(response.data.cart));
+        dispatch(removeFromWishlist(item.variant._id));
+
+        toast({
+          title: "Success",
+          description: "Item moved to cart",
+          duration: 2000,
+          className: "bg-white text-black border border-gray-200"
+        });
       }
-
-      // Remove item from wishlist state
-      dispatch(removeFromWishlist(item.variant._id));
-
-      toast({
-        title: "Success",
-        description: "Item moved to cart",
-        duration: 2000,
-        className: "bg-white text-black border border-gray-200"
-      });
     } catch (error) {
+      // Improved error handling to show specific error message
+      const errorMessage = error.response?.data?.message || "Failed to move item to cart";
       toast({
         title: "Error",
-        description: error.response?.data?.message || "Failed to move item to cart",
+        description: errorMessage,
         duration: 2000,
-        className: "bg-white text-black border border-gray-200"
+        variant: "destructive",
+        className: "bg-red-100 text-red-900 border border-red-200"
       });
     }
   };
