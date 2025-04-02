@@ -4,12 +4,33 @@ import { Layout } from '../layout/Layout';
 import { Button } from '../../ui/Button';
 import { Package, Truck, Check, ArrowLeft, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { downloadInvoiceApi, fetchOrderDetailsApi } from '../../services/api/userApis/userOrderApi';
+import { downloadInvoiceApi, fetchOrderDetailsApi, userReturnOrderItemApi } from '../../services/api/userApis/userOrderApi';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../ui/Dialog';
+import { Label } from '../../ui/Label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../../ui/Select';
+import { Textarea } from '../../ui/Textarea';
+import axios from 'axios';
 
 export default function OrderDetails() {
   const { orderId } = useParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [returnDialog, setReturnDialog] = useState({ 
+    open: false, 
+    orderId: null,
+    itemId: null 
+  });
+  const [returnForm, setReturnForm] = useState({
+    reason: '',
+    additionalDetails: ''
+  });
+  const returnReasons = [
+    "Defective",
+    "Not as described",
+    "Wrong size/fit",
+    "Changed my mind",
+    "Other"
+  ];
 
   useEffect(() => {
     fetchOrderDetails();
@@ -93,6 +114,30 @@ export default function OrderDetails() {
         description: 'There was an error downloading your invoice. Please try again.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleReturnSubmit = async () => {
+    if (!returnForm.reason.trim()) {
+      toast.error('Please provide a reason for return');
+      return;
+    }
+
+    try {
+      const response = await userReturnOrderItemApi(
+        returnDialog.orderId,
+        returnDialog.itemId,
+        returnForm
+      );
+      
+      if (response.data.success) {
+        toast.success('Return request submitted successfully');
+        setReturnDialog({ open: false, orderId: null, itemId: null });
+        setReturnForm({ reason: '', additionalDetails: '' });
+        fetchOrderDetails(); // Refresh order details
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to submit return request');
     }
   };
 
@@ -190,6 +235,17 @@ export default function OrderDetails() {
                           Color: {item.sizeVariant?.color}
                         </div>
                         <div className="text-gray-600">Quantity: {item.quantity}</div>
+                        {item.returnRequested && (
+                          <div className={`text-sm mt-2 ${
+                            item.returnStatus === 'Return Approved' 
+                              ? 'text-green-600'
+                              : item.returnStatus === 'Return Rejected'
+                              ? 'text-red-600'
+                              : 'text-yellow-600'
+                          }`}>
+                            Return Status: {item.returnStatus}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
                         <div className="font-medium">
@@ -198,6 +254,20 @@ export default function OrderDetails() {
                         <div className="text-sm text-gray-500">
                           Subtotal: ₹{((item.price || 0) * item.quantity).toFixed(2)}
                         </div>
+                        {order.orderStatus === 'Delivered' && !item.returnRequested && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-2"
+                            onClick={() => setReturnDialog({ 
+                              open: true, 
+                              orderId: order.orderId,
+                              itemId: item._id 
+                            })}
+                          >
+                            Return Item
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -277,6 +347,72 @@ export default function OrderDetails() {
             </div>
           </div>
         </div>
+
+        {/* Return Details Dialog */}
+        <Dialog 
+          open={returnDialog.open} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setReturnDialog({ open: false, orderId: null, itemId: null });
+              setReturnForm({ reason: '', additionalDetails: '' });
+            }
+          }}
+        >
+          <DialogContent className="bg-white rounded-lg shadow-lg sm:max-w-[425px] p-6">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-semibold text-gray-900">
+                Return Item
+              </DialogTitle>
+            </DialogHeader>
+            <div className="mt-4 space-y-4">
+              <div>
+                <Label htmlFor="reason">Reason for Return *</Label>
+                <Select
+                  value={returnForm.reason}
+                  onValueChange={(value) => setReturnForm(prev => ({ ...prev, reason: value }))}
+                >
+                  <SelectTrigger className="mt-2">
+                    <SelectValue placeholder="Select a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {returnReasons.map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="additionalDetails">Additional Details</Label>
+                <Textarea
+                  id="additionalDetails"
+                  value={returnForm.additionalDetails}
+                  onChange={(e) => setReturnForm(prev => ({ ...prev, additionalDetails: e.target.value }))}
+                  placeholder="Any additional information about the return..."
+                  className="mt-2"
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex justify-end gap-3 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setReturnDialog({ open: false, orderId: null, itemId: null });
+                  setReturnForm({ reason: '', additionalDetails: '' });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleReturnSubmit}
+                disabled={!returnForm.reason.trim()}
+              >
+                Submit Return Request
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

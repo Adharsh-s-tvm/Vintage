@@ -29,6 +29,9 @@ router.put('/:id/cancel', cancelOrder);
 // Return order
 router.post('/:id/return', returnOrder);
 
+// Return specific item in order
+router.post('/:id/items/:itemId/return', returnOrder);
+
 router.get('/:orderId/invoice', pdfDownloader);
 
 export default router;

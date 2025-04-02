@@ -12,3 +12,5 @@ export const verifyFailedPaymentAPi = (data) => privateAPI.post('/payments/verif
 export const userfetchOrdersApi = (params) => privateAPI.get(`/user/orders?${params}`)
 export const userCancelOrderApi = (orderId, reason) => privateAPI.put(`/user/orders/${orderId}/cancel`, { reason })
 export const userReturnOrderApi = (orderId, data) => privateAPI.post(`/user/orders/${orderId}/return`, data)
+export const userReturnOrderItemApi = (orderId, itemId, data) => 
+  privateAPI.post(`/user/orders/${orderId}/items/${itemId}/return`, data);

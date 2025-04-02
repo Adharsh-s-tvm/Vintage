@@ -437,9 +437,10 @@ export const cancelOrder = async (req, res) => {
 // Return order
 export const returnOrder = asyncHandler(async (req, res) => {
     const { reason, additionalDetails } = req.body;
+    const { id: orderId, itemId } = req.params;
     
     const order = await Order.findOne({
-        orderId: req.params.id,
+        orderId: orderId,
         user: req.user._id
     });
 
@@ -448,29 +449,36 @@ export const returnOrder = asyncHandler(async (req, res) => {
         throw new Error('Order not found');
     }
 
+    // Find the specific item
+    const item = order.items.find(item => item._id.toString() === itemId);
+    
+    if (!item) {
+        res.status(404);
+        throw new Error('Order item not found');
+    }
+
     // Check if order status is Delivered
     if (order.orderStatus !== 'Delivered') {
         res.status(400);
         throw new Error('Order must be delivered before requesting return');
     }
 
-    // Check if return is already requested
-    if (order.items.some(item => item.returnRequested)) {
+    // Check if return is already requested for this item
+    if (item.returnRequested) {
         res.status(400);
-        throw new Error('Return already requested for this order');
+        throw new Error('Return already requested for this item');
     }
 
-    // Update order items status
-    for (const item of order.items) {
-        item.returnRequested = true;
-        item.returnReason = reason;
-        item.additionalDetails = additionalDetails;
-        item.returnStatus = 'Return Pending';
-    }
+    // Update specific item status
+    item.returnRequested = true;
+    item.returnReason = reason;
+    item.additionalDetails = additionalDetails;
+    item.returnStatus = 'Return Pending';
 
     await order.save();
 
     res.json({
+        success: true,
         message: 'Return request submitted successfully',
         order
     });
