@@ -253,6 +253,25 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
+export const getAllCategoriesWithoutPagination = async (req, res) => {
+  try {
+    // Only fetch listed categories
+    const categories = await Category.find({ status: 'listed' })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      categories
+    });
+  } catch (error) {
+    console.error('Error fetching categories:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching categories',
+      error: error.message 
+    });
+  }
+};
+
 
 
 export const updateCategoryStatus = async (req, res) => {
@@ -607,5 +626,25 @@ export const updateVariantBlockStatus = async (req, res) => {
   } catch (error) {
     console.error('Error updating variant block status:', error);
     res.status(400).json({ message: error.message });
+  }
+};
+
+// Add this new controller method
+export const getAllBrandsWithoutPagination = async (req, res) => {
+  try {
+    // Only fetch listed brands
+    const brands = await Brand.find({ status: 'listed' })
+      .sort({ createdAt: -1 });
+
+    res.json({
+      brands
+    });
+  } catch (error) {
+    console.error('Error fetching brands:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching brands',
+      error: error.message 
+    });
   }
 };

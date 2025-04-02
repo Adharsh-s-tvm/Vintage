@@ -4,3 +4,4 @@ export const fetchBrandsApi = (params) => privateAPI.get(`/admin/products/brands
 export const updateBrandApi = (id, data) => privateAPI.put(`/admin/products/brand/${id}`, data);
 export const addBrandApi = (data) => privateAPI.post(`/admin/products/brand/add`, data);
 export const changeStatusApi = (id, data) => privateAPI.put(`/admin/products/brand/${id}/status`, data);
+export const fetchAllBrandsApi = () => privateAPI.get(`/admin/products/brands/all`);

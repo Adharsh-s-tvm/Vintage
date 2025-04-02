@@ -29,6 +29,8 @@ import ReactCrop from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { useSearchParams } from 'react-router-dom';
 import { fetchProductCategoriesApi, fetchProductBrandsApi, fetchProductApi, addProductApi, addProductVariantApi, blockProductApi, blockProductVariantApi, toggleProductStatusApi, updateProductVariantApi, updateProductApi } from '../../services/api/adminApis/productsApi';
+import { fetchAllCategoriesApi } from '../../services/api/adminApis/categoryApi';
+import { fetchAllBrandsApi } from '../../services/api/adminApis/brandApi';
 
 const API_BASE_URL = 'http://localhost:7000/api/admin';
 
@@ -142,7 +144,7 @@ const Products = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetchProductCategoriesApi();
+      const response = await fetchAllCategoriesApi();
       setCategories(response.data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -152,7 +154,7 @@ const Products = () => {
 
   const fetchBrands = async () => {
     try {
-      const response = await fetchProductBrandsApi();
+      const response = await fetchAllBrandsApi();
       setBrands(response.data.brands);
     } catch (error) {
       console.error('Error fetching brands:', error);

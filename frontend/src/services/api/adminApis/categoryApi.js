@@ -4,3 +4,4 @@ export const fetchCategoriesApi = (params) => privateAPI.get(`/admin/products/ca
 export const updateCategoryApi = (id, data) => privateAPI.put(`/admin/products/category/${id}`, data);
 export const addCategoryApi = (data) => privateAPI.post(`/admin/products/category/add`, data);
 export const changeStatusApi = (id, data) => privateAPI.put(`/admin/products/category/${id}/status`, data);
+export const fetchAllCategoriesApi = () => privateAPI.get(`/admin/products/categories/all`);

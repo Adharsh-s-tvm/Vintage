@@ -1,6 +1,6 @@
 import express from "express";
 
-import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant, updateProductBlockStatus, updateVariantBlockStatus } from "../../controllers/admin/adminProductController.js";
+import { addProduct, getAllProducts, addVariant, addCategory, getAllCategories, updateCategoryStatus, updateCategory, addBrand, getAllBrands, updateBrandStatus, updateBrand, getProductVariants, deleteVariant, updateProduct, updateProductStatus, updateVariant, updateProductBlockStatus, updateVariantBlockStatus, getAllCategoriesWithoutPagination, getAllBrandsWithoutPagination } from "../../controllers/admin/adminProductController.js";
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import { handleUpload } from "../../middlewares/multer.js";
 
@@ -31,12 +31,14 @@ router.delete("/variant/:variantId",
 // Category Routes
 router.post("/category/add", asyncHandler(addCategory));
 router.get("/categories", asyncHandler(getAllCategories));
+router.get("/categories/all", asyncHandler(getAllCategoriesWithoutPagination));
 router.put("/category/:id/status", asyncHandler(updateCategoryStatus));
 router.put("/category/:id", asyncHandler(updateCategory));
 
 // Brand Routes
 router.post("/brand/add", asyncHandler(addBrand));
 router.get("/brands", asyncHandler(getAllBrands));
+router.get('/brands/all', getAllBrandsWithoutPagination);
 router.put("/brand/:id/status", asyncHandler(updateBrandStatus));
 router.put("/brand/:id", asyncHandler(updateBrand));
 
