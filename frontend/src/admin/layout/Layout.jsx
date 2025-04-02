@@ -1,13 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './Sidebar';
 import { Navbar } from './Navbar';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 export function Layout({ children }) {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+    const navigate = useNavigate();
+    const adminData = useSelector((state) => state.admin.data);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+    useEffect(() => {
+        // Check for admin authentication from multiple sources
+        const adminInfo = localStorage.getItem('adminInfo');
+        const jwt = localStorage.getItem('jwt');
+        
+        if (!adminData && !adminInfo) {
+            // No admin in Redux state or localStorage
+            navigate('/admin/signin');
+            return;
+        }
+        
+        setIsAuthenticated(true);
+    }, [adminData, navigate]);
 
     const toggleMobileSidebar = () => {
         setMobileSidebarOpen(!mobileSidebarOpen);
     };
+
+    // Don't render anything until authentication is confirmed
+    if (!isAuthenticated) {
+        return null;
+    }
 
     return (
         <div className="min-h-screen flex bg-background">

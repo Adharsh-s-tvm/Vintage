@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '../../ui/Input';
 import { Button } from '../../ui/Button';
 import { Label } from '../../ui/Label';
@@ -8,7 +8,6 @@ import { toast } from 'sonner';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAdminInfo } from '../../redux/slices/adminSlice';
 import { loginAdmin } from '../../redux/api/adminApi';
-import { useAdminAuthNavigation } from '../../hooks/useAdminNavigation';
 
 export default function SignIn() {
     const [email, setEmail] = useState('');
@@ -16,6 +15,16 @@ export default function SignIn() {
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const admin = useSelector(state => state.admin.data);
+
+    // Check if already logged in
+    useEffect(() => {
+        const adminInfo = localStorage.getItem('adminInfo');
+        if (adminInfo && admin) {
+            navigate('/admin');
+        }
+    }, [admin, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,8 +34,13 @@ export default function SignIn() {
             console.log('Login Data:', data);
 
             if (data) {
+                // Store admin info in Redux
                 dispatch(setAdminInfo(data));
+                
+                // Store admin info in localStorage
                 localStorage.setItem('adminInfo', JSON.stringify(data));
+                
+                // Store token in localStorage
                 if (data.token) {
                     localStorage.setItem('jwt', data.token);
                 }
@@ -37,14 +51,12 @@ export default function SignIn() {
                 throw new Error('Login failed: No data received');
             }
         } catch (error) {
-            toast.error('Login failed: ' + error.response?.data?.message || error.message);
+            console.error('Login error:', error);
+            toast.error('Login failed: ' + (error.response?.data?.message || error.message));
         } finally {
             setIsLoading(false);
         }
     };
-
-    const { navigate } = useAdminAuthNavigation();
-
 
     return (
         <div className="flex items-center justify-center min-h-[80vh]">

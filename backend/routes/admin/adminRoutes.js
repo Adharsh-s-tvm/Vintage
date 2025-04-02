@@ -16,7 +16,7 @@ const router = express.Router();
 
 
 router.post("/login", loginAdmin);
-router.post("/logout", logoutCurrentAdmin);
+router.post("/logout",  logoutCurrentAdmin);
 router.get("/dashboard", authenticate, authorizeAdmin, getDashboard);
 
 router.get("/users", authenticate, authorizeAdmin, getAllUsers);
@@ -30,7 +30,7 @@ router
 
 router.put("/users/:id/status", authenticate, authorizeAdmin, updateUserStatus);
 
-router.get('/sales-report', getSalesReport);
-router.get('/sales-report/download', downloadSalesReport);
+router.get('/sales-report', authenticate, authorizeAdmin, getSalesReport);
+router.get('/sales-report/download', authenticate, authorizeAdmin, downloadSalesReport);
 
 export default router;
