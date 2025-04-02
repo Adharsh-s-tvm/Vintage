@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button } from '@mui/material';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, Button, Card, CardContent, Grid } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Person } from '@mui/icons-material';
+import { ShoppingBag, Person, AccountBalance, History, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { Layout } from '../layout/Layout';
 import { fetchWalletDetailsApi } from '../../services/api/userApis/profileApi';
@@ -61,13 +61,25 @@ function Wallet() {
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto p-4">
+      <Box sx={{ 
+        maxWidth: '1200px', 
+        mx: 'auto', 
+        p: 4,
+        backgroundColor: '#f8f9fa',
+        borderRadius: 2,
+        minHeight: '90vh'
+      }}>
         {/* Navigation */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
           <Button
             variant="outlined"
             startIcon={<Person />}
             onClick={() => navigate('/profile')}
+            sx={{ 
+              borderRadius: 2,
+              px: 3,
+              '&:hover': { backgroundColor: '#f0f0f0' }
+            }}
           >
             Back to Profile
           </Button>
@@ -75,108 +87,159 @@ function Wallet() {
             variant="contained"
             endIcon={<ShoppingBag />}
             onClick={() => navigate('/products')}
+            sx={{ 
+              borderRadius: 2,
+              px: 3,
+              background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
+              boxShadow: '0 3px 5px 2px rgba(33, 203, 243, .3)'
+            }}
           >
             Continue Shopping
           </Button>
         </Box>
 
-        {/* Wallet Balance */}
-        <Paper className="bg-gray-900 text-white p-4 mb-4 rounded-lg">
-          <Typography variant="h6">Wallet Balance</Typography>
-          <Typography variant="h4" className="text-green-500">
-            ₹{wallet.balance}
-          </Typography>
-        </Paper>
+        {/* Wallet Balance Card */}
+        <Card sx={{ 
+          mb: 4,
+          background: 'linear-gradient(135deg, #1a237e 0%, #0d47a1 100%)',
+          color: 'white',
+          borderRadius: 3,
+          boxShadow: '0 8px 16px rgba(0,0,0,0.2)'
+        }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <AccountBalance sx={{ fontSize: 40, mr: 2 }} />
+              <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                Wallet Balance
+              </Typography>
+            </Box>
+            <Typography variant="h3" sx={{ 
+              fontWeight: 700,
+              color: '#4caf50',
+              textShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}>
+              ₹{wallet.balance.toLocaleString('en-IN')}
+            </Typography>
+          </CardContent>
+        </Card>
 
-        {/* Transaction History Header */}
-        <Typography variant="h6" className="mb-3">
-          Transaction History ({totalTransactions} transactions)
-        </Typography>
+        {/* Transaction History Section */}
+        <Card sx={{ borderRadius: 3, mb: 4, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <History sx={{ mr: 2, color: '#666' }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Transaction History ({totalTransactions} transactions)
+              </Typography>
+            </Box>
 
-        {/* Transactions Table */}
-        <TableContainer component={Paper} className="mb-4">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell align="right">Amount</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {transactions.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    No transactions found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                transactions.map((transaction) => (
-                  <TableRow key={transaction._id}>
-                    <TableCell>
-                      {new Date(transaction.date).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>{transaction.description}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={transaction.type}
-                        color={transaction.type === 'credit' ? 'success' : 'error'}
-                        size="small"
-                      />
-                    </TableCell>
-                    <TableCell align="right">₹{transaction.amount}</TableCell>
+            <TableContainer sx={{ maxHeight: 400 }}>
+              <Table stickyHeader>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Date</TableCell>
+                    <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Description</TableCell>
+                    <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }}>Type</TableCell>
+                    <TableCell sx={{ fontWeight: 600, backgroundColor: '#f5f5f5' }} align="right">Amount</TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {transactions.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} align="center" sx={{ py: 4 }}>
+                        <Typography variant="body1" color="textSecondary">
+                          No transactions found
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    transactions.map((transaction) => (
+                      <TableRow 
+                        key={transaction._id}
+                        sx={{ '&:hover': { backgroundColor: '#f5f5f5' } }}
+                      >
+                        <TableCell>{new Date(transaction.date).toLocaleDateString()}</TableCell>
+                        <TableCell>{transaction.description}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={transaction.type}
+                            color={transaction.type === 'credit' ? 'success' : 'error'}
+                            size="small"
+                            sx={{ 
+                              fontWeight: 500,
+                              minWidth: 80,
+                              borderRadius: 1
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell align="right" sx={{
+                          color: transaction.type === 'credit' ? 'success.main' : 'error.main',
+                          fontWeight: 600
+                        }}>
+                          ₹{transaction.amount.toLocaleString('en-IN')}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-            {/* Page Numbers */}
-            <Box sx={{ display: 'flex', gap: 1 }}>
-              {[...Array(totalPages)].map((_, index) => (
-                <Button
-                  key={index + 1}
-                  variant={currentPage === index + 1 ? "contained" : "outlined"}
-                  onClick={() => handlePageChange(index + 1)}
-                  sx={{
-                    minWidth: '40px',
-                    height: '40px',
-                    backgroundColor: currentPage === index + 1 ? 'primary.main' : 'transparent'
-                  }}
-                >
-                  {index + 1}
-                </Button>
-              ))}
-            </Box>
-
-            {/* Previous/Next Buttons */}
-            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 2,
+              backgroundColor: 'white',
+              padding: 2,
+              borderRadius: 2,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+            }}>
               <Button
-                variant="contained"
+                variant="outlined"
+                startIcon={<NavigateBefore />}
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
+                sx={{ borderRadius: 2 }}
               >
                 Previous
               </Button>
-              <Typography variant="body1">
-                Page {currentPage} of {totalPages}
-              </Typography>
+              
+              <Box sx={{ display: 'flex', gap: 1, mx: 2 }}>
+                {[...Array(totalPages)].map((_, index) => (
+                  <Button
+                    key={index + 1}
+                    variant={currentPage === index + 1 ? "contained" : "outlined"}
+                    onClick={() => handlePageChange(index + 1)}
+                    sx={{
+                      minWidth: '40px',
+                      height: '40px',
+                      borderRadius: 1,
+                      background: currentPage === index + 1 ? 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)' : 'transparent'
+                    }}
+                  >
+                    {index + 1}
+                  </Button>
+                ))}
+              </Box>
+
               <Button
-                variant="contained"
+                variant="outlined"
+                endIcon={<NavigateNext />}
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
+                sx={{ borderRadius: 2 }}
               >
                 Next
               </Button>
             </Box>
           </Box>
         )}
-      </div>
+      </Box>
     </Layout>
   );
 }
