@@ -5,7 +5,9 @@ import path from 'path';
 
 export const getSalesReport = async (req, res) => {
     try {
-        const { range, startDate, endDate, page = 1, limit = 10 } = req.query;
+        const { range, startDate, endDate } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
         let dateFilter = {};
 
@@ -81,7 +83,17 @@ export const getSalesReport = async (req, res) => {
         });
         console.log('Completed payments in range:', completedPayments);
 
-        // Get stats
+        // Get total count for transactions pagination
+        const totalTransactions = await Order.countDocuments(dateFilter);
+
+        // Get paginated transactions with proper skip and limit
+        const transactions = await Order.find(dateFilter)
+            .select('orderId totalAmount payment createdAt orderStatus items.status items.returnStatus')
+            .sort('-createdAt')
+            .skip(skip)
+            .limit(limit);
+
+        // Get stats for the filtered date range
         const stats = await Order.aggregate([
             { $match: dateFilter },
             {
@@ -184,7 +196,7 @@ export const getSalesReport = async (req, res) => {
 
         console.log('Aggregation Results:', stats);
 
-        // Get sales data for chart with proper date formatting
+        // Get sales data for chart with proper date formatting and filtering
         const salesData = await Order.aggregate([
             { 
                 $match: {
@@ -229,17 +241,6 @@ export const getSalesReport = async (req, res) => {
             { $sort: { '_id': 1 } }
         ]);
         
-
-        // Get total count for transactions pagination
-        const totalTransactions = await Order.countDocuments(dateFilter);
-
-        // Get paginated transactions
-        const transactions = await Order.find(dateFilter)
-            .select('orderId totalAmount payment createdAt orderStatus items.status items.returnStatus')
-            .sort('-createdAt')
-            .skip(skip)
-            .limit(parseInt(limit));
-
         res.json({
             stats: stats[0] || {
                 totalRevenue: 0,
@@ -266,12 +267,12 @@ export const getSalesReport = async (req, res) => {
                 createdAt: t.createdAt
             })),
             pagination: {
-                currentPage: parseInt(page),
+                currentPage: page,
                 totalPages: Math.ceil(totalTransactions / limit),
-                totalTransactions,
-                hasNextPage: page * limit < totalTransactions,
-                hasPrevPage: page > 1,
-                limit: parseInt(limit)
+                totalItems: totalTransactions,
+                itemsPerPage: limit,
+                hasNextPage: skip + limit < totalTransactions,
+                hasPrevPage: page > 1
             }
         });
 

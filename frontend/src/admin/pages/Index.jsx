@@ -75,14 +75,15 @@ export default function Dashboard() {
             setLoading(true);
             
             // Build query parameters
-            const params = new URLSearchParams();
-            params.set('range', dateRange);
-            params.set('page', currentPage.toString());
-            params.set('limit', itemsPerPage.toString());
+            const params = {
+                range: dateRange,
+                page: currentPage,
+                limit: itemsPerPage
+            };
             
             if (dateRange === 'custom') {
-                params.set('startDate', customStartDate.toISOString());
-                params.set('endDate', customEndDate.toISOString());
+                params.startDate = customStartDate.toISOString();
+                params.endDate = customEndDate.toISOString();
             }
 
             // Update URL parameters
@@ -95,6 +96,7 @@ export default function Dashboard() {
                 setSalesData(salesData);
                 setTransactions(transactions);
                 setTotalPages(pagination.totalPages);
+                setCurrentPage(pagination.currentPage);
             }
         } catch (error) {
             console.error('Error details:', error.response || error);
@@ -106,7 +108,7 @@ export default function Dashboard() {
 
     useEffect(() => {
         fetchSalesData();
-    }, [searchParams, dateRange, customStartDate, customEndDate]);
+    }, [currentPage, dateRange, customStartDate, customEndDate, itemsPerPage]);
 
     const handleDownloadPDF = async () => {
         try {
