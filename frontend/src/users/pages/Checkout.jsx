@@ -343,6 +343,12 @@ function Checkout() {
     }
   };
 
+  // Add this helper function
+  const isCODAvailable = () => {
+    const finalAmount = total - couponDiscount;
+    return finalAmount <= 1000;
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -509,9 +515,16 @@ function Checkout() {
                   onValueChange={setSelectedPaymentMethod}
                   className="grid grid-cols-2 gap-3"
                 >
-                  <div className="flex items-center space-x-2 border rounded-lg p-3">
-                    <RadioGroupItem value="cod" id="cod" />
-                    <Label htmlFor="cod" className="text-sm">Cash on Delivery</Label>
+                  <div className={`flex items-center space-x-2 border rounded-lg p-3 ${!isCODAvailable() ? 'opacity-50' : ''}`}>
+                    <RadioGroupItem value="cod" id="cod" disabled={!isCODAvailable()} />
+                    <Label htmlFor="cod" className="text-sm">
+                      Cash on Delivery
+                      {!isCODAvailable() && (
+                        <span className="block text-xs text-red-500">
+                          Not available for orders above ₹1000
+                        </span>
+                      )}
+                    </Label>
                   </div>
                   <div className="flex items-center space-x-2 border rounded-lg p-3">
                     <RadioGroupItem value="online" id="online" />

@@ -36,6 +36,11 @@ export const createOrder = asyncHandler(async (req, res) => {
         const userId = req.user._id;
         const orderId = generateOrderId();
 
+        // Add COD validation
+        if (paymentMethod === 'cod' && amount > 1000) {
+            throw new Error('Cash on Delivery is not available for orders above ₹1000');
+        }
+
         // Handle wallet payment
         if (paymentMethod === 'wallet') {
             const wallet = await Wallet.findOne({ userId }).session(session);
