@@ -242,7 +242,7 @@ export const handleReturnRequest = async (req, res) => {
       
       // Update inventory
       await Variant.findByIdAndUpdate(
-        item.sizeVariant._id, // Make sure to use _id from the populated sizeVariant
+        item.sizeVariant._id, 
         { $inc: { stock: item.quantity } },
         { session }
       );
