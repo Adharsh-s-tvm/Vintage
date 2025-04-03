@@ -2,6 +2,7 @@ import Offer from '../../models/product/offerModel.js';
 import Variant from '../../models/product/sizeVariantModel.js';
 import Product from '../../models/product/productModel.js';
 import { calculateAndUpdateDiscounts } from '../../utils/calculateDiscounts.js';
+import Category from '../../models/product/categoryModel.js';
 
 const updateVariantPrices = async (offer) => {
   try {
@@ -180,5 +181,43 @@ export const toggleOfferStatus = async (req, res) => {
     res.status(200).json(offer);
   } catch (error) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const fetchAllProductsForOffer = async (req, res) => {
+  try {
+    const products = await Product.find({ isBlocked: false })
+      .select('name')
+      .sort({ name: 1 });
+    
+    res.status(200).json({
+      success: true,
+      products
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to fetch products",
+      error: error.message 
+    });
+  }
+};
+
+export const fetchAllCategoriesForOffer = async (req, res) => {
+  try {
+    const categories = await Category.find({ status: 'listed' })
+      .select('name')
+      .sort({ name: 1 });
+    
+    res.status(200).json({
+      success: true,
+      categories
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      message: "Failed to fetch categories",
+      error: error.message 
+    });
   }
 };

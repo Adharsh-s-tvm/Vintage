@@ -3,7 +3,7 @@ import { Box, Button, TextField, Modal, FormControl, InputLabel, Select, MenuIte
 import { Add, Search, Edit, Block, CheckCircle } from '@mui/icons-material';
 import { toast } from 'sonner';
 import { useSearchParams } from 'react-router-dom';
-import { addOfferApi, fetchAffectedProductsApi, fetchOffersApi, offerFetchCategoriesApi, offerFetchProductsApi, toggleOfferStatusApi, updateOfferApi, fetchAffectedCategoriesApi } from '../../services/api/adminApis/offerApi';
+import { addOfferApi, fetchAffectedProductsApi, fetchOffersApi, fetchAllCategoriesForOfferApi, fetchAllProductsForOfferApi, toggleOfferStatusApi, updateOfferApi, fetchAffectedCategoriesApi } from '../../services/api/adminApis/offerApi';
 
 function Offers() {
   const [showModal, setShowModal] = useState(false);
@@ -38,8 +38,8 @@ function Offers() {
 
   const fetchProducts = async () => {
     try {
-      const response = await offerFetchProductsApi();
-      console.log('Fetched products:', response.data.products);
+      const response = await fetchAllProductsForOfferApi();
+      console.log('Fetched all products for offer:', response.data.products);
       setProducts(response.data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -49,8 +49,8 @@ function Offers() {
 
   const fetchCategories = async () => {
     try {
-      const response = await offerFetchCategoriesApi();
-      console.log('Fetched categories:', response.data.categories);
+      const response = await fetchAllCategoriesForOfferApi();
+      console.log('Fetched all categories for offer:', response.data.categories);
       setCategories(response.data.categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
