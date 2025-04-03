@@ -1,5 +1,4 @@
 import { privateAPI } from '../api';
-import axios from 'axios';
 
 export const offerFetchProductsApi = () => privateAPI.get(`/admin/products/`);
 export const offerFetchCategoriesApi = () => privateAPI.get(`/admin/products/categories`);

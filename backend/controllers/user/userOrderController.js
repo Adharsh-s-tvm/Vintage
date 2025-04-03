@@ -97,7 +97,6 @@ export const createOrder = asyncHandler(async (req, res) => {
                 throw new Error(`Insufficient stock for ${item.variant.product.name}`);
             }
 
-            // Use discountPrice if available, otherwise use regular price
             const itemPrice = variant.discountPrice || variant.price;
             const itemTotal = item.quantity * itemPrice;
             subtotal += itemTotal;
