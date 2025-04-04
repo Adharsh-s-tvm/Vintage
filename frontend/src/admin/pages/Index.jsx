@@ -70,6 +70,7 @@ export default function Dashboard() {
     const [itemsPerPage] = useState(5);
     const [isDownloading, setIsDownloading] = useState(false);
     const [topProducts, setTopProducts] = useState([]);
+    const [topCategories, setTopCategories] = useState([]);
 
     const fetchSalesData = async () => {
         try {
@@ -90,13 +91,14 @@ export default function Dashboard() {
 
             const response = await fetchSalesDataApi(params);
             if (response.data) {
-                const { stats, salesData, transactions, pagination, topProducts } = response.data;
+                const { stats, salesData, transactions, pagination, topProducts, topCategories } = response.data;
                 setStats(stats);
                 setSalesData(salesData);
                 setTransactions(transactions);
                 setTotalPages(pagination.totalPages);
                 setCurrentPage(pagination.currentPage);
-                setTopProducts(topProducts);
+                setTopProducts(topProducts || []);
+                setTopCategories(topCategories || []);
             }
         } catch (error) {
             console.error('Error details:', error.response || error);
@@ -269,11 +271,18 @@ export default function Dashboard() {
                             data={salesData}
                             className="h-[500px]"
                         />
-                        <PieChartCard
-                            title="Top 10 Products by Revenue"
-                            data={topProducts}
-                            className="h-[500px]"
-                        />
+                        <div className="grid grid-cols-2 gap-6">
+                            <PieChartCard
+                                title="Top 10 Products by Revenue"
+                                data={topProducts || []}
+                                className="h-[500px]"
+                            />
+                            <PieChartCard
+                                title="Top Categories by Revenue"
+                                data={topCategories || []}
+                                className="h-[500px]"
+                            />
+                        </div>
                     </div>
 
                     <div className="bg-white rounded-lg shadow p-6">
