@@ -33,21 +33,6 @@ import {
 import { useSearchParams } from 'react-router-dom';
 import { downloadSalesReportApi, fetchSalesDataApi } from '../../services/api/adminApis/indexApi';
 
-const visitsData = [
-    { name: 'North America', value: 35, color: '#4E80EE' },
-    { name: 'Europe', value: 30, color: '#8B5CF6' },
-    { name: 'Asia', value: 25, color: '#F59E0B' },
-    { name: 'Africa', value: 10, color: '#EF4444' },
-];
-
-const websiteVisitsData = [
-    { name: 'Jan', teamA: 35, teamB: 28 },
-    { name: 'Feb', teamA: 45, teamB: 31 },
-    { name: 'Mar', teamA: 40, teamB: 35 },
-    { name: 'Apr', teamA: 30, teamB: 40 },
-    { name: 'May', teamA: 48, teamB: 42 },
-    { name: 'Jun', teamA: 52, teamB: 48 },
-];
 
 export default function Dashboard() {
     const [dateRange, setDateRange] = useState('monthly');
@@ -71,6 +56,7 @@ export default function Dashboard() {
     const [isDownloading, setIsDownloading] = useState(false);
     const [topProducts, setTopProducts] = useState([]);
     const [topCategories, setTopCategories] = useState([]);
+    const [topBrands, setTopBrands] = useState([]);
 
     const fetchSalesData = async () => {
         try {
@@ -91,7 +77,7 @@ export default function Dashboard() {
 
             const response = await fetchSalesDataApi(params);
             if (response.data) {
-                const { stats, salesData, transactions, pagination, topProducts, topCategories } = response.data;
+                const { stats, salesData, transactions, pagination, topProducts, topCategories, topBrands } = response.data;
                 setStats(stats);
                 setSalesData(salesData);
                 setTransactions(transactions);
@@ -99,6 +85,7 @@ export default function Dashboard() {
                 setCurrentPage(pagination.currentPage);
                 setTopProducts(topProducts || []);
                 setTopCategories(topCategories || []);
+                setTopBrands(topBrands || []);
             }
         } catch (error) {
             console.error('Error details:', error.response || error);
@@ -271,17 +258,24 @@ export default function Dashboard() {
                             data={salesData}
                             className="h-[500px]"
                         />
-                        <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 gap-6">
                             <PieChartCard
                                 title="Top 10 Products by Revenue"
                                 data={topProducts || []}
                                 className="h-[500px]"
                             />
+                         <div className="grid grid-cols-2 gap-6">
                             <PieChartCard
                                 title="Top Categories by Revenue"
                                 data={topCategories || []}
                                 className="h-[500px]"
                             />
+                            <PieChartCard
+                                title="Top Brands by Revenue"
+                                data={topBrands || []}
+                                className="h-[500px]"
+                            />
+                         </div>
                         </div>
                     </div>
 

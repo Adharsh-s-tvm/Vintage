@@ -310,8 +310,47 @@ export const getSalesReport = async (req, res) => {
             { $limit: 10 }
         ]);
 
+        // Add this before the response object
+        const topBrands = await Order.aggregate([
+            { $match: dateFilter },
+            { $unwind: '$items' },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: 'items.product',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' },
+            {
+                $group: {
+                    _id: '$productInfo.brand',
+                    revenue: { $sum: '$items.finalPrice' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'brands',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'brandInfo'
+                }
+            },
+            { $unwind: '$brandInfo' },
+            {
+                $project: {
+                    name: '$brandInfo.name',
+                    revenue: 1
+                }
+            },
+            { $sort: { revenue: -1 } },
+            { $limit: 10 }
+        ]);
+
         // Calculate total revenue for percentages
         const totalCategoriesRevenue = topCategories.reduce((sum, cat) => sum + cat.revenue, 0);
+        const totalBrandsRevenue = topBrands.reduce((sum, brand) => sum + brand.revenue, 0);
 
         // Add this to your response object
         res.status(200).json({
@@ -355,6 +394,11 @@ export const getSalesReport = async (req, res) => {
             topCategories: topCategories.map(category => ({
                 name: category.name,
                 value: Math.round((category.revenue / totalCategoriesRevenue) * 100),
+                color: `#${Math.floor(Math.random()*16777215).toString(16)}` // Random color
+            })),
+            topBrands: topBrands.map(brand => ({
+                name: brand.name,
+                value: Math.round((brand.revenue / totalBrandsRevenue) * 100),
                 color: `#${Math.floor(Math.random()*16777215).toString(16)}` // Random color
             }))
         });
