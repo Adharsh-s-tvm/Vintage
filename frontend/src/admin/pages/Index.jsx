@@ -69,12 +69,12 @@ export default function Dashboard() {
     const [totalPages, setTotalPages] = useState(1);
     const [itemsPerPage] = useState(5);
     const [isDownloading, setIsDownloading] = useState(false);
+    const [topProducts, setTopProducts] = useState([]);
 
     const fetchSalesData = async () => {
         try {
             setLoading(true);
             
-            // Build query parameters
             const params = {
                 range: dateRange,
                 page: currentPage,
@@ -86,17 +86,17 @@ export default function Dashboard() {
                 params.endDate = customEndDate.toISOString();
             }
 
-            // Update URL parameters
             setSearchParams(params);
 
             const response = await fetchSalesDataApi(params);
             if (response.data) {
-                const { stats, salesData, transactions, pagination } = response.data;
+                const { stats, salesData, transactions, pagination, topProducts } = response.data;
                 setStats(stats);
                 setSalesData(salesData);
                 setTransactions(transactions);
                 setTotalPages(pagination.totalPages);
                 setCurrentPage(pagination.currentPage);
+                setTopProducts(topProducts);
             }
         } catch (error) {
             console.error('Error details:', error.response || error);
@@ -263,10 +263,15 @@ export default function Dashboard() {
                         />
                     </div>
 
-                    <div className="mb-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                         <BarChartCard
                             title="Sales Overview"
                             data={salesData}
+                            className="h-[500px]"
+                        />
+                        <PieChartCard
+                            title="Top 10 Products by Revenue"
+                            data={topProducts}
                             className="h-[500px]"
                         />
                     </div>

@@ -241,7 +241,42 @@ export const getSalesReport = async (req, res) => {
             { $sort: { '_id': 1 } }
         ]);
         
-        res.json({
+        // Add this inside getSalesReport function, in the aggregation pipeline
+        const topProducts = await Order.aggregate([
+            { $match: dateFilter },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.product',
+                    totalSold: { $sum: '$items.quantity' },
+                    revenue: { $sum: '$items.finalPrice' }
+                }
+            },
+            {
+                $lookup: {
+                    from: 'products',
+                    localField: '_id',
+                    foreignField: '_id',
+                    as: 'productInfo'
+                }
+            },
+            { $unwind: '$productInfo' },
+            {
+                $project: {
+                    name: '$productInfo.name',
+                    totalSold: 1,
+                    revenue: 1
+                }
+            },
+            { $sort: { revenue: -1 } },
+            { $limit: 10 }
+        ]);
+
+        // Calculate total revenue of top 10 products
+        const totalTopProductsRevenue = topProducts.reduce((sum, product) => sum + product.revenue, 0);
+
+        // Add this to your response object
+        res.status(200).json({
             stats: stats[0] || {
                 totalRevenue: 0,
                 totalOrders: 0,
@@ -273,7 +308,12 @@ export const getSalesReport = async (req, res) => {
                 itemsPerPage: limit,
                 hasNextPage: skip + limit < totalTransactions,
                 hasPrevPage: page > 1
-            }
+            },
+            topProducts: topProducts.map(product => ({
+                name: product.name,
+                value: Math.round((product.revenue / totalTopProductsRevenue) * 100),
+                color: `#${Math.floor(Math.random()*16777215).toString(16)}`
+            }))
         });
 
     } catch (error) {
