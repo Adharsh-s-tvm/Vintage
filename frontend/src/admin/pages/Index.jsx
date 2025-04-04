@@ -258,16 +258,15 @@ export default function Dashboard() {
                             data={salesData}
                             className="h-[500px]"
                         />
-                        <div className="grid grid-cols-1 gap-6">
-                            <PieChartCard
-                                title="Top 10 Products by Revenue"
-                                data={topProducts || []}
-                                className="h-[500px]"
-                            />
-                         <div className="grid grid-cols-2 gap-6">
+                        <div className="grid grid-cols-3 gap-6 mt-7">
                             <PieChartCard
                                 title="Top Categories by Revenue"
                                 data={topCategories || []}
+                                className="h-[500px]"
+                            />
+                            <PieChartCard
+                                title="Top Products by Revenue"
+                                data={topProducts || []}
                                 className="h-[500px]"
                             />
                             <PieChartCard
@@ -275,7 +274,7 @@ export default function Dashboard() {
                                 data={topBrands || []}
                                 className="h-[500px]"
                             />
-                         </div>
+                         
                         </div>
                     </div>
 

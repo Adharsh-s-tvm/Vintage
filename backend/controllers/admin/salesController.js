@@ -349,6 +349,7 @@ export const getSalesReport = async (req, res) => {
         ]);
 
         // Calculate total revenue for percentages
+        const totalProductsRevenue = topProducts.reduce((sum, product) => sum + product.revenue, 0);
         const totalCategoriesRevenue = topCategories.reduce((sum, cat) => sum + cat.revenue, 0);
         const totalBrandsRevenue = topBrands.reduce((sum, brand) => sum + brand.revenue, 0);
 
@@ -388,7 +389,7 @@ export const getSalesReport = async (req, res) => {
             },
             topProducts: topProducts.map(product => ({
                 name: product.name,
-                value: Math.round((product.revenue / stats[0].totalRevenue) * 100),
+                value: Math.round((product.revenue / totalProductsRevenue) * 100),
                 color: `#${Math.floor(Math.random()*16777215).toString(16)}` // Random color
             })),
             topCategories: topCategories.map(category => ({
