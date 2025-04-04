@@ -249,7 +249,30 @@ export const handleReturnRequest = async (req, res) => {
 
       // Process refund for online payments
       if (order.payment?.method) {
-        const refundAmount = item.finalPrice;
+        let refundAmount = item.finalPrice;
+        
+        // Check if this is the first return and if there was a coupon applied
+        const hasOtherReturns = order.items.some((i, idx) => 
+          idx !== itemIndex && i.returnStatus === 'Return Approved'
+        );
+        
+        console.log('Coupon Discount:', order.couponDiscount);
+        console.log('Has Other Returns:', hasOtherReturns);
+        console.log('Original Refund Amount:', refundAmount);
+        
+        if (!hasOtherReturns && order.couponDiscount > 0) {
+          // Calculate the proportion of the item's price to the total order amount
+          const itemProportion = item.finalPrice / order.totalAmount;
+          const couponDeduction = order.couponDiscount * itemProportion;
+          
+          console.log('Item Proportion:', itemProportion);
+          console.log('Coupon Deduction:', couponDeduction);
+          
+          // Subtract the proportional coupon discount from the refund amount
+          refundAmount -= couponDeduction;
+          
+          console.log('Final Refund Amount:', refundAmount);
+        }
         
         const refundSuccess = await processReturnRefund(
           order.orderId,
