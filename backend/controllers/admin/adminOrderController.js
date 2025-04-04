@@ -249,7 +249,7 @@ export const handleReturnRequest = async (req, res) => {
 
       // Process refund for online payments
       if (order.payment?.method) {
-        const refundAmount =  order.totalAmount;
+        const refundAmount = item.finalPrice;
         
         const refundSuccess = await processReturnRefund(
           order.orderId,
