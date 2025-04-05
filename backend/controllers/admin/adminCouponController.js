@@ -55,6 +55,19 @@ export const getAllCoupons = async (req, res) => {
     const search = req.query.search || '';
     const filter = req.query.filter || 'all';
 
+    const currentDate = new Date(); // Get the current date and time
+    await Coupon.updateMany(
+      {
+        endDate: { $lt: currentDate },
+        isExpired: false,
+      },
+      {
+        $set: {
+          isExpired: true,
+        },
+      }
+    );
+
     // Build filter query
     let filterQuery = {};
     

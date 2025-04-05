@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from 'cors'
 import morgan from "morgan";
-
+import { initCouponExpirationCheck } from "./utils/cronJobs.js"
 
 // Utiles 
 import connectDB from './config/db.js'
@@ -35,6 +35,8 @@ app.use(cors({
     origin: process.env.FRONTEND_URL,
     credentials: true
 }));
+
+initCouponExpirationCheck();
 
 
 app.use((req, res, next) => {
