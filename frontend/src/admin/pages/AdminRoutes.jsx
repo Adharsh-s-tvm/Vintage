@@ -6,7 +6,6 @@ import Dashboard from './Index'
 import Products from './Products'
 import Users from './Users'
 import NotFound from '../../ui/NotFound'
-import Blog from './Blog'
 import { AdminLayout } from '../layout/AdminLayout'
 import Brand from './Brand'
 import Category from './Category'
@@ -14,6 +13,7 @@ import Orders from './Orders'
 import Returns from './Returns'
 import Coupons from './Coupons'
 import Offers from './Offers'
+import AdminWallet from './AdminWallet'
 
 function AdminRoutes() {
   return (
@@ -29,6 +29,7 @@ function AdminRoutes() {
         <Route path='returns' element={<Returns />} />
         <Route path='offers' element={<Offers />} />
         <Route path='coupons' element={<Coupons />} />
+        <Route path='wallet' element={<AdminWallet />} />
         
       </Route>
       <Route path='/*' element={<NotFound redirectPageType={'admin'} />} />

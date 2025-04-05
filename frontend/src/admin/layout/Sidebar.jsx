@@ -12,11 +12,12 @@ import {
     Menu,
     Car,
     Ticket,
-    Bus
+    Bus,
+    WalletIcon
 } from 'lucide-react';
 import { cn } from '../../lib/util';
 import { Button } from '../../ui/Button';
-import { BrandingWatermark, BrandingWatermarkOutlined, BrandingWatermarkRounded, BrandingWatermarkSharp, BrandingWatermarkTwoTone, Category, CategoryRounded, ListAlt, Percent, PersonAddAltRounded, ProductionQuantityLimitsSharp, WaterDamageOutlined, WidthNormalOutlined } from '@mui/icons-material';
+import { BrandingWatermark, BrandingWatermarkOutlined, BrandingWatermarkRounded, BrandingWatermarkSharp, BrandingWatermarkTwoTone, Category, CategoryRounded, ListAlt, Percent, PersonAddAltRounded, ProductionQuantityLimitsSharp, Wallet, WaterDamageOutlined, WidthNormalOutlined } from '@mui/icons-material';
 
 export function Sidebar({ className, mobileOpen, onMobileClose }) {
     const [collapsed, setCollapsed] = useState(false);
@@ -58,7 +59,6 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             label: 'Category',
             path: '/admin/category',
             badge: {
-                // count: 24,
                 color: 'badge-info'
             }
         },
@@ -67,7 +67,6 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             label: 'Brand',
             path: '/admin/brand',
             badge: {
-                // count: 24,
                 color: 'badge-info'
             }
         },
@@ -90,6 +89,11 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             icon: Ticket,
             label: 'Coupons',
             path: '/admin/coupons'
+        },
+        {
+            icon: WalletIcon,
+            label: 'Wallet',
+            path: '/admin/wallet'
         },
     ];
 
