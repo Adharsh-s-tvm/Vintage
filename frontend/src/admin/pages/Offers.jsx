@@ -13,7 +13,7 @@ function Offers() {
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     offerName: '',
-    offerType: 'product',
+    offerType: '',
     discountPercentage: '',
     startDate: '',
     endDate: '',

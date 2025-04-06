@@ -11,7 +11,7 @@ function Coupons() {
   const [coupons, setCoupons] = useState([]);
   const [formData, setFormData] = useState({
     couponCode: '',
-    discountType: 'percentage',
+    discountType: '',
     discountValue: '',
     startDate: '',
     endDate: '',
