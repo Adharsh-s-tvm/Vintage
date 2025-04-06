@@ -22,12 +22,18 @@ function AdminWallet() {
         page,
         limit: pagination.pageSize
       });
-      setTransactions(response.transactions);
-      setPagination({
-        ...pagination,
-        current: page,
-        total: response.totalPages * pagination.pageSize
-      });
+      
+      if (response.success && response.data) {
+        setTransactions(response.data.transactions);
+        setPagination({
+          ...pagination,
+          current: response.data.pagination.currentPage,
+          total: response.data.pagination.totalTransactions,
+          pageSize: response.data.pagination.limit
+        });
+      } else {
+        message.error('Invalid response format');
+      }
     } catch (error) {
       message.error('Failed to fetch transactions');
     } finally {
@@ -67,7 +73,7 @@ function AdminWallet() {
     },
     {
       title: 'User',
-      dataIndex: ['userId', 'name'],
+      dataIndex: ['user', 'email'],
       key: 'user',
     },
     {
