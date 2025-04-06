@@ -511,21 +511,37 @@ const Products = () => {
     }
   };
 
-  const handleEditVariantImageChange = (e, type) => {
-    const file = e.target.files?.[0];
+  const handleEditVariantImageChange = async (e, imageType) => {
+
+    const file = e.target.files[0];
     if (file) {
-      setVariantFormData(prev => ({
-        ...prev,
-        [type]: file
-      }));
-      
-      const previewUrl = URL.createObjectURL(file);
-      setEditVariantImagePreview(prev => ({
-        ...prev,
-        [type === 'mainImage' ? 'main' : type]: previewUrl
-      }));
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropConfig({
+          image: reader.result,
+          crop: { unit: '%', width: 30, aspect: undefined },
+          imageType: imageType
+        });
+        setShowCropModal(true);
+      };
+      reader.readAsDataURL(file);
     }
-  };
+  }; 
+    // const file = e.target.files?.[0];
+    // if (file) {
+    //   setVariantFormData(prev => ({
+    //     ...prev,
+    //     [type]: file
+    //   }));
+      
+    //   const previewUrl = URL.createObjectURL(file);
+    //   setEditVariantImagePreview(prev => ({
+    //     ...prev,
+    //     [type === 'mainImage' ? 'main' : type]: previewUrl
+    //   }));
+    // }
+  
+
 
   const BlockConfirmDialog = ({ open, handleClose, handleConfirm, itemType }) => (
     <Modal show={open} onHide={handleClose} centered>
@@ -672,32 +688,61 @@ const Products = () => {
     try {
       const croppedFile = await getCroppedImg(imgRef.current, completedCrop);
 
-      // Update variant data and preview based on image type
-      if (cropConfig.imageType === 'mainImage') {
-        setVariantData(prev => ({
-          ...prev,
-          mainImage: croppedFile
-        }));
-        setImagePreview(prev => ({
-          ...prev,
-          main: URL.createObjectURL(croppedFile)
-        }));
+      if (showEditVariantModal) {
+        // Handle edit variant cropping
+        if (cropConfig.imageType === 'mainImage') {
+          setVariantFormData(prev => ({
+            ...prev,
+            mainImage: croppedFile
+          }));
+          setEditVariantImagePreview(prev => ({
+            ...prev,
+            main: URL.createObjectURL(croppedFile)
+          }));
+        } else {
+          const index = cropConfig.imageType.slice(-1);
+          setVariantFormData(prev => ({
+            ...prev,
+            subImages: {
+              ...prev.subImages,
+              [index]: croppedFile
+            }
+          }));
+          setEditVariantImagePreview(prev => ({
+            ...prev,
+            [`sub${index}`]: URL.createObjectURL(croppedFile)
+          }));
+        }
       } else {
-        const index = cropConfig.imageType.slice(-1);
-        setVariantData(prev => ({
-          ...prev,
-          subImages: {
-            ...prev.subImages,
-            [index]: croppedFile
-          }
-        }));
-        setImagePreview(prev => ({
-          ...prev,
-          [`sub${index}`]: URL.createObjectURL(croppedFile)
-        }));
+        // Handle new variant cropping
+        if (cropConfig.imageType === 'mainImage') {
+          setVariantData(prev => ({
+            ...prev,
+            mainImage: croppedFile
+          }));
+          setImagePreview(prev => ({
+            ...prev,
+            main: URL.createObjectURL(croppedFile)
+          }));
+        } else {
+          const index = cropConfig.imageType.slice(-1);
+          setVariantData(prev => ({
+            ...prev,
+            subImages: {
+              ...prev.subImages,
+              [index]: croppedFile
+            }
+          }));
+          setImagePreview(prev => ({
+            ...prev,
+            [`sub${index}`]: URL.createObjectURL(croppedFile)
+          }));
+        }
       }
 
       setShowCropModal(false);
+      setCropConfig(prev => ({ ...prev, image: null }));
+      setCompletedCrop(null);
     } catch (error) {
       console.error('Error cropping image:', error);
       toast.error('Failed to crop image');
