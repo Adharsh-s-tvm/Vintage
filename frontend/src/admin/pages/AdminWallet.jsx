@@ -14,6 +14,7 @@ function AdminWallet() {
   });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [totalWalletAmount, setTotalWalletAmount] = useState(0);
 
   const fetchTransactions = async (page = 1) => {
     try {
@@ -25,6 +26,8 @@ function AdminWallet() {
       
       if (response.success && response.data) {
         setTransactions(response.data.transactions);
+        const totalAmount = response.data.transactions.reduce((acc, transaction) => acc + transaction.amount, 0);
+        setTotalWalletAmount(totalAmount);
         setPagination({
           ...pagination,
           current: response.data.pagination.currentPage,
@@ -107,8 +110,17 @@ function AdminWallet() {
   ];
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Wallet Transactions</h1>
+
+      <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Wallet Transactions</h1>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <p className="text-sm text-gray-600">Total Wallet Amount</p>
+          <p className={`text-xl font-bold ${totalWalletAmount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            ₹{totalWalletAmount.toFixed(2)}
+          </p>
+        </div>
+      </div>
       
       <Table
         columns={columns}
