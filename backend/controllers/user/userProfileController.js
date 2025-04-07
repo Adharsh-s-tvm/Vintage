@@ -97,7 +97,7 @@ export const addUserAddress = asyncHandler(async (req, res) => {
             isDefault
         });
 
-        res.status(201).json(newAddress);
+        res.status(HttpStatus.CREATED).json(newAddress);
     } catch (error) {
         console.error('Error adding address:', error);
         res.status(500).json({ message: 'Failed to add address' });

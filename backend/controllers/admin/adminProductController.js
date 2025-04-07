@@ -15,7 +15,7 @@ export const addProduct = async (req, res) => {
       .populate('category', 'name')
       .populate('brand', 'name');
 
-    res.status(201).json(populatedProduct);
+    res.status(HttpStatus.CREATED).json(populatedProduct);
   } catch (error) {
     console.error('Error adding product:', error);
     res.status(400).json({ message: error.message });
@@ -158,7 +158,7 @@ export const addVariant = async (req, res) => {
     const populatedVariant = await Variant.findById(savedVariant._id)
       .populate('product', 'name');
 
-    res.status(201).json({
+    res.status(HttpStatus.CREATED).json({
       success: true,
       message: 'Variant added successfully',
       variant: populatedVariant
@@ -194,7 +194,7 @@ export const addCategory = async (req, res) => {
   });
 
   const savedCategory = await newCategory.save();
-  res.status(201).json(savedCategory);
+  res.status(HttpStatus.CREATED).json(savedCategory);
 };
 
 
@@ -342,7 +342,7 @@ export const addBrand = async (req, res) => {
   });
 
   const savedBrand = await newBrand.save();
-  res.status(201).json(savedBrand);
+  res.status(HttpStatus.CREATED).json(savedBrand);
 };
 
 export const getAllBrands = async (req, res) => {

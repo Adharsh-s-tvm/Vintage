@@ -43,7 +43,7 @@ export const addCoupon = async (req, res) => {
     });
 
     await coupon.save();
-    res.status(201).json(coupon);
+    res.status(HttpStatus.CREATED).json(coupon);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

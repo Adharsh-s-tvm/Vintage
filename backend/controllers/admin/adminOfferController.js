@@ -98,7 +98,7 @@ export const addOffer = async (req, res) => {
     await offer.save();
     await updateVariantPrices(offer);
 
-    res.status(201).json(offer);
+    res.status(HttpStatus.CREATED).json(offer);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

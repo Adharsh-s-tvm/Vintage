@@ -11,6 +11,7 @@ import { fileURLToPath } from 'url';
 import Coupon from '../../models/product/couponModel.js';
 import { processReturnRefund } from './userWalletController.js';
 import Wallet from '../../models/walletModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -234,7 +235,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         await session.commitTransaction();
         transactionStarted = false;
 
-        res.status(201).json({
+        res.status(HttpStatus.CREATED).json({
             success: true,
             message: 'Order placed successfully',
             orderId: order.orderId,

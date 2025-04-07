@@ -100,7 +100,7 @@ const createUser = asyncHandler(async (req, res) => {
         await session.commitTransaction();
         createToken(res, newUser[0]._id);
 
-        res.status(201).json({
+        res.status(HttpStatus.CREATED).json({
             _id: newUser[0]._id,
             firstname: newUser[0].firstname,
             lastname: newUser[0].lastname,
