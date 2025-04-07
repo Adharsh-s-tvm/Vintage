@@ -1,16 +1,16 @@
-import { privateAPI } from '../api';
+import { API } from '../api';
 
-export const fetchOrderDetailsApi = (orderId) => privateAPI.get(`/user/orders/${orderId}`)
-export const downloadInvoiceApi = (orderId) => privateAPI.get(`/user/orders/${orderId}/invoice`, {
-    responseType: 'blob'
+export const fetchOrderDetailsApi = (orderId) => API.get(`/user/orders/${orderId}`)
+export const downloadInvoiceApi = (orderId) => API.get(`/user/orders/${orderId}/invoice`, {
+  responseType: 'blob'
 })
 
 
-export const retryPaymentResponseApi = (data) => privateAPI.post('/payments/create-order', data)
-export const verifyFailedPaymentAPi = (data) => privateAPI.post('/payments/verify', data)
+export const retryPaymentResponseApi = (data) => API.post('/payments/create-order', data)
+export const verifyFailedPaymentAPi = (data) => API.post('/payments/verify', data)
 
-export const userfetchOrdersApi = (params) => privateAPI.get(`/user/orders?${params}`)
-export const userCancelOrderApi = (orderId, reason) => privateAPI.put(`/user/orders/${orderId}/cancel`, { reason })
-export const userReturnOrderApi = (orderId, data) => privateAPI.post(`/user/orders/${orderId}/return`, data)
-export const userReturnOrderItemApi = (orderId, itemId, data) => 
-  privateAPI.post(`/user/orders/${orderId}/items/${itemId}/return`, data);
+export const userfetchOrdersApi = (params) => API.get(`/user/orders?${params}`)
+export const userCancelOrderApi = (orderId, reason) => API.put(`/user/orders/${orderId}/cancel`, { reason })
+export const userReturnOrderApi = (orderId, data) => API.post(`/user/orders/${orderId}/return`, data)
+export const userReturnOrderItemApi = (orderId, itemId, data) =>
+  API.post(`/user/orders/${orderId}/items/${itemId}/return`, data);

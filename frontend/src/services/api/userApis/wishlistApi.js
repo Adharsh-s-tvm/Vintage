@@ -1,6 +1,6 @@
-import { privateAPI } from '../api';
+import { API } from '../api';
 
-export const wishlistCountApi = () => privateAPI.get('/user/wishlist');
-export const fetchWishlistApi = () => privateAPI.get('/user/wishlist');
-export const removeWishlistApi = (id) => privateAPI.delete(`/user/wishlist/${id}`);
-export const moveToCartApi = (data) => privateAPI.post('/user/cart/add', data);
+export const wishlistCountApi = () => API.get('/user/wishlist');
+export const fetchWishlistApi = () => API.get('/user/wishlist');
+export const removeWishlistApi = (id) => API.delete(`/user/wishlist/${id}`);
+export const moveToCartApi = (data) => API.post('/user/cart/add', data);
