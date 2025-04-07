@@ -3,6 +3,7 @@ import Variant from '../../models/product/sizeVariantModel.js';
 import Product from '../../models/product/productModel.js';
 import { calculateAndUpdateDiscounts } from '../../utils/calculateDiscounts.js';
 import Category from '../../models/product/categoryModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 const updateVariantPrices = async (offer) => {
   try {
@@ -163,7 +164,7 @@ export const updateOffer = async (req, res) => {
     // Recalculate all discounts
     await calculateAndUpdateDiscounts();
     
-    res.status(200).json(offer);
+    res.status(HttpStatus.OK).json(offer);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -178,7 +179,7 @@ export const toggleOfferStatus = async (req, res) => {
     // Recalculate all discounts
     await calculateAndUpdateDiscounts();
     
-    res.status(200).json(offer);
+    res.status(HttpStatus.OK).json(offer);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -190,7 +191,7 @@ export const fetchAllProductsForOffer = async (req, res) => {
       .select('name')
       .sort({ name: 1 });
     
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       products
     });
@@ -209,7 +210,7 @@ export const fetchAllCategoriesForOffer = async (req, res) => {
       .select('name')
       .sort({ name: 1 });
     
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       categories
     });

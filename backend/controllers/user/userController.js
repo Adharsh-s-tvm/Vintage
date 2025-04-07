@@ -10,6 +10,7 @@ import { oauth2client } from "../../utils/googleConfig.js";
 import crypto from 'crypto';
 import mongoose from 'mongoose';
 import Wallet from "../../models/walletModel.js";
+import { HttpStatus } from "../../utils/httpStatus.js";
 
 
 dotenv.config()
@@ -145,7 +146,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const token = createToken(res, existingUser._id);
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
         success: true,
         _id: existingUser._id,
         firstname: existingUser.firstname,
@@ -163,7 +164,7 @@ const logoutCurrentUser = asyncHandler(async (req, res) => {
         expires: new Date(0),
     });
 
-    res.status(200).json({ message: "Logged out successfully" });
+    res.status(HttpStatus.OK).json({ message: "Logged out successfully" });
 });
 
 
@@ -263,7 +264,7 @@ const googleLogin = asyncHandler(async (req, res) => {
         // Create JWT token
         const token = createToken(res, user._id);
 
-        res.status(200).json({
+        res.status(HttpStatus.OK).json({
             success: true,
             user: {
                 _id: user._id,
@@ -345,7 +346,7 @@ export const sendEmailChangeOtp = async (req, res) => {
         // For development, you can console log the OTP
         console.log(`OTP for email change: ${otp}`);
 
-        res.status(200).json({ message: 'OTP sent to your new email address' });
+        res.status(HttpStatus.OK).json({ message: 'OTP sent to your new email address' });
     } catch (error) {
         console.error('Error sending email change OTP:', error);
         res.status(500).json({ message: 'Failed to send OTP' });
@@ -376,7 +377,7 @@ export const verifyEmailChangeOtp = async (req, res) => {
         
         await user.save();
 
-        res.status(200).json({ 
+        res.status(HttpStatus.OK).json({ 
             message: 'Email updated successfully',
             email: user.email
         });
@@ -407,7 +408,7 @@ export const resendEmailChangeOtp = async (req, res) => {
         // For development, you can console log the OTP
         console.log(`New OTP for email change: ${otp}`);
 
-        res.status(200).json({ message: 'OTP resent to your new email address' });
+        res.status(HttpStatus.OK).json({ message: 'OTP resent to your new email address' });
     } catch (error) {
         console.error('Error resending email change OTP:', error);
         res.status(500).json({ message: 'Failed to resend OTP' });

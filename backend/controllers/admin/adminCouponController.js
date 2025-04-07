@@ -1,4 +1,5 @@
 import Coupon from '../../models/product/couponModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 export const addCoupon = async (req, res) => {
   try {
@@ -9,7 +10,7 @@ export const addCoupon = async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    if(discountType === 'percentage' && discountValue > 100){
+    if (discountType === 'percentage' && discountValue > 100) {
       return res.status(400).json({ message: 'Discount value must be less than 100 for percentage discount' });
     }
 
@@ -23,10 +24,10 @@ export const addCoupon = async (req, res) => {
     }
 
     // Check if coupon code already exists (case insensitive)
-    const existingCoupon = await Coupon.findOne({ 
+    const existingCoupon = await Coupon.findOne({
       couponCode: { $regex: new RegExp(`^${couponCode.trim()}$`, 'i') }
     });
-    
+
     if (existingCoupon) {
       return res.status(400).json({ message: 'Coupon code already exists' });
     }
@@ -70,7 +71,7 @@ export const getAllCoupons = async (req, res) => {
 
     // Build filter query
     let filterQuery = {};
-    
+
     // Add search conditions if search query exists
     if (search) {
       filterQuery.$or = [
@@ -106,9 +107,9 @@ export const getAllCoupons = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(500).json({
       message: "Failed to fetch coupons",
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -159,7 +160,7 @@ export const updateCoupon = async (req, res) => {
       return res.status(404).json({ message: 'Coupon not found' });
     }
 
-    res.status(200).json(coupon);
+    res.status(HttpStatus.OK).json(coupon);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }
@@ -168,7 +169,7 @@ export const updateCoupon = async (req, res) => {
 export const toggleCouponStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const coupon = await Coupon.findById(id);
     if (!coupon) {
       return res.status(404).json({ message: 'Coupon not found' });
@@ -177,7 +178,7 @@ export const toggleCouponStatus = async (req, res) => {
     coupon.isExpired = !coupon.isExpired;
     await coupon.save();
 
-    res.status(200).json(coupon);
+    res.status(HttpStatus.OK).json(coupon);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

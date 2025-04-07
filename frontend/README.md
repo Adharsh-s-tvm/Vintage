@@ -4,9 +4,18 @@ wishlist loaders
 wishlist remove still showing
 ---------------------------------------------------------------------------------------------------------------
 MAKE ALL PAGE RESPONSIVE
+BLOCKED USER GET OUT
+COUPON REACTIVATION
+CSRF 
+INVOICE VALUE
+SALESREPORT VALUE
+RATINGS AND REVIEW
+CHAT
+LOCATION
+INACTIVE BUTTONS SHOULD BE REMOVED
+EXPRESS RATE LIMITER
 
-
--------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------- 
 
 
 
@@ -37,7 +46,7 @@ Repeat Pendings...
 <!-- implement backend pagination in offer -->
 <!-- Issue in payment gateway integration -->
 <!-- cancel order need refund -->
-wallet need pagination
+<!-- wallet need pagination -->
 <!-- keep same currency throught application -->
 <!-- order listing need pagination -->
 never call api from component

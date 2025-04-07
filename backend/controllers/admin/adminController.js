@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import User from "../../models/userModel.js";
 import bcrypt from "bcrypt";
+import { HttpStatus } from "../../utils/httpStatus.js";
 
 
 
@@ -71,7 +72,7 @@ const logoutCurrentAdmin = asyncHandler(async (req, res) => {
         path: '/'
     });
 
-    res.status(200).json({ message: "Admin logged out successfully" });
+    res.status(HttpStatus.OK).json({ message: "Admin logged out successfully" });
 });
 
 
@@ -202,7 +203,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
         await user.save();
 
         // Return success response
-        res.status(200).json({ 
+        res.status(HttpStatus.OK).json({ 
             message: `User ${status === 'active' ? 'activated' : 'banned'} successfully`, 
             user: {
                 _id: user._id,
@@ -246,7 +247,7 @@ const getDashboard = asyncHandler(async (req, res) => {
         throw new Error("Not authorized as admin");
     }
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
         success: true,
         message: "Admin dashboard access granted",
         admin: {

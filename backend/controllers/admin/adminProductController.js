@@ -2,6 +2,7 @@ import Product from "../../models/product/productModel.js";
 import Variant from "../../models/product/sizeVariantModel.js";
 import Category from "../../models/product/categoryModel.js";
 import Brand from "../../models/product/brandModel.js";
+import { HttpStatus } from "../../utils/httpStatus.js";
 
 
 export const addProduct = async (req, res) => {
@@ -289,7 +290,7 @@ export const updateCategoryStatus = async (req, res) => {
 
   category.status = status;
   const updatedCategory = await category.save();
-  res.status(200).json(updatedCategory);
+  res.status(HttpStatus.OK).json(updatedCategory);
 };
 
 
@@ -319,7 +320,7 @@ export const updateCategory = async (req, res) => {
 
   category.name = name;
   const updatedCategory = await category.save();
-  res.status(200).json(updatedCategory);
+  res.status(HttpStatus.OK).json(updatedCategory);
 };
 
 export const addBrand = async (req, res) => {
@@ -414,7 +415,7 @@ export const updateBrandStatus = async (req, res) => {
 
   brand.status = status;
   const updatedBrand = await brand.save();
-  res.status(200).json(updatedBrand);
+  res.status(HttpStatus.OK).json(updatedBrand);
 };
 
 export const updateBrand = async (req, res) => {
@@ -441,7 +442,7 @@ export const updateBrand = async (req, res) => {
 
   brand.name = name;
   const updatedBrand = await brand.save();
-  res.status(200).json(updatedBrand);
+  res.status(HttpStatus.OK).json(updatedBrand);
 };
 
 // Add a controller to get variants for a specific product
@@ -452,7 +453,7 @@ export const getProductVariants = async (req, res) => {
     const variants = await Variant.find({ product: productId })
       .populate('product', 'name');
 
-    res.status(200).json(variants);
+    res.status(HttpStatus.OK).json(variants);
   } catch (error) {
     console.error('Error fetching variants:', error);
     res.status(500).json({ message: 'Error fetching variants' });
@@ -488,7 +489,7 @@ export const updateProduct = async (req, res) => {
     // Log the updated product
     console.log('Updated product:', updatedProduct);
 
-    res.status(200).json(updatedProduct);
+    res.status(HttpStatus.OK).json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error);
     res.status(400).json({ message: error.message });
@@ -514,7 +515,7 @@ export const deleteVariant = async (req, res) => {
     // Delete variant
     await Variant.findByIdAndDelete(variantId);
 
-    res.status(200).json({ message: "Variant deleted successfully" });
+    res.status(HttpStatus.OK).json({ message: "Variant deleted successfully" });
   } catch (error) {
     console.error('Error deleting variant:', error);
     res.status(500).json({ message: 'Error deleting variant' });
@@ -538,7 +539,7 @@ export const updateProductStatus = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json(updatedProduct);
+    res.status(HttpStatus.OK).json(updatedProduct);
   } catch (error) {
     console.error('Error updating product status:', error);
     res.status(400).json({ message: error.message });
@@ -575,7 +576,7 @@ export const updateVariant = async (req, res) => {
       return res.status(404).json({ message: "Variant not found" });
     }
 
-    res.status(200).json(updatedVariant);
+    res.status(HttpStatus.OK).json(updatedVariant);
   } catch (error) {
     console.error('Error updating variant:', error);
     res.status(400).json({ message: error.message });
@@ -599,7 +600,7 @@ export const updateProductBlockStatus = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.status(200).json(updatedProduct);
+    res.status(HttpStatus.OK).json(updatedProduct);
   } catch (error) {
     console.error('Error updating product block status:', error);
     res.status(400).json({ message: error.message });
@@ -622,7 +623,7 @@ export const updateVariantBlockStatus = async (req, res) => {
       return res.status(404).json({ message: "Variant not found" });
     }
 
-    res.status(200).json(updatedVariant);
+    res.status(HttpStatus.OK).json(updatedVariant);
   } catch (error) {
     console.error('Error updating variant block status:', error);
     res.status(400).json({ message: error.message });

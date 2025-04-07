@@ -2,6 +2,7 @@ import Order from '../../models/product/orderModel.js';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import path from 'path';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 export const getSalesReport = async (req, res) => {
     try {
@@ -354,7 +355,7 @@ export const getSalesReport = async (req, res) => {
         const totalBrandsRevenue = topBrands.reduce((sum, brand) => sum + brand.revenue, 0);
 
         // Add this to your response object
-        res.status(200).json({
+        res.status(HttpStatus.OK).json({
             stats: stats[0] || {
                 totalRevenue: 0,
                 totalOrders: 0,

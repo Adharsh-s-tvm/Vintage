@@ -1,5 +1,6 @@
 import Wallet from '../../models/walletModel.js';
 import User from '../../models/userModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 export const getAllTransactions = async (req, res) => {
   try {
@@ -45,7 +46,7 @@ export const getAllTransactions = async (req, res) => {
     const totalTransactions = result[0].metadata[0]?.total || 0;
     const transactions = result[0].transactions;
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       data: {
         transactions,
@@ -80,7 +81,7 @@ export const getTransactionDetails = async (req, res) => {
 
     const transaction = wallet.transactions.id(transactionId);
     
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       transactionId: transaction._id,
       user: wallet.userId,
       type: transaction.type,

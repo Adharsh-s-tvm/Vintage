@@ -7,6 +7,7 @@ import mongoose from 'mongoose';
 import Cart from '../../models/product/cartModel.js';
 import Variant from '../../models/product/sizeVariantModel.js';
 import Address from '../../models/userAddressModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -171,7 +172,7 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
       }
     });
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       order: razorpayOrder,
       tempOrderId: tempPayment._id
@@ -245,7 +246,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
 
     await session.commitTransaction();
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       message: "Payment verified and order created successfully",
       orderId: order.orderId
@@ -306,7 +307,7 @@ export const cancelPayment = asyncHandler(async (req, res) => {
 
     await session.commitTransaction();
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       message: "Payment cancelled and order reversed successfully"
     });
@@ -354,7 +355,7 @@ export const handlePaymentFailure = asyncHandler(async (req, res) => {
       error: error ? JSON.stringify(error) : 'Payment failed'
     });
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
       success: true,
       message: "Payment failure recorded successfully"
     });

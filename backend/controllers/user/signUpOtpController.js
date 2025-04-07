@@ -1,6 +1,7 @@
 import asyncHandler from "../../middlewares/asyncHandler.js";
 import OTP from "../../models/signUpOtpModel.js";
 import nodemailer from "nodemailer";
+import { HttpStatus } from "../../utils/httpStatus.js";
 
 // Generate OTP
 const generateOTP = () => {
@@ -72,7 +73,7 @@ export const sendOTP = asyncHandler(async (req, res) => {
     // Send OTP via email
     await sendEmailOTP(email, otpCode);  // Ensure this function is working correctly
 
-    res.status(200).json({ message: "OTP sent successfully", otpCode });
+    res.status(HttpStatus.OK).json({ message: "OTP sent successfully", otpCode });
   } catch (error) {
     console.error("❌ Error saving OTP:", error);
     res.status(500).json({ message: "Internal server error" });
@@ -119,7 +120,7 @@ export const verifyOTP = async (req, res) => {
     // OTP is valid - delete from DB
     await OTP.deleteOne({ email });
 
-    res.status(200).json({ message: "OTP verified successfully", success : true });
+    res.status(HttpStatus.OK).json({ message: "OTP verified successfully", success : true });
   } catch (error) {
     console.error("❌ Error in verifyOTP:", error);
     res.status(500).json({ message: "Error verifying OTP", error: error.message });
@@ -162,7 +163,7 @@ export const resSendOTP = asyncHandler(async (req, res) => {
     // Send OTP via email
     await sendEmailOTP(email, otpCode);  // Ensure this function is working correctly
 
-    res.status(200).json({ message: "OTP sent successfully", otpCode });
+    res.status(HttpStatus.OK).json({ message: "OTP sent successfully", otpCode });
   } catch (error) {
     console.error("❌ Error saving OTP:", error);
     res.status(500).json({ message: "Internal server error" });

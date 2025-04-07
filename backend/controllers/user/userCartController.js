@@ -2,6 +2,7 @@ import Cart from "../../models/product/cartModel.js";
 import Product from "../../models/product/productModel.js";
 import Variant from "../../models/product/sizeVariantModel.js";
 import Wishlist from "../../models/product/wishlistModel.js"; // Add this import
+import { HttpStatus } from "../../utils/httpStatus.js";
 
 const MAX_QUANTITY_PER_ITEM = 5; // Add this constant at the top of the file
 
@@ -113,7 +114,7 @@ export const addToCart = async (req, res) => {
                 .populate('items.variant');
         }
 
-        res.status(200).json({
+        res.status(HttpStatus.OK).json({
             cart: populatedCart,
             wishlist: removeFromWishlist ? updatedWishlist?.items || [] : undefined
         });
@@ -138,7 +139,7 @@ export const getCart = async (req, res) => {
             });
 
         if (!cart) {
-            return res.status(200).json({
+            return res.status(HttpStatus.OK).json({
                 items: [],
                 subtotal: 0,
                 tax: 0,
@@ -161,7 +162,7 @@ export const getCart = async (req, res) => {
         });
 
         await cart.save();
-        res.status(200).json(cart);
+        res.status(HttpStatus.OK).json(cart);
     } catch (error) {
         console.error('Error fetching cart:', error);
         res.status(500).json({ message: "Error fetching cart" });
@@ -220,7 +221,7 @@ export const updateCartItem = async (req, res) => {
                 }
             });
 
-        res.status(200).json(updatedCart);
+        res.status(HttpStatus.OK).json(updatedCart);
     } catch (error) {
         console.error('Error updating cart item:', error);
         res.status(500).json({ message: "Error updating cart item" });
@@ -253,7 +254,7 @@ export const removeFromCart = async (req, res) => {
                 }
             });
 
-        res.status(200).json(updatedCart);
+        res.status(HttpStatus.OK).json(updatedCart);
     } catch (error) {
         console.error('Error removing from cart:', error);
         res.status(500).json({ message: "Error removing from cart" });

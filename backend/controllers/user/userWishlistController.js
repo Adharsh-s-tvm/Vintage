@@ -2,6 +2,7 @@ import asyncHandler from 'express-async-handler';
 import Wishlist from '../../models/product/wishlistModel.js';
 import Product from '../../models/product/productModel.js'
 import Variant from '../../models/product/sizeVariantModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 
 const getWishlist = asyncHandler(async (req, res) => {
@@ -76,7 +77,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
         .populate('items.variant');
 
     const addedItem = populatedWishlist.items[populatedWishlist.items.length - 1];
-    res.status(200).json(addedItem);
+    res.status(HttpStatus.OK).json(addedItem);
 });
 
 
@@ -126,7 +127,7 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
         throw new Error('Failed to update wishlist');
     }
 
-    res.status(200).json({
+    res.status(HttpStatus.OK).json({
         success: true,
         message: 'Item removed from wishlist',
         items: wishlist.items

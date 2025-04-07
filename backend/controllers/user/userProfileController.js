@@ -3,6 +3,7 @@ import Address from '../../models/userAddressModel.js';
 import asyncHandler from '../../middlewares/asyncHandler.js';
 import cloudinary from '../../config/cloudinary.js';
 import bcrypt from 'bcryptjs';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 // @desc    Get user details
 // @route   GET /api/user/profile/details
@@ -316,7 +317,7 @@ export const updateUserEmail = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        res.status(200).json({
+        res.status(HttpStatus.OK).json({
             _id: updatedUser._id,
             firstname: updatedUser.firstname,
             lastname: updatedUser.lastname,

@@ -3,6 +3,7 @@ import Variant from "../../models/product/sizeVariantModel.js";
 import Category from "../../models/product/categoryModel.js";
 import Brand from "../../models/product/brandModel.js";
 import mongoose from 'mongoose';
+import { HttpStatus } from "../../utils/httpStatus.js";
 
 
 
@@ -200,13 +201,13 @@ export const getAllShopProducts = async (req, res) => {
 
 export const getAllShopCategories = async (req, res) => {
     const categories = await Category.find().sort({ createdAt: -1 });
-    res.status(200).json(categories);
+    res.status(HttpStatus.OK).json(categories);
 };
 
 
 export const getAllShopBrands = async (req, res) => {
     const brands = await Brand.find().sort({ createdAt: -1 });
-    res.status(200).json(brands);
+    res.status(HttpStatus.OK).json(brands);
 };
 
 export const getProductById = async (req, res) => {
@@ -255,7 +256,7 @@ export const getProductById = async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        res.status(200).json({
+        res.status(HttpStatus.OK).json({
             success: true,
             product: product[0]
         });
@@ -328,7 +329,7 @@ export const searchProducts = async (req, res) => {
 
         const products = await Product.aggregate(aggregationPipeline);
 
-        res.status(200).json({ success: true, products });
+        res.status(HttpStatus.OK).json({ success: true, products });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
