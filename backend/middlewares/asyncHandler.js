@@ -1,4 +1,4 @@
-import { HttpStatus } from "../utils/httpStatus";
+import { HttpStatus } from "../utils/httpStatus.js";
 
 const asyncHandler = (fn) => (req, res, next) => {
     return Promise.resolve(fn(req, res, next)).catch((error) => {
