@@ -14,7 +14,7 @@ export const addToCart = async (req, res) => {
 
         // Check maximum quantity
         if (quantity > MAX_QUANTITY_PER_ITEM) {
-            return res.status(400).json({ 
+            return res.status(HttpStatus.BAD_REQUEST).json({ 
                 message: `Maximum ${MAX_QUANTITY_PER_ITEM} items allowed per product` 
             });
         }
@@ -26,7 +26,7 @@ export const addToCart = async (req, res) => {
         });
 
         if (!variant) {
-            return res.status(404).json({ message: "Variant not found" });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: "Variant not found" });
         }
 
         // Check if variant or product is blocked/unlisted
@@ -37,12 +37,12 @@ export const addToCart = async (req, res) => {
             variant.product.category.isBlocked ||
             variant.product.brand.isBlocked
         ) {
-            return res.status(400).json({ message: "Product is not available" });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: "Product is not available" });
         }
 
         // Check stock
         if (variant.stock < quantity) {
-            return res.status(400).json({ message: "Insufficient stock" });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: "Insufficient stock" });
         }
 
         // Find or create cart
@@ -60,13 +60,13 @@ export const addToCart = async (req, res) => {
             // Check if new total quantity exceeds maximum limit
             const newQuantity = existingItem.quantity + quantity;
             if (newQuantity > MAX_QUANTITY_PER_ITEM) {
-                return res.status(400).json({ 
+                return res.status(HttpStatus.BAD_REQUEST).json({ 
                     message: `Cannot add more than ${MAX_QUANTITY_PER_ITEM} items of the same product` 
                 });
             }
             // Check if new total quantity exceeds stock
             if (newQuantity > variant.stock) {
-                return res.status(400).json({ message: "Insufficient stock" });
+                return res.status(HttpStatus.BAD_REQUEST).json({ message: "Insufficient stock" });
             }
             existingItem.quantity = newQuantity;
             existingItem.totalPrice = existingItem.price * existingItem.quantity;
@@ -120,7 +120,7 @@ export const addToCart = async (req, res) => {
         });
     } catch (error) {
         console.error('Error adding to cart:', error);
-        res.status(500).json({ message: "Error adding to cart" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error adding to cart" });
     }
 };
 
@@ -165,7 +165,7 @@ export const getCart = async (req, res) => {
         res.status(HttpStatus.OK).json(cart);
     } catch (error) {
         console.error('Error fetching cart:', error);
-        res.status(500).json({ message: "Error fetching cart" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error fetching cart" });
     }
 };
 
@@ -176,7 +176,7 @@ export const updateCartItem = async (req, res) => {
         const userId = req.user._id;
 
         if (quantity < 1 || quantity > MAX_QUANTITY_PER_ITEM) {
-            return res.status(400).json({ 
+            return res.status(HttpStatus.BAD_REQUEST).json({ 
                 message: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ITEM}` 
             });
         }
@@ -192,7 +192,7 @@ export const updateCartItem = async (req, res) => {
             });
 
         if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: "Cart not found" });
         }
 
         const cartItem = cart.items.find(item =>
@@ -200,12 +200,12 @@ export const updateCartItem = async (req, res) => {
         );
 
         if (!cartItem) {
-            return res.status(404).json({ message: "Item not found in cart" });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: "Item not found in cart" });
         }
 
         // Check stock
         if (cartItem.variant.stock < quantity) {
-            return res.status(400).json({ message: "Insufficient stock" });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: "Insufficient stock" });
         }
 
         cartItem.quantity = quantity;
@@ -224,7 +224,7 @@ export const updateCartItem = async (req, res) => {
         res.status(HttpStatus.OK).json(updatedCart);
     } catch (error) {
         console.error('Error updating cart item:', error);
-        res.status(500).json({ message: "Error updating cart item" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error updating cart item" });
     }
 };
 
@@ -236,7 +236,7 @@ export const removeFromCart = async (req, res) => {
 
         const cart = await Cart.findOne({ user: userId });
         if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: "Cart not found" });
         }
 
         cart.items = cart.items.filter(item =>
@@ -257,6 +257,6 @@ export const removeFromCart = async (req, res) => {
         res.status(HttpStatus.OK).json(updatedCart);
     } catch (error) {
         console.error('Error removing from cart:', error);
-        res.status(500).json({ message: "Error removing from cart" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error removing from cart" });
     }
 };

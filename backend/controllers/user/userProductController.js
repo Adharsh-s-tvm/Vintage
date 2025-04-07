@@ -192,7 +192,7 @@ export const getAllShopProducts = async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching products:', error);
-        res.status(500).json({ message: 'Error fetching products' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error fetching products' });
     }
 };
 
@@ -253,7 +253,7 @@ export const getProductById = async (req, res) => {
         const product = await Product.aggregate(aggregationPipeline);
 
         if (!product || product.length === 0) {
-            return res.status(404).json({ message: 'Product not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'Product not found' });
         }
 
         res.status(HttpStatus.OK).json({
@@ -263,7 +263,7 @@ export const getProductById = async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching product:', error);
-        res.status(500).json({
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             success: false,
             message: 'Error fetching product details'
         });
@@ -275,7 +275,7 @@ export const searchProducts = async (req, res) => {
         const { keyword } = req.query;
 
         if (!keyword) {
-            return res.status(400).json({ success: false, message: "Keyword is required" });
+            return res.status(HttpStatus.BAD_REQUEST).json({ success: false, message: "Keyword is required" });
         }
 
         const aggregationPipeline = [
@@ -331,6 +331,6 @@ export const searchProducts = async (req, res) => {
 
         res.status(HttpStatus.OK).json({ success: true, products });
     } catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: error.message });
     }
 };

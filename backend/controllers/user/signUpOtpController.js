@@ -43,7 +43,7 @@ export const sendOTP = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Email is required" });
   }
 
   // Generate a random 6-digit OTP as a string
@@ -67,7 +67,7 @@ export const sendOTP = asyncHandler(async (req, res) => {
     const savedOTP = await OTP.findOne({ email });
     if (!savedOTP) {
       console.log("❌ OTP NOT SAVED in MongoDB.");
-      return res.status(500).json({ message: "Failed to save OTP. Please try again." });
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Failed to save OTP. Please try again." });
     }
 
     // Send OTP via email
@@ -76,7 +76,7 @@ export const sendOTP = asyncHandler(async (req, res) => {
     res.status(HttpStatus.OK).json({ message: "OTP sent successfully", otpCode });
   } catch (error) {
     console.error("❌ Error saving OTP:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
   }
 });
 
@@ -91,7 +91,7 @@ export const verifyOTP = async (req, res) => {
     const { email, otp } = req.body;
     console.log(req.body);
     
-    if ( !otp) return res.status(400).json({ message: "OTP is required" });
+    if ( !otp) return res.status(HttpStatus.BAD_REQUEST).json({ message: "OTP is required" });
 
     console.log(`🔍 Verifying OTP for ${email}: Received OTP - ${otp}`);
 
@@ -100,7 +100,7 @@ export const verifyOTP = async (req, res) => {
 
     if (!otpRecord) {
       console.log("❌ No OTP record found for this email.");
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: "Invalid OTP" });
     }
 
     console.log(`✅ Stored OTP for ${email}: ${otpRecord.otp}`);
@@ -108,13 +108,13 @@ export const verifyOTP = async (req, res) => {
     // Ensure OTP matches (convert both to strings to prevent type mismatches)
     if (String(otpRecord.otp).trim() !== String(otp).trim()) {
       console.log("❌ OTP mismatch! Received:", otp, "Stored:", otpRecord.otp);
-      return res.status(400).json({ message: "Invalid OTP" });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: "Invalid OTP" });
     }
 
     // Check if OTP is expired
     if (otpRecord.expiresAt < new Date()) {
       console.log("❌ OTP expired!");
-      return res.status(400).json({ message: "OTP expired" });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: "OTP expired" });
     }
 
     // OTP is valid - delete from DB
@@ -123,7 +123,7 @@ export const verifyOTP = async (req, res) => {
     res.status(HttpStatus.OK).json({ message: "OTP verified successfully", success : true });
   } catch (error) {
     console.error("❌ Error in verifyOTP:", error);
-    res.status(500).json({ message: "Error verifying OTP", error: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error verifying OTP", error: error.message });
   }
 };
 
@@ -133,7 +133,7 @@ export const resSendOTP = asyncHandler(async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ message: "Email is required" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Email is required" });
   }
 
   // Generate a random 6-digit OTP as a string
@@ -157,7 +157,7 @@ export const resSendOTP = asyncHandler(async (req, res) => {
     const savedOTP = await OTP.findOne({ email });
     if (!savedOTP) {
       console.log("❌ OTP NOT SAVED in MongoDB.");
-      return res.status(500).json({ message: "Failed to save OTP. Please try again." });
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Failed to save OTP. Please try again." });
     }
 
     // Send OTP via email
@@ -166,6 +166,6 @@ export const resSendOTP = asyncHandler(async (req, res) => {
     res.status(HttpStatus.OK).json({ message: "OTP sent successfully", otpCode });
   } catch (error) {
     console.error("❌ Error saving OTP:", error);
-    res.status(500).json({ message: "Internal server error" });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Internal server error" });
   }
 });

@@ -13,7 +13,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
         const user = await User.findById(req.user._id).select('-password');
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'User not found' });
         }
 
         res.json({
@@ -29,7 +29,7 @@ export const getUserDetails = asyncHandler(async (req, res) => {
         });
     } catch (error) {
         console.error('Error in getUserDetails:', error);
-        res.status(500).json({ message: 'Server error' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Server error' });
     }
 });
 
@@ -40,14 +40,14 @@ export const getUserAddresses = asyncHandler(async (req, res) => {
     try {
         // Verify user exists in request
         if (!req.user || !req.user._id) {
-            return res.status(401).json({ message: 'Not authorized' });
+            return res.status(HttpStatus.UNAUTHORIZED).json({ message: 'Not authorized' });
         }
 
         const addresses = await Address.find({ user: req.user._id });
         res.json(addresses);
     } catch (error) {
         console.error('Error fetching addresses:', error);
-        res.status(500).json({ message: 'Failed to fetch addresses' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to fetch addresses' });
     }
 });
 
@@ -58,7 +58,7 @@ export const addUserAddress = asyncHandler(async (req, res) => {
     try {
         // Verify user exists in request
         if (!req.user || !req.user._id) {
-            return res.status(401).json({ message: 'Not authorized' });
+            return res.status(HttpStatus.UNAUTHORIZED).json({ message: 'Not authorized' });
         }
 
         const {
@@ -74,7 +74,7 @@ export const addUserAddress = asyncHandler(async (req, res) => {
 
         // Validate required fields
         if (!fullName || !phone || !street || !city || !state || !postalCode) {
-            return res.status(400).json({ message: 'Please fill all required fields' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Please fill all required fields' });
         }
 
         // If this address is set as default, unset any existing default address
@@ -100,7 +100,7 @@ export const addUserAddress = asyncHandler(async (req, res) => {
         res.status(HttpStatus.CREATED).json(newAddress);
     } catch (error) {
         console.error('Error adding address:', error);
-        res.status(500).json({ message: 'Failed to add address' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to add address' });
     }
 });
 
@@ -115,7 +115,7 @@ export const updateUserAddress = asyncHandler(async (req, res) => {
         });
 
         if (!address) {
-            return res.status(404).json({ message: 'Address not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'Address not found' });
         }
 
         if (req.body.isDefault) {
@@ -134,7 +134,7 @@ export const updateUserAddress = asyncHandler(async (req, res) => {
         res.json(updatedAddress);
     } catch (error) {
         console.error('Error updating address:', error);
-        res.status(500).json({ message: 'Failed to update address' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to update address' });
     }
 });
 
@@ -149,13 +149,13 @@ export const deleteUserAddress = asyncHandler(async (req, res) => {
         });
 
         if (!address) {
-            return res.status(404).json({ message: 'Address not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'Address not found' });
         }
 
         res.json({ message: 'Address removed successfully' });
     } catch (error) {
         console.error('Error deleting address:', error);
-        res.status(500).json({ message: 'Failed to delete address' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to delete address' });
     }
 });
 
@@ -167,7 +167,7 @@ export const updateUserDetails = asyncHandler(async (req, res) => {
         const user = await User.findById(req.user._id);
 
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'User not found' });
         }
 
         // Update only the fields that are provided
@@ -201,7 +201,7 @@ export const updateUserDetails = asyncHandler(async (req, res) => {
         });
     } catch (error) {
         console.error('Error updating user details:', error);
-        res.status(500).json({ message: 'Failed to update user details' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to update user details' });
     }
 });
 
@@ -211,7 +211,7 @@ export const updateUserDetails = asyncHandler(async (req, res) => {
 export const uploadProfileImage = asyncHandler(async (req, res) => {
     try {
         if (!req.file) {
-            return res.status(400).json({ message: 'No image file provided' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No image file provided' });
         }
 
         // Get the uploaded file URL from Cloudinary (already handled by your multer setup)
@@ -220,7 +220,7 @@ export const uploadProfileImage = asyncHandler(async (req, res) => {
         // Update user's image URL in database
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'User not found' });
         }
 
         user.image = imageUrl;
@@ -233,7 +233,7 @@ export const uploadProfileImage = asyncHandler(async (req, res) => {
 
     } catch (error) {
         console.error('Error uploading image:', error);
-        res.status(500).json({
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
             message: 'Failed to upload image',
             error: error.message
         });
@@ -250,26 +250,26 @@ export const changePassword = asyncHandler(async (req, res) => {
         // Find user
         const user = await User.findById(req.user._id);
         if (!user) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'User not found' });
         }
 
         // Verify old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: 'Current password is incorrect' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Current password is incorrect' });
         }
 
         // Check if new password is same as old password
         const isSamePassword = await bcrypt.compare(newPassword, user.password);
         if (isSamePassword) {
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 message: 'New password cannot be the same as your current password'
             });
         }
 
         // Password validation (optional but recommended)
         if (newPassword.length < 6) {
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 message: 'Password must be at least 6 characters long'
             });
         }
@@ -284,7 +284,7 @@ export const changePassword = asyncHandler(async (req, res) => {
         res.json({ message: 'Password updated successfully' });
     } catch (error) {
         console.error('Error in changePassword:', error);
-        res.status(500).json({ message: 'Failed to change password' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to change password' });
     }
 });
 
@@ -297,13 +297,13 @@ export const updateUserEmail = async (req, res) => {
         const userId = req.user._id;
 
         if (!email) {
-            return res.status(400).json({ message: 'Email is required' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Email is required' });
         }
 
         // Check if email already exists for another user
         const existingUser = await User.findOne({ email, _id: { $ne: userId } });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email already in use by another account' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Email already in use by another account' });
         }
 
         // Update user's email
@@ -314,7 +314,7 @@ export const updateUserEmail = async (req, res) => {
         ).select('-password');
 
         if (!updatedUser) {
-            return res.status(404).json({ message: 'User not found' });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: 'User not found' });
         }
 
         res.status(HttpStatus.OK).json({
@@ -329,6 +329,6 @@ export const updateUserEmail = async (req, res) => {
         });
     } catch (error) {
         console.error('Error updating email:', error);
-        res.status(500).json({ message: 'Failed to update email' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to update email' });
     }
 };

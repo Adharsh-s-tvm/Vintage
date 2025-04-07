@@ -31,14 +31,14 @@ const addToWishlist = asyncHandler(async (req, res) => {
     const { productId, variantId } = req.body;
 
     if (!productId || !variantId) {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error('Product ID and Variant ID are required');
     }
 
     // Find the variant and check if it exists
     const variant = await Variant.findById(variantId);
     if (!variant) {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error('Variant not found');
     }
 
@@ -57,7 +57,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
     );
 
     if (existingItem) {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error('This item is already in your wishlist');
     }
 
@@ -85,7 +85,7 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
     const variantId = req.params.variantId;
 
     if (!variantId) {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error('Variant ID is required');
     }
 
@@ -93,7 +93,7 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
     let wishlist = await Wishlist.findOne({ user: req.user._id });
 
     if (!wishlist) {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error('Wishlist not found');
     }
 
@@ -123,7 +123,7 @@ const removeFromWishlist = asyncHandler(async (req, res) => {
     );
 
     if (!wishlist) {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error('Failed to update wishlist');
     }
 

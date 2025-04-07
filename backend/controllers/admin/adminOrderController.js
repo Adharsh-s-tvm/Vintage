@@ -57,7 +57,7 @@ export const getAllOrders = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching orders:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       message: "Failed to fetch orders",
       error: error.message 
     });
@@ -77,12 +77,12 @@ export const updateOrderStatus = async (req, res) => {
     );
 
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Order not found" });
     }
 
     res.status(HttpStatus.OK).json(order);
   } catch (error) {
-    res.status(500).json({ message: "Failed to update order status", error: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Failed to update order status", error: error.message });
   }
 };
 
@@ -96,7 +96,7 @@ export const updateReturnStatus = async (req, res) => {
     const order = await Order.findById(orderId).populate('items.sizeVariant');
     
     if (!order) {
-      return res.status(404).json({ message: "Order not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Order not found" });
     }
 
     if (approved) {
@@ -134,7 +134,7 @@ export const updateReturnStatus = async (req, res) => {
 
     res.status(HttpStatus.OK).json(order);
   } catch (error) {
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       message: "Failed to update return status", 
       error: error.message 
     });
@@ -204,7 +204,7 @@ export const getReturnRequests = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching returns:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: "Failed to fetch returns",
       error: error.message 
@@ -307,7 +307,7 @@ export const handleReturnRequest = async (req, res) => {
       await session.abortTransaction();
     }
     console.error('Error in handleReturnRequest:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: "Failed to handle return request",
       error: error.message 

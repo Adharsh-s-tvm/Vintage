@@ -407,7 +407,7 @@ export const getSalesReport = async (req, res) => {
 
     } catch (error) {
         console.error('Error in getSalesReport:', error);
-        res.status(500).json({ message: 'Failed to generate sales report' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to generate sales report' });
     }
 };
 
@@ -607,7 +607,7 @@ export const downloadSalesReport = async (req, res) => {
 
     } catch (error) {
         console.error('Error generating PDF:', error);
-        res.status(500).json({ message: 'Failed to generate PDF report' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to generate PDF report' });
     }
 };
 

@@ -80,7 +80,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         // 2. Verify address
         const address = await Address.findById(addressId);
         if (!address) {
-            res.status(404);
+            res.status(HttpStatus.NOT_FOUNDyy);
             throw new Error('Delivery address not found');
         }
 
@@ -93,13 +93,13 @@ export const createOrder = asyncHandler(async (req, res) => {
             
             // Check product availability
             if (!variant || variant.isBlocked || variant.product.isBlocked) {
-                res.status(400);
+                res.status(HttpStatus.BAD_REQUEST);
                 throw new Error(`${item.variant.product.name} is no longer available`);
             }
 
             // Check stock
             if (variant.stock < item.quantity) {
-                res.status(400);
+                res.status(HttpStatus.BAD_REQUEST);
                 throw new Error(`Insufficient stock for ${item.variant.product.name}`);
             }
 
@@ -246,7 +246,7 @@ export const createOrder = asyncHandler(async (req, res) => {
         if (transactionStarted) {
             await session.abortTransaction();
         }
-        res.status(400).json({ message: error.message });
+        res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
     } finally {
         session.endSession();
     }
@@ -307,7 +307,7 @@ export const getOrders = asyncHandler(async (req, res) => {
             }
         });
     } catch (error) {
-        res.status(500).json({ 
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
             success: false,
             message: "Failed to fetch orders",
             error: error.message 
@@ -340,7 +340,7 @@ export const getOrderById = asyncHandler(async (req, res) => {
             order
         });
     } else {
-        res.status(404).json({
+        res.status(HttpStatus.NOT_FOUNDyy).json({
             success: false,
             message: 'Order not found'
         });
@@ -362,13 +362,13 @@ export const cancelOrder = async (req, res) => {
     }).populate('items.sizeVariant');
 
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(HttpStatus.NOT_FOUNDyy).json({ message: 'Order not found' });
     }
 
     // Check if order can be cancelled
     const allowedStatuses = ['pending', 'Processing'];
     if (!allowedStatuses.includes(order.orderStatus)) {
-      return res.status(400).json({ 
+      return res.status(HttpStatus.BAD_REQUEST).json({ 
         message: 'Order cannot be cancelled at this stage' 
       });
     }
@@ -430,7 +430,7 @@ export const cancelOrder = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     console.error('Cancel order error:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       message: 'Error cancelling order',
       error: error.message 
     });
@@ -450,7 +450,7 @@ export const returnOrder = asyncHandler(async (req, res) => {
     });
 
     if (!order) {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUNDyy);
         throw new Error('Order not found');
     }
 
@@ -458,19 +458,19 @@ export const returnOrder = asyncHandler(async (req, res) => {
     const item = order.items.find(item => item._id.toString() === itemId);
     
     if (!item) {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUNDyy);
         throw new Error('Order item not found');
     }
 
     // Check if order status is Delivered
     if (order.orderStatus !== 'Delivered') {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error('Order must be delivered before requesting return');
     }
 
     // Check if return is already requested for this item
     if (item.returnRequested) {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error('Return already requested for this item');
     }
 
@@ -500,7 +500,7 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
         .populate('shipping.address');
 
     if (!order) {
-        return res.status(404).json({ message: "Order not found" });
+        return res.status(HttpStatus.NOT_FOUNDyy).json({ message: "Order not found" });
     }
 
     // Create a new PDF document
@@ -558,7 +558,7 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
         res.download(filePath, `invoice-${order.orderId}.pdf`, (err) => {
             if (err) {
                 console.error("Download error:", err);
-                res.status(500).json({ message: "Error downloading invoice" });
+                res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error downloading invoice" });
             }
             // Delete file after download
             fs.unlinkSync(filePath);
@@ -637,7 +637,7 @@ export const processReturn = async (req, res) => {
     });
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({ message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
   } finally {
     session.endSession();
   }

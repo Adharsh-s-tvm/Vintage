@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 import Admin from "../models/adminModel.js";
 import asyncHandler from "./asyncHandler.js";
+import { HttpStatus } from "../utils/httpStatus.js";
 
 const authenticate = asyncHandler(async (req, res, next) => {
   let token;
@@ -22,10 +23,10 @@ const authenticate = asyncHandler(async (req, res, next) => {
       next();
     } catch (error) {
       console.error('Auth error:', error);
-      res.status(401).json({ message: "Not authorized, token failed" });
+      res.status(HttpStatus.UNAUTHORIZED).json({ message: "Not authorized, token failed" });
     }
   } else {
-    res.status(401).json({ message: "Please login" });
+    res.status(HttpStatus.UNAUTHORIZED).json({ message: "Please login" });
   }
 });
 
@@ -33,7 +34,7 @@ const authorizeAdmin = asyncHandler(async (req, res, next) => {
   let token = req.cookies.token;
 
   if (!token) {
-    res.status(401);
+    res.status(HttpStatus.UNAUTHORIZED);
     throw new Error("Not authorized, no token");
   }
 
@@ -42,14 +43,14 @@ const authorizeAdmin = asyncHandler(async (req, res, next) => {
     const admin = await Admin.findById(decoded.id).select("-password");
 
     if (!admin || !admin.isAdmin) {
-      res.status(401);
+      res.status(HttpStatus.UNAUTHORIZED);
       throw new Error("Not authorized as admin");
     }
 
     req.admin = admin;
     next();
   } catch (error) {
-    res.status(401);
+    res.status(HttpStatus.UNAUTHORIZED);
     throw new Error("Not authorized, token failed");
   }
 });

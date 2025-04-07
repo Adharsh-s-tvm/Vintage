@@ -14,19 +14,19 @@ const loginAdmin = asyncHandler(async (req, res) => {
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
-        res.status(401);
+        res.status(HttpStatus.UNAUTHORIZED);
         throw new Error("Admin not found");
     }
 
     if (!admin.isAdmin) {
-        res.status(401);
+        res.status(HttpStatus.UNAUTHORIZED);
         throw new Error("Not authorized as admin");
     }
 
     const isPasswordValid = await bcrypt.compare(password, admin.password);
 
     if (!isPasswordValid) {
-        res.status(401);
+        res.status(HttpStatus.UNAUTHORIZED);
         throw new Error("Invalid password");
     }
 
@@ -136,7 +136,7 @@ const getAllUsers = asyncHandler(async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching users:', error);
-        res.status(500).json({ 
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
             success: false, 
             message: 'Error fetching users',
             error: error.message 
@@ -151,7 +151,7 @@ const getUserById = asyncHandler(async (req, res) => {
     if (user) {
         res.json(user);
     } else {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error("User not found");
     }
 });
@@ -174,7 +174,7 @@ const updateUserById = asyncHandler(async (req, res) => {
             isAdmin: updatedUser.isAdmin,
         });
     } else {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error("User not found");
     }
 });
@@ -187,7 +187,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
 
     // Validate status
     if (!["active", "banned"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status value" });
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: "Invalid status value" });
     }
 
     try {
@@ -195,7 +195,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
         const user = await User.findById(userId);
 
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(HttpStatus.NOT_FOUND).json({ message: "User not found" });
         }
 
         // Update user status
@@ -217,7 +217,7 @@ export const updateUserStatus = asyncHandler(async (req, res) => {
         });
     } catch (error) {
         console.error("Error updating user status:", error);
-        res.status(500).json({ message: "Failed to update user status" });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Failed to update user status" });
     }
 });
 
@@ -228,14 +228,14 @@ const deleteUserById = asyncHandler(async (req, res) => {
 
     if (user) {
         if (user.isAdmin) {
-            res.status(400);
+            res.status(HttpStatus.BAD_REQUEST);
             throw new Error("Cannot delete admin user");
         }
 
         await User.deleteOne({ _id: user._id });
         res.json({ message: "User removed" });
     } else {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error("User not found.");
     }
 });
@@ -243,7 +243,7 @@ const deleteUserById = asyncHandler(async (req, res) => {
 
 const getDashboard = asyncHandler(async (req, res) => {
     if (!req.admin || !req.admin.isAdmin) {
-        res.status(401);
+        res.status(HttpStatus.UNAUTHORIZED);
         throw new Error("Not authorized as admin");
     }
 

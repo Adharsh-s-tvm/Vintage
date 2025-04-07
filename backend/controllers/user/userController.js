@@ -21,13 +21,13 @@ const createUser = asyncHandler(async (req, res) => {
     const { firstname, lastname, email, password, referralCode } = req.body;
 
     if (!firstname || !lastname || !email || !password) {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error("Please fill all the inputs.");
     }
 
     const userExists = await User.findOne({ email });
     if (userExists) {
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error("User already exists");
     }
 
@@ -112,7 +112,7 @@ const createUser = asyncHandler(async (req, res) => {
     } catch (error) {
         await session.abortTransaction();
         console.error('Save error:', error);
-        res.status(400);
+        res.status(HttpStatus.BAD_REQUEST);
         throw new Error("Invalid user data");
     } finally {
         session.endSession();
@@ -125,12 +125,12 @@ const loginUser = asyncHandler(async (req, res) => {
     const existingUser = await User.findOne({ email });
 
     if (!existingUser) {
-        res.status(401);
+        res.status(HttpStatus.UNAUTHORIZED);
         throw new Error("User not registered");
     }
 
     if (existingUser.status == 'banned') {
-        res.status(403);
+        res.status(HttpStatus.FORBIDDEN);
         throw new Error("Your account has been blocked. Contact support for assistance.");
     }
 
@@ -140,7 +140,7 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 
     if (!isPasswordValid) {
-        res.status(401);
+        res.status(HttpStatus.UNAUTHORIZED);
         throw new Error("Invalid password");
     }
 
@@ -179,7 +179,7 @@ const getCurrentUserProfile = asyncHandler(async (req, res) => {
             email: user.email,
         });
     } else {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error("User not found.");
     }
 });
@@ -206,7 +206,7 @@ const updateCurrentUserProfile = asyncHandler(async (req, res) => {
             isAdmin: updatedUser.isAdmin,
         });
     } else {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error("User not found");
     }
 });
@@ -279,7 +279,7 @@ const googleLogin = asyncHandler(async (req, res) => {
 
     } catch (error) {
         console.error('Google login error:', error);
-        res.status(401).json({
+        res.status(HttpStatus.UNAUTHORIZED).json({
             message: "Failed to authenticate with Google",
             error: error.message
         });
@@ -300,7 +300,7 @@ const resetPassword = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        res.status(404);
+        res.status(HttpStatus.NOT_FOUND);
         throw new Error("User not found");
     }
 
@@ -321,7 +321,7 @@ export const sendEmailChangeOtp = async (req, res) => {
         // Check if email already exists for another user
         const existingUser = await User.findOne({ email, _id: { $ne: userId } });
         if (existingUser) {
-            return res.status(400).json({ message: 'Email already in use by another account' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Email already in use by another account' });
         }
 
         // Generate a 6-digit OTP
@@ -349,7 +349,7 @@ export const sendEmailChangeOtp = async (req, res) => {
         res.status(HttpStatus.OK).json({ message: 'OTP sent to your new email address' });
     } catch (error) {
         console.error('Error sending email change OTP:', error);
-        res.status(500).json({ message: 'Failed to send OTP' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to send OTP' });
     }
 };
 
@@ -362,11 +362,11 @@ export const verifyEmailChangeOtp = async (req, res) => {
         
         // Check if OTP matches and is not expired
         if (!user || user.emailChangeOtp !== otp || user.newEmail !== email) {
-            return res.status(400).json({ message: 'Invalid OTP' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Invalid OTP' });
         }
         
         if (Date.now() > user.emailChangeOtpExpiry) {
-            return res.status(400).json({ message: 'OTP has expired' });
+            return res.status(HttpStatus.BAD_REQUEST).json({ message: 'OTP has expired' });
         }
 
         // Update user's email
@@ -383,7 +383,7 @@ export const verifyEmailChangeOtp = async (req, res) => {
         });
     } catch (error) {
         console.error('Error verifying email change OTP:', error);
-        res.status(500).json({ message: 'Failed to verify OTP' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to verify OTP' });
     }
 };
 
@@ -411,7 +411,7 @@ export const resendEmailChangeOtp = async (req, res) => {
         res.status(HttpStatus.OK).json({ message: 'OTP resent to your new email address' });
     } catch (error) {
         console.error('Error resending email change OTP:', error);
-        res.status(500).json({ message: 'Failed to resend OTP' });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Failed to resend OTP' });
     }
 };
 

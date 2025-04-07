@@ -73,15 +73,15 @@ export const addOffer = async (req, res) => {
 
     // Validate required fields
     if (!offerName || !offerType || !discountPercentage || !startDate || !endDate || !items.length) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'All fields are required' });
     }
 
     if(startDate > endDate){
-      return res.status(400).json({ message: 'Start date cannot be greater than end date' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Start date cannot be greater than end date' });
     }
 
     if(discountPercentage > 100){
-      return res.status(400).json({ message: 'Discount percentage cannot be greater than 100' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Discount percentage cannot be greater than 100' });
     }
 
 
@@ -100,7 +100,7 @@ export const addOffer = async (req, res) => {
 
     res.status(HttpStatus.CREATED).json(offer);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -150,7 +150,7 @@ export const getAllOffers = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       message: "Failed to fetch offers",
       error: error.message 
     });
@@ -166,7 +166,7 @@ export const updateOffer = async (req, res) => {
     
     res.status(HttpStatus.OK).json(offer);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -181,7 +181,7 @@ export const toggleOfferStatus = async (req, res) => {
     
     res.status(HttpStatus.OK).json(offer);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -196,7 +196,7 @@ export const fetchAllProductsForOffer = async (req, res) => {
       products
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: "Failed to fetch products",
       error: error.message 
@@ -215,7 +215,7 @@ export const fetchAllCategoriesForOffer = async (req, res) => {
       categories
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: "Failed to fetch categories",
       error: error.message 

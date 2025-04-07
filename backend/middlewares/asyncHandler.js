@@ -1,6 +1,8 @@
+import { HttpStatus } from "../utils/httpStatus";
+
 const asyncHandler = (fn) => (req, res, next) => {
     return Promise.resolve(fn(req, res, next)).catch((error) => {
-        res.status(500).json({ message: error.message });
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
     });
 };
 

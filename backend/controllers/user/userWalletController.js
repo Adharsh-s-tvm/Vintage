@@ -44,7 +44,7 @@ export const getWalletDetails = asyncHandler(async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: "Failed to fetch wallet details"
     });

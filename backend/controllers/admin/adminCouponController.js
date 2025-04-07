@@ -7,20 +7,20 @@ export const addCoupon = async (req, res) => {
 
     // Validate required fields and check for empty spaces
     if (!couponCode?.trim() || !discountType || !discountValue || !startDate || !endDate || !minOrderAmount) {
-      return res.status(400).json({ message: 'All fields are required' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'All fields are required' });
     }
 
     if (discountType === 'percentage' && discountValue > 100) {
-      return res.status(400).json({ message: 'Discount value must be less than 100 for percentage discount' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Discount value must be less than 100 for percentage discount' });
     }
 
     // Validate coupon code format
     if (couponCode.trim().length < 3) {
-      return res.status(400).json({ message: 'Coupon code must be at least 3 characters long' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Coupon code must be at least 3 characters long' });
     }
 
     if (discountValue >= minOrderAmount) {
-      return res.status(400).json({ message: 'Discount value must be less than minimum order amount' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Discount value must be less than minimum order amount' });
     }
 
     // Check if coupon code already exists (case insensitive)
@@ -29,7 +29,7 @@ export const addCoupon = async (req, res) => {
     });
 
     if (existingCoupon) {
-      return res.status(400).json({ message: 'Coupon code already exists' });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Coupon code already exists' });
     }
 
     // Create new coupon with trimmed code
@@ -45,7 +45,7 @@ export const addCoupon = async (req, res) => {
     await coupon.save();
     res.status(HttpStatus.CREATED).json(coupon);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -107,7 +107,7 @@ export const getAllCoupons = async (req, res) => {
       }
     });
   } catch (error) {
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       message: "Failed to fetch coupons",
       error: error.message
     });
@@ -122,11 +122,11 @@ export const updateCoupon = async (req, res) => {
     // Validate coupon code if it's being updated
     if (updateData.couponCode) {
       if (!updateData.couponCode.trim()) {
-        return res.status(400).json({ message: 'Coupon code cannot be empty' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Coupon code cannot be empty' });
       }
 
       if (updateData.couponCode.trim().length < 3) {
-        return res.status(400).json({ message: 'Coupon code must be at least 3 characters long' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Coupon code must be at least 3 characters long' });
       }
 
       // Check if the new code already exists (excluding current coupon)
@@ -136,7 +136,7 @@ export const updateCoupon = async (req, res) => {
       });
 
       if (existingCoupon) {
-        return res.status(400).json({ message: 'Coupon code already exists' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Coupon code already exists' });
       }
 
       // Trim and uppercase the coupon code
@@ -146,7 +146,7 @@ export const updateCoupon = async (req, res) => {
     // Validate discount value if both discount value and min order amount are present
     if (updateData.discountValue && updateData.minOrderAmount) {
       if (updateData.discountValue >= updateData.minOrderAmount) {
-        return res.status(400).json({ message: 'Discount value must be less than minimum order amount' });
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Discount value must be less than minimum order amount' });
       }
     }
 
@@ -157,12 +157,12 @@ export const updateCoupon = async (req, res) => {
     );
 
     if (!coupon) {
-      return res.status(404).json({ message: 'Coupon not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Coupon not found' });
     }
 
     res.status(HttpStatus.OK).json(coupon);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -172,7 +172,7 @@ export const toggleCouponStatus = async (req, res) => {
 
     const coupon = await Coupon.findById(id);
     if (!coupon) {
-      return res.status(404).json({ message: 'Coupon not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Coupon not found' });
     }
 
     coupon.isExpired = !coupon.isExpired;
@@ -180,6 +180,6 @@ export const toggleCouponStatus = async (req, res) => {
 
     res.status(HttpStatus.OK).json(coupon);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };

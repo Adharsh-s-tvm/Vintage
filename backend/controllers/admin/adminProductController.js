@@ -18,7 +18,7 @@ export const addProduct = async (req, res) => {
     res.status(HttpStatus.CREATED).json(populatedProduct);
   } catch (error) {
     console.error('Error adding product:', error);
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -107,7 +107,7 @@ export const getAllProducts = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching products:', error);
-    res.status(500).json({ message: 'Error fetching products' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error fetching products' });
   }
 };
 
@@ -119,7 +119,7 @@ export const addVariant = async (req, res) => {
 
     // Validate required fields
     if (!product || !size || !color || !stock || !price) {
-      return res.status(400).json({
+      return res.status(HttpStatus.BAD_REQUEST).json({
         success: false,
         message: "All fields are required"
       });
@@ -166,7 +166,7 @@ export const addVariant = async (req, res) => {
 
   } catch (error) {
     console.error('Error in addVariant:', error);
-    res.status(400).json({
+    res.status(HttpStatus.BAD_REQUEST).json({
       success: false,
       message: error.message || 'Failed to add variant'
     });
@@ -179,13 +179,13 @@ export const addCategory = async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
-    return res.status(400).json({ message: "Category name is required" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Category name is required" });
   }
 
   // Check if category already exists
   const existingCategory = await Category.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
   if (existingCategory) {
-    return res.status(400).json({ message: "Category already exists" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Category already exists" });
   }
 
   const newCategory = new Category({
@@ -246,7 +246,7 @@ export const getAllCategories = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: 'Error fetching categories',
       error: error.message 
@@ -265,7 +265,7 @@ export const getAllCategoriesWithoutPagination = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching categories:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: 'Error fetching categories',
       error: error.message 
@@ -280,12 +280,12 @@ export const updateCategoryStatus = async (req, res) => {
   const { status } = req.body;
 
   if (!status || !['listed', 'Not listed'].includes(status)) {
-    return res.status(400).json({ message: "Invalid status" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Invalid status" });
   }
 
   const category = await Category.findById(id);
   if (!category) {
-    return res.status(404).json({ message: "Category not found" });
+    return res.status(HttpStatus.NOT_FOUND).json({ message: "Category not found" });
   }
 
   category.status = status;
@@ -300,7 +300,7 @@ export const updateCategory = async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
-    return res.status(400).json({ message: "Category name is required" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Category name is required" });
   }
 
   // Check if the new name already exists for other categories
@@ -310,12 +310,12 @@ export const updateCategory = async (req, res) => {
   });
 
   if (existingCategory) {
-    return res.status(400).json({ message: "Category name already exists" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Category name already exists" });
   }
 
   const category = await Category.findById(id);
   if (!category) {
-    return res.status(404).json({ message: "Category not found" });
+    return res.status(HttpStatus.NOT_FOUND).json({ message: "Category not found" });
   }
 
   category.name = name;
@@ -327,13 +327,13 @@ export const addBrand = async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
-    return res.status(400).json({ message: "Brand name is required" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Brand name is required" });
   }
 
   // Check if brand already exists
   const existingBrand = await Brand.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
   if (existingBrand) {
-    return res.status(400).json({ message: "Brand already exists" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Brand already exists" });
   }
 
   const newBrand = new Brand({
@@ -392,7 +392,7 @@ export const getAllBrands = async (req, res) => {
 
   } catch (error) {
     console.error('Error fetching brands:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: 'Error fetching brands',
       error: error.message 
@@ -405,12 +405,12 @@ export const updateBrandStatus = async (req, res) => {
   const { status } = req.body;
 
   if (!status || !['listed', 'Not listed'].includes(status)) {
-    return res.status(400).json({ message: "Invalid status" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Invalid status" });
   }
 
   const brand = await Brand.findById(id);
   if (!brand) {
-    return res.status(404).json({ message: "Brand not found" });
+    return res.status(HttpStatus.NOT_FOUND).json({ message: "Brand not found" });
   }
 
   brand.status = status;
@@ -423,7 +423,7 @@ export const updateBrand = async (req, res) => {
   const { name } = req.body;
 
   if (!name) {
-    return res.status(400).json({ message: "Brand name is required" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Brand name is required" });
   }
 
   const existingBrand = await Brand.findOne({
@@ -432,12 +432,12 @@ export const updateBrand = async (req, res) => {
   });
 
   if (existingBrand) {
-    return res.status(400).json({ message: "Brand name already exists" });
+    return res.status(HttpStatus.BAD_REQUEST).json({ message: "Brand name already exists" });
   }
 
   const brand = await Brand.findById(id);
   if (!brand) {
-    return res.status(404).json({ message: "Brand not found" });
+    return res.status(HttpStatus.NOT_FOUND).json({ message: "Brand not found" });
   }
 
   brand.name = name;
@@ -456,7 +456,7 @@ export const getProductVariants = async (req, res) => {
     res.status(HttpStatus.OK).json(variants);
   } catch (error) {
     console.error('Error fetching variants:', error);
-    res.status(500).json({ message: 'Error fetching variants' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error fetching variants' });
   }
 };
 
@@ -469,7 +469,7 @@ export const updateProduct = async (req, res) => {
 
     // Validate input data
     if (!updateData.name || !updateData.category || !updateData.brand) {
-      return res.status(400).json({ message: "Required fields are missing" });
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: "Required fields are missing" });
     }
 
     // Log the update operation
@@ -483,7 +483,7 @@ export const updateProduct = async (req, res) => {
       .populate('brand', 'name');
 
     if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Product not found" });
     }
 
     // Log the updated product
@@ -492,7 +492,7 @@ export const updateProduct = async (req, res) => {
     res.status(HttpStatus.OK).json(updatedProduct);
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -503,7 +503,7 @@ export const deleteVariant = async (req, res) => {
 
     const variant = await Variant.findById(variantId);
     if (!variant) {
-      return res.status(404).json({ message: "Variant not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Variant not found" });
     }
 
     // Remove variant from product's variants array
@@ -518,7 +518,7 @@ export const deleteVariant = async (req, res) => {
     res.status(HttpStatus.OK).json({ message: "Variant deleted successfully" });
   } catch (error) {
     console.error('Error deleting variant:', error);
-    res.status(500).json({ message: 'Error deleting variant' });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error deleting variant' });
   }
 };
 
@@ -536,13 +536,13 @@ export const updateProductStatus = async (req, res) => {
       .populate('brand', 'name');
 
     if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Product not found" });
     }
 
     res.status(HttpStatus.OK).json(updatedProduct);
   } catch (error) {
     console.error('Error updating product status:', error);
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -573,13 +573,13 @@ export const updateVariant = async (req, res) => {
     ).populate('product', 'name');
 
     if (!updatedVariant) {
-      return res.status(404).json({ message: "Variant not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Variant not found" });
     }
 
     res.status(HttpStatus.OK).json(updatedVariant);
   } catch (error) {
     console.error('Error updating variant:', error);
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -597,13 +597,13 @@ export const updateProductBlockStatus = async (req, res) => {
       .populate('brand', 'name');
 
     if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Product not found" });
     }
 
     res.status(HttpStatus.OK).json(updatedProduct);
   } catch (error) {
     console.error('Error updating product block status:', error);
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -620,13 +620,13 @@ export const updateVariantBlockStatus = async (req, res) => {
     ).populate('product', 'name');
 
     if (!updatedVariant) {
-      return res.status(404).json({ message: "Variant not found" });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: "Variant not found" });
     }
 
     res.status(HttpStatus.OK).json(updatedVariant);
   } catch (error) {
     console.error('Error updating variant block status:', error);
-    res.status(400).json({ message: error.message });
+    res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
   }
 };
 
@@ -642,7 +642,7 @@ export const getAllBrandsWithoutPagination = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching brands:', error);
-    res.status(500).json({ 
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ 
       success: false,
       message: 'Error fetching brands',
       error: error.message 

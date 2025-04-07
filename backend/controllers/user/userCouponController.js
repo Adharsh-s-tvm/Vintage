@@ -1,4 +1,5 @@
 import Coupon from '../../models/product/couponModel.js';
+import { HttpStatus } from '../../utils/httpStatus.js';
 
 export const getAvailableCoupons = async (req, res) => {
   
@@ -20,7 +21,7 @@ export const getAvailableCoupons = async (req, res) => {
 
     res.json(coupons);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 };
 
@@ -37,11 +38,11 @@ export const applyCoupon = async (req, res) => {
     });
 
     if (!coupon) {
-      return res.status(404).json({ message: 'Invalid or expired coupon' });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Invalid or expired coupon' });
     }
 
     if (cartTotal < coupon.minOrderAmount) {
-      return res.status(400).json({ 
+      return res.status(HttpStatus.BAD_REQUEST).json({ 
         message: `Minimum order amount of ₹${coupon.minOrderAmount} required`
       });
     }
@@ -58,7 +59,7 @@ export const applyCoupon = async (req, res) => {
       couponDetails: coupon
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 };
 
@@ -114,6 +115,6 @@ export const calculateFinalPrice = async (req, res) => {
         sum + (item.originalTotal - item.finalPrice), 0)
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 };

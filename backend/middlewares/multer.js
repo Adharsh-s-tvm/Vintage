@@ -1,6 +1,7 @@
 import multer from 'multer';
 import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import cloudinary from '../config/cloudinary.js';
+import { HttpStatus } from '../utils/httpStatus.js';
 
 
 // Add error handling for cloudinary configuration
@@ -47,7 +48,7 @@ const handleUpload = (req, res, next) => {
     uploadFields(req, res, (err) => {
         if (err) {
             console.error("Upload error:", err);
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 success: false,
                 message: "File upload error",
                 error: err.message
@@ -62,7 +63,7 @@ const handleUpload = (req, res, next) => {
 
         // For other routes (like adding new variants), require files
         if (!req.files || Object.keys(req.files).length === 0) {
-            return res.status(400).json({
+            return res.status(HttpStatus.BAD_REQUEST).json({
                 success: false,
                 message: "No files were uploaded"
             });

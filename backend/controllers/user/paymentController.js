@@ -140,7 +140,7 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
     const { amount, addressId, paymentMethod, } = req.body;
     
     if (!amount || !addressId || !paymentMethod) {
-      res.status(400);
+      res.status(HttpStatus.BAD_REQUEST);
       throw new Error('Amount, address, and payment method are required');
     }
 
@@ -179,7 +179,7 @@ export const createPaymentOrder = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message
     });
@@ -254,7 +254,7 @@ export const verifyPayment = asyncHandler(async (req, res) => {
 
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message
     });
@@ -314,7 +314,7 @@ export const cancelPayment = asyncHandler(async (req, res) => {
 
   } catch (error) {
     await session.abortTransaction();
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message
     });
@@ -361,7 +361,7 @@ export const handlePaymentFailure = asyncHandler(async (req, res) => {
     });
 
   } catch (error) {
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message
     });

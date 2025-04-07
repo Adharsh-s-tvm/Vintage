@@ -60,7 +60,7 @@ export const getAllTransactions = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in getAllTransactions:', error);
-    res.status(500).json({
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: error.message || 'Internal server error'
     });
@@ -76,7 +76,7 @@ export const getTransactionDetails = async (req, res) => {
       .populate('userId', 'name email phone');
 
     if (!wallet) {
-      return res.status(404).json({ message: 'Transaction not found' });
+      return res.status(HttpStatus.NOT_FOUND).json({ message: 'Transaction not found' });
     }
 
     const transaction = wallet.transactions.id(transactionId);
@@ -90,6 +90,6 @@ export const getTransactionDetails = async (req, res) => {
       date: transaction.date
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: error.message });
   }
 };
