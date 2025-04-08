@@ -151,8 +151,7 @@ function UserProfile() {
               <div>
                 <Label className="text-sm text-gray-500">Username</Label>
                 <p className="text-sm font-medium">{userDetails?.username || 'Not provided'}</p>
-              </div>
-              <div className="col-span-2">
+              <div className="col-span-2 mt-3">
                 <Label className="text-sm text-gray-500">Referral Code</Label>
                 <div className="flex items-center gap-2">
                   <p className="text-lg font-mono bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text font-bold">
@@ -181,6 +180,7 @@ function UserProfile() {
                     </svg>
                   </button>
                 </div>
+              </div>
               </div>
               <div>
                 <Label className="text-sm text-gray-500">Member Since</Label>
