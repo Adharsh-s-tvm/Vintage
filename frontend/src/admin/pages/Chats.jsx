@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Send } from 'lucide-react';
+import { API } from '../../services/api/api';
 
 function Chats() {
-  const [users, setUsers] = useState([]);  // Initialize as empty array
+  const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -11,31 +12,34 @@ function Chats() {
 
   useEffect(() => {
     fetchUsers();
+    const interval = setInterval(fetchUsers, 10000); // Poll every 10 seconds
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (selectedUser) {
+      fetchMessages(selectedUser._id);
+      const interval = setInterval(() => fetchMessages(selectedUser._id), 5000);
+      return () => clearInterval(interval);
+    }
+  }, [selectedUser]);
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/admin/chat-users');
-      // Ensure users is always an array
+      const response = await API.get('/chat/admin/chat-users');
       setUsers(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching users:', error);
-      setUsers([]); // Set to empty array on error
+      setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (selectedUser) {
-      fetchMessages(selectedUser._id);
-    }
-  }, [selectedUser]);
-
   const fetchMessages = async (userId) => {
     try {
-      const response = await axios.get(`/api/admin/messages/${userId}`);
+      const response = await API.get(`/chat/admin/messages/${userId}`);
       setMessages(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -48,7 +52,7 @@ function Chats() {
     if (!newMessage.trim() || !selectedUser) return;
 
     try {
-      const response = await axios.post('/api/admin/messages', {
+      const response = await API.post('/chat/admin/messages', {
         text: newMessage,
         receiverId: selectedUser._id,
         time: new Date(),
@@ -60,6 +64,8 @@ function Chats() {
       console.error('Error sending message:', error);
     }
   };
+
+
 
   if (loading) {
     return (
@@ -116,26 +122,26 @@ function Chats() {
                 </div>
               ) : (
                 messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${
-                      message.senderId === 'ADMIN_ID' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
                     <div
-                      className={`max-w-[70%] rounded-lg p-3 ${
-                        message.senderId === 'ADMIN_ID'
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100'
+                      key={index}
+                      className={`flex ${
+                        message.isAdminMessage ? 'justify-end' : 'justify-start'
                       }`}
                     >
-                      <p>{message.text}</p>
-                      <span className="text-xs opacity-75">
-                        {new Date(message.time).toLocaleTimeString()}
-                      </span>
+                      <div
+                        className={`max-w-[70%] rounded-lg p-3 ${
+                          message.isAdminMessage
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100'
+                        }`}
+                      >
+                        <p>{message.text}</p>
+                        <span className="text-xs opacity-75">
+                          {new Date(message.time).toLocaleTimeString()}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
 

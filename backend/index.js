@@ -27,6 +27,7 @@ import adminOfferRoutes from './routes/admin/adminOfferRoutes.js'
 import adminCouponRoutes from './routes/admin/adminCouponRoutes.js'
 import userCouponRoutes from './routes/user/userCouponRoutes.js'
 import adminWalletRoutes from './routes/admin/adminWalletRoutes.js'
+import messageRoutes from './routes/messageRoutes.js'
 
 
 dotenv.config()
@@ -98,6 +99,8 @@ app.use("/api/admin/coupons", adminCouponRoutes)
 
 app.use("/api/admin/wallet", adminWalletRoutes)
 
+
+app.use("/api/chat", messageRoutes)
 
 
 app.use("/api", userRoutes);

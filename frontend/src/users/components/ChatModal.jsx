@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, Send } from 'lucide-react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
+import { API } from '../../services/api/api'
 
 export default function ChatModal({ open, onClose }) {
   const [messages, setMessages] = useState([]);
@@ -10,21 +11,30 @@ export default function ChatModal({ open, onClose }) {
   const messagesEndRef = useRef(null);
   const { userInfo } = useSelector((state) => state.auth);
 
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
     if (open) {
       fetchMessages();
+      const interval = setInterval(fetchMessages, 5000); // Poll every 5 seconds
+      return () => clearInterval(interval);
     }
   }, [open]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('/api/messages');
-      // Ensure messages is always an array
+      const response = await API.get('/chat/user/messages');
       setMessages(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching messages:', error);
-      setMessages([]); // Set to empty array on error
+      setMessages([]);
     } finally {
       setLoading(false);
     }
@@ -35,9 +45,9 @@ export default function ChatModal({ open, onClose }) {
     if (!newMessage.trim()) return;
 
     try {
-      const response = await axios.post('/api/messages', {
+      const response = await API.post('/chat/user/messages', {
         text: newMessage,
-        receiverId: 'ADMIN_ID', // Replace with actual admin ID
+        receiverId: '67c52d1795b7c876db8a4c91',    //process.env.REACT_APP_ADMIN_ID, // Set this in your environment variables
         time: new Date(),
       });
 
