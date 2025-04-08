@@ -278,7 +278,6 @@ export default function Cart() {
                 <Button variant="outline" asChild>
                   <Link to="/products">Continue Shopping</Link>
                 </Button>
-                <Button variant="outline">Update Cart</Button>
               </div>
             </div>
 
@@ -295,12 +294,8 @@ export default function Cart() {
               </Button>
 
               <div className="mt-6">
-                <h3 className="font-medium mb-2">We Accept</h3>
                 <div className="flex space-x-2">
-                  <div className="h-8 w-12 bg-gray-100 rounded"></div>
-                  <div className="h-8 w-12 bg-gray-100 rounded"></div>
-                  <div className="h-8 w-12 bg-gray-100 rounded"></div>
-                  <div className="h-8 w-12 bg-gray-100 rounded"></div>
+                
                 </div>
               </div>
             </div>
