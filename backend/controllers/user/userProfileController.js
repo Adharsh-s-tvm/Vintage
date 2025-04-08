@@ -180,6 +180,13 @@ export const updateUserDetails = asyncHandler(async (req, res) => {
             image
         } = req.body;
 
+        if (phone) {
+            const isValidPhone = (phone) => /^[0-9]{10}$/.test(phone);
+            if (!isValidPhone(phone)) {
+                return res.status(HttpStatus.BAD_REQUEST).json({ message: 'Invalid phone number' });
+            }
+        }
+
         if (firstname) user.firstname = firstname;
         if (lastname) user.lastname = lastname;
         if (email) user.email = email;
