@@ -5,6 +5,8 @@ import cookieParser from "cookie-parser";
 import cors from 'cors'
 import morgan from "morgan";
 import helmet from "helmet";
+import http from 'http'
+import { Server } from "socket.io";
 import { initCouponExpirationCheck } from "./utils/cronJobs.js"
 
 // Utiles 
@@ -56,7 +58,32 @@ app.use(cookieParser())
 app.use(helmet())
 app.use(morgan("dev"))
 
+const server = http.createServer(app);
 
+const io = new Server(server, {
+    cors: {
+        origin: process.env.FRONTEND_URL,
+        methods: ["GET", "POST"],
+        credentials: true
+    }, 
+})
+
+io.on("connection", (socket) => {
+    console.log("A user connected", socket.id); 
+
+
+socket.on("send_message", (data) => {
+   io.to(data.receiverId).emit("receive_message", data) 
+})
+
+socket.on('join_room', (roomId) => {
+    socket.join(roomId);
+});
+
+socket.on('disconnect', () => {
+    console.log('Client disconnected');
+  });
+});
 
 
 app.use("/api/admin", adminRoutes);

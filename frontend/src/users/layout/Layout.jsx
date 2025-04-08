@@ -12,6 +12,7 @@ import {
 } from '../../ui/Select';
 import { Button } from '../../ui/Button';
 import { ChevronRight, ChevronLeft } from 'lucide-react';
+import FloatingChatButton from '../components/FloatingChatButton';
 
 export function Layout({ children, showSidebar = false, sidebarContent }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -145,6 +146,7 @@ export function Layout({ children, showSidebar = false, sidebarContent }) {
         </div>
       </main>
       <Footer />
+      <FloatingChatButton />
     </div>
   );
 }

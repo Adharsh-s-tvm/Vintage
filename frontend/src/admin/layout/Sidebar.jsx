@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../../lib/util';
 import { Button } from '../../ui/Button';
-import { BrandingWatermark, BrandingWatermarkOutlined, BrandingWatermarkRounded, BrandingWatermarkSharp, BrandingWatermarkTwoTone, Category, CategoryRounded, ListAlt, Percent, PersonAddAltRounded, ProductionQuantityLimitsSharp, Wallet, WaterDamageOutlined, WidthNormalOutlined } from '@mui/icons-material';
+import { BrandingWatermark, BrandingWatermarkOutlined, BrandingWatermarkRounded, BrandingWatermarkSharp, BrandingWatermarkTwoTone, Category, CategoryRounded, ListAlt, Message, Percent, PersonAddAltRounded, ProductionQuantityLimitsSharp, Wallet, WaterDamageOutlined, WidthNormalOutlined } from '@mui/icons-material';
 
 export function Sidebar({ className, mobileOpen, onMobileClose }) {
     const [collapsed, setCollapsed] = useState(false);
@@ -50,7 +50,6 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             label: 'Products',
             path: '/admin/products',
             badge: {
-                // count: 24,
                 color: 'badge-info'
             }
         },
@@ -95,6 +94,11 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
             label: 'Wallet',
             path: '/admin/wallet'
         },
+        {
+           icon: Message,
+           label: 'Chat',
+           path: '/admin/chat' 
+        }
     ];
 
     return (

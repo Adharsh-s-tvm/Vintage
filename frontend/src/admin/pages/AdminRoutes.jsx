@@ -14,6 +14,7 @@ import Returns from './Returns'
 import Coupons from './Coupons'
 import Offers from './Offers'
 import AdminWallet from './AdminWallet'
+import Chats from './Chats'
 
 function AdminRoutes() {
   return (
@@ -30,6 +31,7 @@ function AdminRoutes() {
         <Route path='offers' element={<Offers />} />
         <Route path='coupons' element={<Coupons />} />
         <Route path='wallet' element={<AdminWallet />} />
+        <Route path='chat' element={<Chats />} />
         
       </Route>
       <Route path='/*' element={<NotFound redirectPageType={'admin'} />} />
