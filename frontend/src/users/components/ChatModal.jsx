@@ -47,7 +47,7 @@ export default function ChatModal({ open, onClose }) {
     try {
       const response = await API.post('/chat/user/messages', {
         text: newMessage,
-        receiverId: '67c52d1795b7c876db8a4c91',    //process.env.REACT_APP_ADMIN_ID, // Set this in your environment variables
+        receiverId: import.meta.env.REACT_APP_ADMIN_ID, // Set this in your environment variables
         time: new Date(),
       });
 

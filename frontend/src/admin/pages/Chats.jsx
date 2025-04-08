@@ -98,7 +98,7 @@ function Chats() {
                   }`}
                 >
                   <p className="font-medium">{user.firstname} {user.lastname}</p>
-                  <p className="text-sm text-gray-500">{user.email}</p>
+                 
                 </button>
               ))
             )}
@@ -112,7 +112,7 @@ function Chats() {
           <>
             <div className="p-4 border-b">
               <h3 className="font-semibold">{selectedUser.firstname} {selectedUser.lastname}</h3>
-              <p className="text-sm text-gray-500">{selectedUser.email}</p>
+             
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
