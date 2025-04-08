@@ -110,11 +110,8 @@ export function Navbar() {
   };
 
   const categories = [
-    { name: 'All', href: '/products' },
-    { name: 'Winter', href: '#' },
-    { name: 'Leather', href: '#' },
-    { name: 'Denim', href: '#' },
-    { name: 'Summer', href: '#' },
+    { name: '', href: '/products' },
+
   ];
 
   const handleLogout = () => {
