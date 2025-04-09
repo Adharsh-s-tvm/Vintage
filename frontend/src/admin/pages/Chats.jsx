@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import { Send } from 'lucide-react';
 import { API } from '../../services/api/api';
 

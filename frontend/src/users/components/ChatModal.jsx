@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send } from 'lucide-react';
-import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { API } from '../../services/api/api'
 

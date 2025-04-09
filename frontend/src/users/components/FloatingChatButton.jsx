@@ -23,9 +23,12 @@ export default function FloatingChatButton() {
     <>
       <button
         onClick={handleChatClick}
-        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all z-50"
+        className="fixed bottom-4 right-4 bg-emerald-500 text-white p-3 rounded-full hover:bg-emerald-600 transition-all z-50 group"
       >
         <MessageCircle className="h-6 w-6" />
+        <span className="absolute hidden group-hover:block right-full mr-2 bg-gray-800 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
+          Chat with us
+        </span>
       </button>
 
       {userInfo && <ChatModal open={isChatOpen} onClose={() => setIsChatOpen(false)} />}
