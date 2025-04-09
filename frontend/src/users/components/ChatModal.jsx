@@ -4,12 +4,16 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { API } from '../../services/api/api'
 
+
+const RECIEVER_ID = import.meta.env.VITE_REACT_APP_ADMIN_ID; 
+const RECIEVER_IDd = import.meta.env.VITE_RAZORPAY_KEY_ID; 
 export default function ChatModal({ open, onClose }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const { userInfo } = useSelector((state) => state.auth);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -41,13 +45,13 @@ export default function ChatModal({ open, onClose }) {
   };
 
   const sendMessage = async (e) => {
-    e.preventDefault();
+    e.preventDefault();    
     if (!newMessage.trim()) return;
 
     try {
       const response = await API.post('/chat/user/messages', {
         text: newMessage,
-        receiverId: import.meta.env.REACT_APP_ADMIN_ID, // Set this in your environment variables
+        receiverId: RECIEVER_ID, // Set this in your environment variables
         time: new Date(),
       });
 
