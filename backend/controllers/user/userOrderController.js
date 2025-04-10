@@ -502,7 +502,11 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
         return res.status(HttpStatus.NOT_FOUNDyy).json({ message: "Order not found" });
     }
 
-    const doc = new PDFDocument({ margin: 50 });
+    const doc = new PDFDocument({ 
+        margin: 50,
+        size: 'A4'
+    });
+
     const filePath = path.join(__dirname, `../invoices/invoice-${orderId}.pdf`);
 
     if (!fs.existsSync(path.join(__dirname, '../invoices'))) {
@@ -512,121 +516,170 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Add company logo or header
-    doc.fontSize(20).text("VINTAGE", { align: "center" });
-    doc.fontSize(10).text("Your Fashion Destination", { align: "center" });
-    doc.moveDown();
-
-    // Add horizontal line
-    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-    doc.moveDown();
-
-    // Invoice header with two columns
-    doc.fontSize(16).text("INVOICE", { align: "center" });
-    doc.moveDown();
-
-    // Create two columns for invoice details
-    const leftColumn = {
-        x: 50,
-        width: 250,
-        fontSize: 10
-    };
-    const rightColumn = {
-        x: 300,
-        width: 250,
-        fontSize: 10
+    // Helper function for drawing borders
+    const drawBorder = () => {
+        doc.lineWidth(1)
+           .rect(40, 40, doc.page.width - 80, doc.page.height - 80)
+           .stroke();
     };
 
-    // Left column - Customer details
-    doc.font('Helvetica-Bold').fontSize(leftColumn.fontSize)
-        .text("BILLED TO:", leftColumn.x, doc.y);
-    doc.font('Helvetica').fontSize(leftColumn.fontSize)
-        .text(`${order.user.firstname} ${order.user.lastname}`)
-        .text(`Email: ${order.user.email}`);
+    // Add decorative border
+    drawBorder();
 
-    // Right column - Order details
-    doc.font('Helvetica-Bold').fontSize(rightColumn.fontSize)
-        .text("ORDER DETAILS:", rightColumn.x, doc.y - doc.currentLineHeight() * 3);
-    doc.font('Helvetica').fontSize(rightColumn.fontSize)
-        .text(`Order ID: ${order.orderId}`)
-        .text(`Order Date: ${new Date(order.createdAt).toLocaleDateString()}`)
-        .text(`Payment Method: ${order.payment.method.toUpperCase()}`);
+    // Add company header with styling
+    doc.fontSize(24)
+       .font('Helvetica-Bold')
+       .text("VINTAGE", { align: "center" });
+    
+    doc.fontSize(12)
+       .font('Helvetica')
+       .text("Your Fashion Destination", { align: "center" });
+
+    // Add decorative line with gradient
+    doc.lineWidth(2);
+    const gradient = doc.linearGradient(50, doc.y + 10, 550, doc.y + 10);
+    gradient.stop(0, '#000000')
+           .stop(0.5, '#666666')
+           .stop(1, '#000000');
+    doc.moveTo(50, doc.y + 10)
+       .lineTo(550, doc.y + 10)
+       .stroke(gradient);
 
     doc.moveDown(2);
 
-    // Shipping address
-    doc.font('Helvetica-Bold').fontSize(10)
-        .text("SHIPPING ADDRESS:", leftColumn.x);
-    doc.font('Helvetica').fontSize(10)
-        .text(order.shipping.address.fullName)
-        .text(order.shipping.address.street)
-        .text(`${order.shipping.address.city}, ${order.shipping.address.state} ${order.shipping.address.postalCode}`)
-        .text(`Phone: ${order.shipping.address.phone}`);
+    // Add invoice title with background
+    doc.rect(doc.x, doc.y, 500, 30).fill('#f0f0f0');
+    doc.fontSize(16)
+       .font('Helvetica-Bold')
+       .fillColor('#000000')
+       .text("INVOICE", { align: "center" });
 
-    doc.moveDown(2);
-
-    // Add table header for items
-    const tableTop = doc.y;
-    const itemX = 50;
-    const descriptionX = 150;
-    const quantityX = 280;
-    const priceX = 350;
-    const totalX = 450;
-
-    // Draw table header
-    doc.font('Helvetica-Bold').fontSize(10)
-        .text('Item', itemX, tableTop)
-        .text('Description', descriptionX, tableTop)
-        .text('Qty', quantityX, tableTop)
-        .text('Price', priceX, tableTop)
-        .text('Total', totalX, tableTop);
-
-    // Draw header line
-    doc.moveTo(50, doc.y + 5).lineTo(550, doc.y + 5).stroke();
     doc.moveDown();
 
-    // Add items
-    let currentY = doc.y;
-    order.items.forEach((item, index) => {
-        doc.font('Helvetica').fontSize(10)
-            .text(`${index + 1}`, itemX, currentY)
-            .text(`${item.product.name}\n${item.sizeVariant.size}/${item.sizeVariant.color}`, descriptionX, currentY)
-            .text(`${item.quantity}`, quantityX, currentY)
-            .text(`₹${item.price}`, priceX, currentY)
-            .text(`₹${item.finalPrice}`, totalX, currentY);
+    // Create styled info boxes
+    const drawInfoBox = (title, content, x, y, width) => {
+        doc.rect(x, y, width, 80)
+           .lineWidth(1)
+           .stroke();
         
-        currentY = doc.y + 10;
+        // Title background
+        doc.rect(x, y, width, 20)
+           .fill('#f0f0f0');
+        
+        // Title
+        doc.fontSize(10)
+           .font('Helvetica-Bold')
+           .fillColor('#000000')
+           .text(title, x + 5, y + 5, { width: width - 10 });
+        
+        // Content
+        doc.fontSize(9)
+           .font('Helvetica')
+           .text(content, x + 5, y + 25, { width: width - 10 });
+    };
+
+    // Draw info boxes
+    const startY = doc.y;
+    drawInfoBox(
+        "BILLED TO",
+        `${order.user.firstname} ${order.user.lastname}\n${order.user.email}`,
+        50, startY, 240
+    );
+
+    drawInfoBox(
+        "ORDER DETAILS",
+        `Order ID: ${order.orderId}\nDate: ${new Date(order.createdAt).toLocaleDateString()}\nPayment: ${order.payment.method.toUpperCase()}`,
+        310, startY, 240
+    );
+
+    doc.moveDown(4);
+
+    drawInfoBox(
+        "SHIPPING ADDRESS",
+        `${order.shipping.address.fullName}\n${order.shipping.address.street}\n${order.shipping.address.city}, ${order.shipping.address.state} ${order.shipping.address.postalCode}\nPhone: ${order.shipping.address.phone}`,
+        50, doc.y, 500
+    );
+
+    doc.moveDown(5);
+
+    // Create styled table
+    const createTable = () => {
+        const tableTop = doc.y + 10;
+        const tableHeaders = ['Item', 'Description', 'Qty', 'Price', 'Total'];
+        const columnWidths = [40, 220, 60, 90, 90];
+        let xPosition = 50;
+
+        // Draw table header
+        doc.rect(50, tableTop, 500, 20).fill('#f0f0f0');
+        tableHeaders.forEach((header, i) => {
+            doc.fontSize(10)
+               .font('Helvetica-Bold')
+               .fillColor('#000000')
+               .text(header, xPosition, tableTop + 5, { width: columnWidths[i], align: 'center' });
+            xPosition += columnWidths[i];
+        });
+
+        // Draw table content
+        let currentY = tableTop + 20;
+        order.items.forEach((item, index) => {
+            xPosition = 50;
+            doc.rect(50, currentY, 500, 30).stroke();
+            
+            doc.fontSize(9)
+               .font('Helvetica')
+               .text(`${index + 1}`, xPosition, currentY + 10, { width: columnWidths[0], align: 'center' });
+            xPosition += columnWidths[0];
+            
+            doc.text(`${item.product.name}\n${item.sizeVariant.size}/${item.sizeVariant.color}`, xPosition, currentY + 5, { width: columnWidths[1] });
+            xPosition += columnWidths[1];
+            
+            doc.text(`${item.quantity}`, xPosition, currentY + 10, { width: columnWidths[2], align: 'center' });
+            xPosition += columnWidths[2];
+            
+            doc.text(`₹${item.price}`, xPosition, currentY + 10, { width: columnWidths[3], align: 'right' });
+            xPosition += columnWidths[3];
+            
+            doc.text(`₹${item.finalPrice}`, xPosition, currentY + 10, { width: columnWidths[4], align: 'right' });
+            
+            currentY += 30;
+        });
+
+        return currentY;
+    };
+
+    const tableEndY = createTable();
+
+    // Add styled totals section
+    doc.rect(350, tableEndY + 10, 200, 100)
+       .lineWidth(1)
+       .stroke();
+
+    const totalsY = tableEndY + 20;
+    ['Subtotal:', 'Shipping:', 'Discount:', 'TOTAL:'].forEach((label, index) => {
+        const isTotal = index === 3;
+        doc.fontSize(isTotal ? 12 : 10)
+           .font(isTotal ? 'Helvetica-Bold' : 'Helvetica')
+           .text(label, 360, totalsY + (index * 20));
+        
+        const value = [
+            `₹${order.totalAmount - order.shipping.deliveryCharge}`,
+            `₹${order.shipping.deliveryCharge}`,
+            `₹${order.totalDiscount || 0}`,
+            `₹${order.totalAmount}`
+        ][index];
+
+        doc.text(value, 460, totalsY + (index * 20), { align: 'right' });
     });
 
-    // Draw line after items
-    doc.moveTo(50, doc.y + 5).lineTo(550, doc.y + 5).stroke();
-    doc.moveDown(2);
-
-    // Add totals section
-    const totalsX = 400;
-    doc.font('Helvetica').fontSize(10)
-        .text('Subtotal:', totalsX)
-        .text('Shipping:', totalsX)
-        .text('Discount:', totalsX);
+    // Add styled footer
+    doc.rect(50, doc.page.height - 100, 500, 40)
+       .fill('#f0f0f0');
     
-    doc.font('Helvetica-Bold').fontSize(10)
-        .text(`₹${order.totalAmount - order.shipping.deliveryCharge}`, totalX, doc.y - doc.currentLineHeight() * 3)
-        .text(`₹${order.shipping.deliveryCharge}`, totalX, doc.y - doc.currentLineHeight() * 2)
-        .text(`₹${order.totalDiscount || 0}`, totalX);
-
-    // Draw line before final total
-    doc.moveTo(totalsX - 50, doc.y + 5).lineTo(550, doc.y + 5).stroke();
-    doc.moveDown();
-
-    // Add final total
-    doc.font('Helvetica-Bold').fontSize(12)
-        .text('TOTAL:', totalsX)
-        .text(`₹${order.totalAmount}`, totalX);
-
-    // Add footer
-    doc.moveDown(4);
-    doc.fontSize(8).text('Thank you for shopping with Vintage!', { align: 'center' });
-    doc.fontSize(8).text('For any queries, please contact support@trendythreads.com', { align: 'center' });
+    doc.fontSize(8)
+       .font('Helvetica')
+       .fillColor('#000000')
+       .text('Thank you for shopping with Vintage!', { align: 'center' })
+       .text('For any queries, please contact support@vintage.com', { align: 'center' });
 
     doc.end();
 
