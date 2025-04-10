@@ -513,7 +513,7 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
     doc.pipe(stream);
 
     // Add company logo or header
-    doc.fontSize(20).text("TRENDY THREADS", { align: "center" });
+    doc.fontSize(20).text("VINTAGE", { align: "center" });
     doc.fontSize(10).text("Your Fashion Destination", { align: "center" });
     doc.moveDown();
 
@@ -625,7 +625,7 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
 
     // Add footer
     doc.moveDown(4);
-    doc.fontSize(8).text('Thank you for shopping with Trendy Threads!', { align: 'center' });
+    doc.fontSize(8).text('Thank you for shopping with Vintage!', { align: 'center' });
     doc.fontSize(8).text('For any queries, please contact support@trendythreads.com', { align: 'center' });
 
     doc.end();
