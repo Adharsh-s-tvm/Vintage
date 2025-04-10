@@ -492,7 +492,6 @@ export const returnOrder = asyncHandler(async (req, res) => {
 export const pdfDownloader = asyncHandler(async (req, res) => {
     const { orderId } = req.params;
 
-    // Fetch order details with populated fields
     const order = await Order.findOne({ orderId })
         .populate('user', 'firstname lastname email')
         .populate('items.product', 'name')
@@ -503,11 +502,9 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
         return res.status(HttpStatus.NOT_FOUNDyy).json({ message: "Order not found" });
     }
 
-    // Create a new PDF document
-    const doc = new PDFDocument();
+    const doc = new PDFDocument({ margin: 50 });
     const filePath = path.join(__dirname, `../invoices/invoice-${orderId}.pdf`);
 
-    // Ensure the invoices directory exists
     if (!fs.existsSync(path.join(__dirname, '../invoices'))) {
         fs.mkdirSync(path.join(__dirname, '../invoices'));
     }
@@ -515,42 +512,121 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
     const stream = fs.createWriteStream(filePath);
     doc.pipe(stream);
 
-    // Add invoice details
-    doc.fontSize(20).text("Invoice", { align: "center" });
-    doc.moveDown();
-    doc.fontSize(14).text(`Order ID: ${order.orderId}`);
-    doc.text(`Customer: ${order.user.firstname} ${order.user.lastname}`);
-    doc.text(`Email: ${order.user.email}`);
+    // Add company logo or header
+    doc.fontSize(20).text("TRENDY THREADS", { align: "center" });
+    doc.fontSize(10).text("Your Fashion Destination", { align: "center" });
     doc.moveDown();
 
-    // Add shipping address
-    doc.fontSize(14).text("Shipping Address:");
-    doc.fontSize(12)
+    // Add horizontal line
+    doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
+    doc.moveDown();
+
+    // Invoice header with two columns
+    doc.fontSize(16).text("INVOICE", { align: "center" });
+    doc.moveDown();
+
+    // Create two columns for invoice details
+    const leftColumn = {
+        x: 50,
+        width: 250,
+        fontSize: 10
+    };
+    const rightColumn = {
+        x: 300,
+        width: 250,
+        fontSize: 10
+    };
+
+    // Left column - Customer details
+    doc.font('Helvetica-Bold').fontSize(leftColumn.fontSize)
+        .text("BILLED TO:", leftColumn.x, doc.y);
+    doc.font('Helvetica').fontSize(leftColumn.fontSize)
+        .text(`${order.user.firstname} ${order.user.lastname}`)
+        .text(`Email: ${order.user.email}`);
+
+    // Right column - Order details
+    doc.font('Helvetica-Bold').fontSize(rightColumn.fontSize)
+        .text("ORDER DETAILS:", rightColumn.x, doc.y - doc.currentLineHeight() * 3);
+    doc.font('Helvetica').fontSize(rightColumn.fontSize)
+        .text(`Order ID: ${order.orderId}`)
+        .text(`Order Date: ${new Date(order.createdAt).toLocaleDateString()}`)
+        .text(`Payment Method: ${order.payment.method.toUpperCase()}`);
+
+    doc.moveDown(2);
+
+    // Shipping address
+    doc.font('Helvetica-Bold').fontSize(10)
+        .text("SHIPPING ADDRESS:", leftColumn.x);
+    doc.font('Helvetica').fontSize(10)
         .text(order.shipping.address.fullName)
         .text(order.shipping.address.street)
         .text(`${order.shipping.address.city}, ${order.shipping.address.state} ${order.shipping.address.postalCode}`)
         .text(`Phone: ${order.shipping.address.phone}`);
+
+    doc.moveDown(2);
+
+    // Add table header for items
+    const tableTop = doc.y;
+    const itemX = 50;
+    const descriptionX = 150;
+    const quantityX = 280;
+    const priceX = 350;
+    const totalX = 450;
+
+    // Draw table header
+    doc.font('Helvetica-Bold').fontSize(10)
+        .text('Item', itemX, tableTop)
+        .text('Description', descriptionX, tableTop)
+        .text('Qty', quantityX, tableTop)
+        .text('Price', priceX, tableTop)
+        .text('Total', totalX, tableTop);
+
+    // Draw header line
+    doc.moveTo(50, doc.y + 5).lineTo(550, doc.y + 5).stroke();
     doc.moveDown();
 
-    // Add order items
-    doc.fontSize(14).text("Order Items:");
+    // Add items
+    let currentY = doc.y;
     order.items.forEach((item, index) => {
-        doc.fontSize(12).text(
-            `${index + 1}. ${item.product.name} - ${item.sizeVariant.size}/${item.sizeVariant.color}`,
-            { continued: true }
-        );
-        doc.text(
-            `   Qty: ${item.quantity} x ₹${item.price} = ₹${item.finalPrice}`,
-            { align: 'right' }
-        );
+        doc.font('Helvetica').fontSize(10)
+            .text(`${index + 1}`, itemX, currentY)
+            .text(`${item.product.name}\n${item.sizeVariant.size}/${item.sizeVariant.color}`, descriptionX, currentY)
+            .text(`${item.quantity}`, quantityX, currentY)
+            .text(`₹${item.price}`, priceX, currentY)
+            .text(`₹${item.finalPrice}`, totalX, currentY);
+        
+        currentY = doc.y + 10;
     });
 
+    // Draw line after items
+    doc.moveTo(50, doc.y + 5).lineTo(550, doc.y + 5).stroke();
+    doc.moveDown(2);
+
+    // Add totals section
+    const totalsX = 400;
+    doc.font('Helvetica').fontSize(10)
+        .text('Subtotal:', totalsX)
+        .text('Shipping:', totalsX)
+        .text('Discount:', totalsX);
+    
+    doc.font('Helvetica-Bold').fontSize(10)
+        .text(`₹${order.totalAmount - order.shipping.deliveryCharge}`, totalX, doc.y - doc.currentLineHeight() * 3)
+        .text(`₹${order.shipping.deliveryCharge}`, totalX, doc.y - doc.currentLineHeight() * 2)
+        .text(`₹${order.totalDiscount || 0}`, totalX);
+
+    // Draw line before final total
+    doc.moveTo(totalsX - 50, doc.y + 5).lineTo(550, doc.y + 5).stroke();
     doc.moveDown();
-    // Add totals
-    doc.fontSize(14)
-        .text(`Subtotal: ₹${order.totalAmount - order.shipping.deliveryCharge}`, { align: 'right' })
-        .text(`Shipping: ₹${order.shipping.deliveryCharge}`, { align: 'right' })
-        .text(`Total: ₹${order.totalAmount}`, { align: 'right' });
+
+    // Add final total
+    doc.font('Helvetica-Bold').fontSize(12)
+        .text('TOTAL:', totalsX)
+        .text(`₹${order.totalAmount}`, totalX);
+
+    // Add footer
+    doc.moveDown(4);
+    doc.fontSize(8).text('Thank you for shopping with Trendy Threads!', { align: 'center' });
+    doc.fontSize(8).text('For any queries, please contact support@trendythreads.com', { align: 'center' });
 
     doc.end();
 
@@ -560,7 +636,6 @@ export const pdfDownloader = asyncHandler(async (req, res) => {
                 console.error("Download error:", err);
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: "Error downloading invoice" });
             }
-            // Delete file after download
             fs.unlinkSync(filePath);
         });
     });
