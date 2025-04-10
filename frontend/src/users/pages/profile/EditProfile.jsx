@@ -25,6 +25,7 @@ function EditProfile() {
     const [otpLoading, setOtpLoading] = useState(false);
     const [timer, setTimer] = useState(60);
     const [canResend, setCanResend] = useState(false);
+    const [imageUploading, setImageUploading] = useState(false);  // Add this new state
 
     const [formData, setFormData] = useState({
         firstname: '',
@@ -117,7 +118,7 @@ function EditProfile() {
             formData.append('image', file);
 
             try {
-                setLoading(true);
+                setImageUploading(true);  // Set loading state for image upload
                 const response = await uploadProfileImageApi(formData)
 
                 setProfileImage(response.data.imageUrl);
@@ -126,7 +127,7 @@ function EditProfile() {
             } catch (error) {
                 toast.error('Failed to upload image');
             } finally {
-                setLoading(false);
+                setImageUploading(false);  // Reset loading state
             }
         }
     };
@@ -240,7 +241,11 @@ function EditProfile() {
                     <div className="flex items-center space-x-4 mb-6">
                         <div className="relative">
                             <div className="h-20 w-20 rounded-full bg-gray-200 overflow-hidden">
-                                {profileImage ? (
+                                {imageUploading ? (
+                                    <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                    </div>
+                                ) : profileImage ? (
                                     <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
                                 ) : (
                                     <div className="h-full w-full flex items-center justify-center">
@@ -248,9 +253,15 @@ function EditProfile() {
                                     </div>
                                 )}
                             </div>
-                            <label className="absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full cursor-pointer">
+                            <label className={`absolute bottom-0 right-0 bg-primary text-white p-1.5 rounded-full cursor-pointer ${imageUploading ? 'opacity-50 cursor-not-allowed' : ''}`}>
                                 <Camera className="h-4 w-4" />
-                                <input type="file" className="hidden" onChange={handleImageUpload} accept="image/*" />
+                                <input 
+                                    type="file" 
+                                    className="hidden" 
+                                    onChange={handleImageUpload} 
+                                    accept="image/*"
+                                    disabled={imageUploading}
+                                />
                             </label>
                         </div>
                     </div>
@@ -410,4 +421,4 @@ function EditProfile() {
     );
 }
 
-export default EditProfile; 
+export default EditProfile;
