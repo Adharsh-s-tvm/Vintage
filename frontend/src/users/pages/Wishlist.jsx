@@ -18,12 +18,14 @@ import {
   AlertDialogTitle,
 } from "../../ui/AlertDialog";
 import { fetchWishlistApi, moveToCartApi, removeWishlistApi } from '../../services/api/userApis/wishlistApi';
+import { Loader2 } from 'lucide-react'; // Add this import
 
 export default function Wishlist() {
   const dispatch = useDispatch();
   const { wishlistItems } = useSelector((state) => state.wishlist);
   const [itemToRemove, setItemToRemove] = useState(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   useEffect(() => {
     fetchWishlist();
@@ -31,6 +33,7 @@ export default function Wishlist() {
 
   const fetchWishlist = async () => {
     try {
+      setIsLoading(true); // Set loading to true before fetching
       const response = await fetchWishlistApi()
       dispatch(setWishlistItems(response.data));
     } catch (error) {
@@ -40,6 +43,8 @@ export default function Wishlist() {
         duration: 2000,
         className: "bg-white text-black border border-gray-200"
       });
+    } finally {
+      setIsLoading(false); // Set loading to false after fetching
     }
   };
 
@@ -199,41 +204,53 @@ export default function Wishlist() {
       <div className="max-w-3xl mx-auto px-4">
         <h1 className="text-2xl font-bold mb-6">Your Wishlist</h1>
 
-        {/* Confirmation Dialog */}
-        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="text-xl font-semibold text-gray-900">Remove from Wishlist</AlertDialogTitle>
-              <AlertDialogDescription className="text-gray-600">
-                Are you sure you want to remove this item from your wishlist?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="flex space-x-2">
-              <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">Cancel</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={removeItem} 
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Remove
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {wishlistItems.length > 0 ? (
-          <div className="space-y-4">
-            {wishlistItems.map((item) => renderWishlistItem(item))}
+        {/* Show loader while loading */}
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-sm text-gray-500">Loading wishlist...</p>
+            </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm p-6 text-center">
-            <h2 className="text-xl font-medium mb-3">Your wishlist is empty</h2>
-            <p className="text-gray-600 mb-4">
-              Items added to your wishlist will appear here.
-            </p>
-            <Button asChild>
-              <Link to="/products">Discover Products</Link>
-            </Button>
-          </div>
+          <>
+            {/* Confirmation Dialog */}
+            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <AlertDialogContent className="bg-white border border-gray-200 shadow-lg">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-xl font-semibold text-gray-900">Remove from Wishlist</AlertDialogTitle>
+                  <AlertDialogDescription className="text-gray-600">
+                    Are you sure you want to remove this item from your wishlist?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex space-x-2">
+                  <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={removeItem} 
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Remove
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {wishlistItems.length > 0 ? (
+              <div className="space-y-4">
+                {wishlistItems.map((item) => renderWishlistItem(item))}
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+                <h2 className="text-xl font-medium mb-3">Your wishlist is empty</h2>
+                <p className="text-gray-600 mb-4">
+                  Items added to your wishlist will appear here.
+                </p>
+                <Button asChild>
+                  <Link to="/products">Discover Products</Link>
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </Layout>
