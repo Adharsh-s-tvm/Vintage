@@ -262,17 +262,17 @@ export default function Dashboard() {
                             <PieChartCard
                                 title="Top Categories by Revenue"
                                 data={topCategories || []}
-                                className="h-[500px]"
+                                className="h-[550px]"
                             />
                             <PieChartCard
                                 title="Top Products by Revenue"
                                 data={topProducts || []}
-                                className="h-[500px]"
+                                className="h-[550px]"
                             />
                             <PieChartCard
                                 title="Top Brands by Revenue"
                                 data={topBrands || []}
-                                className="h-[500px]"
+                                className="h-[550px]"
                             />
                          
                         </div>
