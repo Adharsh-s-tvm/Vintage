@@ -389,7 +389,7 @@ const ProductListing = () => {
 
   // Custom sidebar content for product listing
   const sidebarContent = (
-    <div className="px-4 py-6">
+    <div className="sticky top-4 px-4 py-6 max-h-[calc(100vh-2rem)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
       <div className="mb-6">
         <h3 className="font-semibold text-lg mb-3">Categories</h3>
         <div className="space-y-2">
