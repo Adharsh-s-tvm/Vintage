@@ -36,7 +36,7 @@ export function Sidebar({ className, mobileOpen, onMobileClose }) {
     const navItems = [
         {
             icon: LayoutDashboard,
-            label: 'Dashboard',
+            label: 'Sales Analytics',
             path: '/admin',
             exact: true
         },
