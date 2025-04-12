@@ -32,6 +32,7 @@ import {
 } from "../../ui/Pagination";
 import { useSearchParams } from 'react-router-dom';
 import { downloadSalesReportApi, fetchSalesDataApi } from '../../services/api/adminApis/indexApi';
+import { set } from 'date-fns';
 
 
 export default function Dashboard() {
@@ -123,7 +124,10 @@ export default function Dashboard() {
             link.remove();
             window.URL.revokeObjectURL(url);
 
-            toast.success('Report downloaded successfully');
+            setTimeout(() => {
+              
+                toast.success('Report downloaded successfully');
+            },3000)
         } catch (error) {
             console.error('Download error:', error);
             toast.error('Failed to download report');

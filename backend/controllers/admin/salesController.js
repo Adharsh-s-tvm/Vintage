@@ -508,7 +508,24 @@ export const downloadSalesReport = async (req, res) => {
                         $sum: {
                             $cond: [
                                 { $eq: ['$orderStatus', 'Delivered'] },
-                                '$totalAmount',
+                                {
+                                    $reduce: {
+                                        input: '$items',
+                                        initialValue: 0,
+                                        in: {
+                                            $add: [
+                                                "$$value",
+                                                {
+                                                    $cond: [
+                                                        { $ne: ['$$this.status', 'Returned'] },
+                                                        "$$this.finalPrice",
+                                                        0
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    }
+                                },
                                 0
                             ]
                         }
@@ -516,14 +533,42 @@ export const downloadSalesReport = async (req, res) => {
                     totalOrders: { $sum: 1 },
                     returnedOrders: {
                         $sum: {
-                            $cond: [{ $eq: ['$orderStatus', 'Returned'] }, 1, 0]
+                            $cond: [
+                                { $gt: [{ 
+                                    $size: { 
+                                        $filter: { 
+                                            input: "$items",
+                                            as: "item",
+                                            cond: { $eq: ["$$item.status", "Returned"] }
+                                        }
+                                    }
+                                }, 0] },
+                                1,
+                                0
+                            ]
                         }
                     },
                     cancelledOrders: {
                         $sum: { $cond: [{ $eq: ['$orderStatus', 'Cancelled'] }, 1, 0] }
                     },
                     totalDiscounts: {
-                        $sum: '$discountAmount'
+                        $sum: {
+                            $reduce: {
+                                input: "$items",
+                                initialValue: 0,
+                                in: {
+                                    $add: [
+                                        "$$value",
+                                        {
+                                            $subtract: [
+                                                { $multiply: ["$$this.price", "$$this.quantity"] },
+                                                "$$this.finalPrice"
+                                            ]
+                                        }
+                                    ]
+                                }
+                            }
+                        }
                     }
                 }
             }
