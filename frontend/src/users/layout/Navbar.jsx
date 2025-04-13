@@ -110,9 +110,7 @@ export function Navbar() {
   };
 
   const categories = [
-    { name: 'All Products', href: '/products' },
-    { name: 'Offer Products', href: '/products' },
-    { name: 'New Stock', href: '/products' },
+    { name: '', href: '/products' },
   ];
 
   const handleLogout = () => {
