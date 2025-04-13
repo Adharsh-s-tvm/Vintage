@@ -716,14 +716,14 @@ const ProductListing = () => {
   return (
     <Layout showSidebar={true} sidebarContent={sidebarContent}>
     {/* Add Filter Toggle Button for both mobile and desktop */}
-    <div className="fixed top-20 left-4 z-50">
+    <div className="md:hidden fixed top-20 left-4 z-50">
       <Button
         variant="outline"
         size="icon"
         className="rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 mt-4"
         onClick={() => setShowMobileFilters(!showMobileFilters)}
       >
-        {showMobileFilters ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4 " />}
+        {showMobileFilters ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
       </Button>
     </div>
 
