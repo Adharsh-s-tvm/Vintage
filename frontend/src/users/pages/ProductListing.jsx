@@ -505,7 +505,7 @@ const ProductListing = () => {
         </Button>
 
         <Button
-          className="w-full mt-4"
+          className="w-full mt-4 bg-red-500"
           onClick={handleClearFilters}
         >
           Clear Filters
