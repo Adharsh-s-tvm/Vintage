@@ -1,11 +1,13 @@
- /** @type {import('tailwindcss').Config} */
- export default {
+/** @type {import('tailwindcss').Config} */
+import tailwindAnimate from "tailwindcss-animate";
+
+export default {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}"
   ],
   
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindAnimate],
   theme: {
 		container: {
 			center: true,
@@ -166,5 +168,23 @@
         'glass': '0 4px 30px rgba(0, 0, 0, 0.1)'
       }
 		}
+	},
+	theme: {
+		extend: {
+			keyframes: {
+				fadeIn: {
+					'0%': { opacity: '0' },
+					'100%': { opacity: '1' },
+				},
+				slideIn: {
+					'0%': { transform: 'translateX(-10px)', opacity: '0' },
+					'100%': { transform: 'translateX(0)', opacity: '1' },
+				},
+			},
+			animation: {
+				fadeIn: 'fadeIn 0.5s ease-in-out',
+				slideIn: 'slideIn 0.5s ease-in-out',
+			},
+		},
 	},
 }
