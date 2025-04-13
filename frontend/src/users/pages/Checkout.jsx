@@ -253,7 +253,7 @@ function Checkout() {
           key: import.meta.env.VITE_RAZORPAY_KEY_ID,
           amount: paymentResponse.data.order.amount,
           currency: "INR",
-          name: "Your Store Name",
+          name: "VINTAGE",
           description: "Order Payment",
           order_id: paymentResponse.data.order.id,
           handler: async function (response) {
