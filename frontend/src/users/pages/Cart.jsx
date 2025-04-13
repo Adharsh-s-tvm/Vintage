@@ -44,20 +44,20 @@ const DeleteConfirmationModal = ({ isOpen, onClose, onConfirm }) => {
 };
 
 const CartSummary = ({ cartItems, subtotal, shipping, total }) => {
-  const originalSubtotal = cartItems.reduce((sum, item) => 
+  const originalSubtotal = cartItems.reduce((sum, item) =>
     sum + (item.variant.price * item.quantity), 0
   );
-  
+
   const totalSavings = originalSubtotal - subtotal;
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+    <div className="bg-white rounded-lg shadow-sm p-6 space-y-4 animate-scaleUp hover:shadow-md transition-shadow duration-200">
       <h2 className="text-lg font-semibold">Order Summary</h2>
       <div className="space-y-2">
         <div className="flex justify-between">
           <span>Original Subtotal</span>
           <span className={totalSavings > 0 ? "line-through text-gray-500" : ""}>
-          ₹{originalSubtotal.toFixed(2)}
+            ₹{originalSubtotal.toFixed(2)}
           </span>
         </div>
         {totalSavings > 0 && (
@@ -99,7 +99,7 @@ export default function Cart() {
     try {
       // Simulate loading for 2 seconds
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const response = await fetchCartApi();
       dispatch(setCartItems(response.data));
     } catch (error) {
@@ -117,38 +117,38 @@ export default function Cart() {
 
   const MAX_QUANTITY_PER_ITEM = 5; // Add this constant at the top of the component
 
-    const updateQuantity = async (variantId, quantity) => {
-      if (quantity < 1 || quantity > MAX_QUANTITY_PER_ITEM) {
-        toast({
-          title: "Error",
-          description: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ITEM}`,
-          duration: 2000,
-          className: "bg-white text-black border border-gray-200"
-        });
-        return;
-      }
+  const updateQuantity = async (variantId, quantity) => {
+    if (quantity < 1 || quantity > MAX_QUANTITY_PER_ITEM) {
+      toast({
+        title: "Error",
+        description: `Quantity must be between 1 and ${MAX_QUANTITY_PER_ITEM}`,
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+      return;
+    }
 
-      try {
-        const response = await updateQuantityApi(variantId, quantity);
+    try {
+      const response = await updateQuantityApi(variantId, quantity);
 
-        if (response.data) {
-          dispatch(setCartItems(response.data));
-          toast({
-            title: "Success",
-            description: "Cart updated",
-            duration: 2000,
-            className: "bg-white text-black border border-gray-200"
-          });
-        }
-      } catch (error) {
+      if (response.data) {
+        dispatch(setCartItems(response.data));
         toast({
-          title: "Error",
-          description: error.response?.data?.message || "Failed to update quantity",
+          title: "Success",
+          description: "Cart updated",
           duration: 2000,
           className: "bg-white text-black border border-gray-200"
         });
       }
-    };
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update quantity",
+        duration: 2000,
+        className: "bg-white text-black border border-gray-200"
+      });
+    }
+  };
 
   const confirmRemove = async () => {
     if (deleteModal.itemId) {
@@ -184,17 +184,17 @@ export default function Cart() {
   // Remove the duplicate confirmRemove function and update the DeleteConfirmationModal usage
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 animate-fadeIn">
         <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
 
         {loading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center justify-center min-h-[400px] animate-fadeIn">
             <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
           </div>
         ) : cartItems?.length > 0 ? (
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-8 animate-slideUp">
             <div className="md:col-span-2">
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-200 animate-scaleUp">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -210,7 +210,7 @@ export default function Cart() {
                       <TableRow key={item.variant._id}>
                         <TableCell>
                           <div className="flex items-center space-x-4">
-                            <div className="h-16 w-16 bg-gray-100 rounded overflow-hidden">
+                            <div className="h-24 md:h-16 w-24 md:w-16 bg-gray-100 rounded overflow-hidden">
                               <img
                                 src={item.variant.mainImage}
                                 alt={item.variant.product.name}
@@ -254,8 +254,8 @@ export default function Cart() {
                           </div>
                         </TableCell>
                         <TableCell className="font-medium">
-                        ₹{((item.variant.discountPrice && item.variant.discountPrice > 0 && item.variant.discountPrice < item.variant.price 
-                            ? item.variant.discountPrice 
+                          ₹{((item.variant.discountPrice && item.variant.discountPrice > 0 && item.variant.discountPrice < item.variant.price
+                            ? item.variant.discountPrice
                             : item.variant.price) * item.quantity).toFixed(2)}
                         </TableCell>
                         <TableCell>
@@ -282,7 +282,7 @@ export default function Cart() {
             </div>
 
             <div className="md:col-span-1">
-              <CartSummary 
+              <CartSummary
                 cartItems={cartItems}
                 subtotal={subtotal}
                 shipping={shipping}
@@ -295,13 +295,13 @@ export default function Cart() {
 
               <div className="mt-6">
                 <div className="flex space-x-2">
-                
+
                 </div>
               </div>
             </div>
           </div>
         ) : (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="bg-white rounded-lg shadow-sm p-8 text-center animate-scaleUp">
             <h2 className="text-2xl font-medium mb-4">Your cart is empty</h2>
             <p className="text-gray-600 mb-6">
               Looks like you haven't added any items to your cart yet.

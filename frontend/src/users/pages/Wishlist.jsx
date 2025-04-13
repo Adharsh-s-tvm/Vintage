@@ -58,10 +58,10 @@ export default function Wishlist() {
 
     try {
       const response = await removeWishlistApi(itemToRemove.variant._id);
-      
+
       if (response.data.success) {
         dispatch(removeFromWishlist(itemToRemove.variant._id));
-        
+
         toast({
           title: "Success",
           description: "Item removed from wishlist",
@@ -126,87 +126,87 @@ export default function Wishlist() {
 
   const renderWishlistItem = (item) => {
     if (!item?.variant || !item?.product) {
-        return null;
+      return null;
     }
 
     return (
-        <div
-            key={item.variant._id}
-            className="bg-white rounded-lg shadow-sm overflow-hidden flex"
-        >
-            <div className="relative h-32 w-32 flex-shrink-0">
-                <img
-                    src={item.variant.mainImage || '/placeholder-image.jpg'}
-                    alt={item.product.name || 'Product'}
-                    className="h-full w-full object-cover"
-                />
-                {item.variant.stock === 0 && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <span className="bg-white px-3 py-1 rounded-full text-xs font-medium">
-                            Out of Stock
-                        </span>
-                    </div>
-                )}
+      <div
+        key={item.variant._id}
+        className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col md:flex-row animate-scaleUp hover:shadow-md transition-shadow duration-200"
+      >
+        <div className="relative h-48 md:h-32 w-full md:w-32 flex-shrink-0">
+          <img
+            src={item.variant.mainImage || '/placeholder-image.jpg'}
+            alt={item.product.name || 'Product'}
+            className="h-full w-full object-cover"
+          />
+          {item.variant.stock === 0 && (
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+              <span className="bg-white px-3 py-1 rounded-full text-xs font-medium">
+                Out of Stock
+              </span>
             </div>
-
-            <div className="flex-1 p-4 flex flex-col justify-between">
-                <div>
-                    <Link
-                        to={`/products/${item.product._id}`}
-                        className="text-base font-medium text-gray-900 hover:text-primary"
-                    >
-                        {item.product.name}
-                    </Link>
-                    <div className="mt-1 text-sm text-gray-500">
-                        Size: {item.variant.size}, Color: {item.variant.color}
-                    </div>
-                    <div className="mt-1 text-base font-semibold">
-                        ₹{item.variant.price.toFixed(2)}
-                    </div>
-                </div>
-
-                <div className="flex items-center space-x-2 mt-2">
-                    <Button
-                        variant="outline"
-                        className="flex-1"
-                        size="sm"
-                        asChild
-                    >
-                        <Link to={`/products/${item.product._id}`}>
-                            View Details
-                        </Link>
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="flex-1"
-                        disabled={item.variant.stock === 0}
-                        onClick={() => moveToCart(item)}
-                    >
-                        <ShoppingBag className="mr-2 h-4 w-4" />
-                        Move to Cart
-                    </Button>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="text-gray-500 hover:text-red-500 h-8 w-8"
-                        onClick={() => handleRemoveClick(item)}
-                    >
-                        <Trash className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
+          )}
         </div>
+
+        <div className="flex-1 p-4 flex flex-col justify-between space-y-4 md:space-y-0">
+          <div>
+            <Link
+              to={`/products/${item.product._id}`}
+              className="text-base font-medium text-gray-900 hover:text-primary"
+            >
+              {item.product.name}
+            </Link>
+            <div className="mt-1 text-sm text-gray-500">
+              Size: {item.variant.size}, Color: {item.variant.color}
+            </div>
+            <div className="mt-1 text-base font-semibold">
+              ₹{item.variant.price.toFixed(2)}
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 mt-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              size="sm"
+              asChild
+            >
+              <Link to={`/products/${item.product._id}`}>
+                View Details
+              </Link>
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1"
+              disabled={item.variant.stock === 0}
+              onClick={() => moveToCart(item)}
+            >
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              Move to Cart
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="text-gray-500 hover:text-red-500 h-8 w-8"
+              onClick={() => handleRemoveClick(item)}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
     );
   };
 
   return (
     <Layout>
-      <div className="max-w-3xl mx-auto px-4">
+      <div className="max-w-3xl mx-auto px-4 animate-fadeIn">
         <h1 className="text-2xl font-bold mb-6">Your Wishlist</h1>
 
         {/* Show loader while loading */}
         {isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center justify-center min-h-[400px] animate-fadeIn">
             <div className="flex flex-col items-center gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
               <p className="text-sm text-gray-500">Loading wishlist...</p>
@@ -225,8 +225,8 @@ export default function Wishlist() {
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex space-x-2">
                   <AlertDialogCancel className="bg-gray-100 hover:bg-gray-200 text-gray-800">Cancel</AlertDialogCancel>
-                  <AlertDialogAction 
-                    onClick={removeItem} 
+                  <AlertDialogAction
+                    onClick={removeItem}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     Remove
@@ -236,11 +236,11 @@ export default function Wishlist() {
             </AlertDialog>
 
             {wishlistItems.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-4 animate-slideUp">
                 {wishlistItems.map((item) => renderWishlistItem(item))}
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-sm p-6 text-center">
+              <div className="bg-white rounded-lg shadow-sm p-6 text-center animate-scaleUp">
                 <h2 className="text-xl font-medium mb-3">Your wishlist is empty</h2>
                 <p className="text-gray-600 mb-4">
                   Items added to your wishlist will appear here.
