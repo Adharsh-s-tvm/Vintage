@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import { Slider } from '../../ui/Slider';
@@ -17,6 +17,11 @@ import FloatingChatButton from '../components/FloatingChatButton';
 export function Layout({ children, showSidebar = false, sidebarContent }) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [priceRange, setPriceRange] = useState([50, 500]);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const defaultSidebarContent = (
     <>
@@ -105,31 +110,45 @@ export function Layout({ children, showSidebar = false, sidebarContent }) {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background transition-colors duration-300">
       <Navbar />
-      <main className="flex-1 flex">
+      <main className="flex-1 flex relative">
         {showSidebar && (
           <>
-            <aside className={`hidden md:block bg-white border-r border-gray-100 transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-0 overflow-hidden'}`}>
+            <aside 
+              className={`
+                fixed md:static
+                z-30 bg-white border-r border-gray-100
+                transition-all duration-500 ease-in-out
+                ${sidebarOpen ? 'w-full md:w-64' : 'w-0 overflow-hidden'}
+                h-[calc(100vh-4rem)] md:h-auto
+                ${mounted ? 'opacity-100' : 'opacity-0'}
+              `}
+            >
               <div className="p-4 h-full overflow-y-auto">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-4 animate-fadeIn">
                   <h2 className="font-bold text-xl">Filters</h2>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => setSidebarOpen(!sidebarOpen)}
+                    className="transition-transform hover:scale-105"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                 </div>
-                {sidebarContent || defaultSidebarContent}
+                <div className="animate-slideIn">
+                  {sidebarContent || defaultSidebarContent}
+                </div>
               </div>
             </aside>
             {!sidebarOpen && (
               <Button
                 variant="outline"
                 size="icon"
-                className="hidden md:flex fixed left-0 top-1/2 transform -translate-y-1/2 z-10 shadow-md"
+                className="hidden md:flex fixed left-0 top-1/2 transform -translate-y-1/2 z-40 
+                  shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110
+                  bg-white hover:bg-gray-50"
                 onClick={() => setSidebarOpen(true)}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -138,10 +157,13 @@ export function Layout({ children, showSidebar = false, sidebarContent }) {
           </>
         )}
         <div
-          className={`flex-1 container mx-auto px-4 py-8 transition-all duration-300 ${showSidebar ? (sidebarOpen ? 'md:ml-0' : 'md:ml-0') : ''
-            }`}
+          className={`
+            flex-1 container mx-auto px-4 py-8
+            transition-all duration-500 ease-in-out
+            ${showSidebar ? (sidebarOpen ? 'md:ml-0 blur-none' : 'md:ml-0') : ''}
+            ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}
+          `}
         >
-
           {children}
         </div>
       </main>
