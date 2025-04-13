@@ -67,102 +67,100 @@ function UserProfile() {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto p-4">
-        <div className="flex gap-6">
-          {/* Sidebar */}
-          <div className="w-64 bg-white rounded-lg shadow-md p-4 h-fit">
+      <div className="max-w-7xl mx-auto p-4 animate-fadeIn">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Sidebar - Responsive */}
+          <div className="w-full md:w-64 bg-white rounded-lg shadow-lg p-4 h-fit transition-all duration-300 hover:shadow-xl">
             <nav className="space-y-2">
-              <h2 className="text-lg font-semibold mb-4">My Account</h2>
-              <a href="/profile" className="flex items-center space-x-2 p-2 bg-gray-100 rounded-md text-sm">
-                <User className="h-4 w-4" />
-                <span>Profile</span>
-              </a>
-              <a href="/orders" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
-                <Package className="h-4 w-4" />
-                <span>My Orders</span>
-              </a>
-              <a href="/profile/addresses" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
-                <MapPin className="h-4 w-4" />
-                <span>Addresses</span>
-              </a>
-              <a href="/wishlist" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
-                <Heart className="h-4 w-4" />
-                <span>Wishlist</span>
-              </a>
-              <a href="/wallet" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
-                <Wallet className="h-4 w-4" />
-                <span>Wallet</span>
-              </a>
-              <a href="/coupons" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
-                <Ticket className="h-4 w-4" />
-                <span>My Coupons</span>
-              </a>
-              <a href="/profile/change-password" className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-md text-sm">
-                <Lock className="h-4 w-4" />
-                <span>Change Password</span>
-              </a>
+              <h2 className="text-lg font-semibold mb-4 bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">My Account</h2>
+              {[
+                { href: '/profile', icon: User, label: 'Profile', active: true },
+                { href: '/orders', icon: Package, label: 'My Orders' },
+                { href: '/profile/addresses', icon: MapPin, label: 'Addresses' },
+                { href: '/wishlist', icon: Heart, label: 'Wishlist' },
+                { href: '/wallet', icon: Wallet, label: 'Wallet' },
+                { href: '/coupons', icon: Ticket, label: 'My Coupons' },
+                { href: '/profile/change-password', icon: Lock, label: 'Change Password' }
+              ].map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  className={`flex items-center space-x-2 p-3 rounded-md text-sm transition-all duration-200 transform hover:scale-105 ${
+                    item.active 
+                      ? 'bg-gradient-to-r from-purple-100 to-blue-100 text-primary'
+                      : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </a>
+              ))}
             </nav>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 bg-white rounded-lg shadow-md p-4">
+          {/* Main Content - Responsive */}
+          <div className="flex-1 bg-white rounded-lg shadow-lg p-6 transition-all duration-300 hover:shadow-xl">
             {/* Profile Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-lg font-bold">Profile Information</h1>
-              <Button size="sm" onClick={() => navigate('/profile/edit')}>
+            <div className="flex flex-col sm:flex-row items-center justify-between mb-8 gap-4">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text">
+                Profile Information
+              </h1>
+              <Button 
+                size="sm" 
+                onClick={() => navigate('/profile/edit')}
+                className="transition-all duration-300 hover:scale-105"
+              >
                 <Edit className="h-3 w-3 mr-1" />
                 Edit Profile
               </Button>
             </div>
 
-            {/* Profile Display */}
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="relative">
-                <div className="h-16 w-16 rounded-full bg-gray-200 overflow-hidden">
-                  {profileImage ? (
-                    <img src={profileImage} alt="Profile" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="h-full w-full flex items-center justify-center">
-                      <Camera className="h-6 w-6 text-gray-400" />
-                    </div>
-                  )}
+            {/* Profile Display with Animation */}
+            <div className="flex items-center space-x-4 mb-8">
+              <div className="relative group">
+                <div className="h-20 w-20 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 p-1 transition-transform duration-300 group-hover:scale-110">
+                  <div className="h-full w-full rounded-full bg-white overflow-hidden">
+                    {profileImage ? (
+                      <img src={profileImage} alt="Profile" className="h-full w-full object-cover transition-transform duration-300 hover:scale-110" />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                        <Camera className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Profile Information Display */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm text-gray-500">First Name</Label>
-                <p className="text-sm font-medium">{userDetails?.firstname || 'Not provided'}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">Last Name</Label>
-                <p className="text-sm font-medium">{userDetails?.lastname || 'Not provided'}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">Email</Label>
-                <p className="text-sm font-medium">{userDetails?.email || 'Not provided'}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">Mobile</Label>
-                <p className="text-sm font-medium">{userDetails?.phone || 'Not provided'}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">Username</Label>
-                <p className="text-sm font-medium">{userDetails?.username || 'Not provided'}</p>
-              <div className="col-span-2 mt-3">
+            {/* Profile Information Grid - Responsive */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              {[
+                { label: 'First Name', value: userDetails?.firstname },
+                { label: 'Last Name', value: userDetails?.lastname },
+                { label: 'Email', value: userDetails?.email },
+                { label: 'Mobile', value: userDetails?.phone },
+                { label: 'Username', value: userDetails?.username },
+                { label: 'Member Since', value: userDetails?.createdAt ? new Date(userDetails.createdAt).toLocaleDateString() : null }
+              ].map((field, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg transition-all duration-300 hover:shadow-md">
+                  <Label className="text-sm text-gray-500">{field.label}</Label>
+                  <p className="text-sm font-medium mt-1">{field.value || 'Not provided'}</p>
+                </div>
+              ))}
+
+              {/* Referral Code Section - Full Width */}
+              <div className="col-span-full bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg">
                 <Label className="text-sm text-gray-500">Referral Code</Label>
-                <div className="flex items-center gap-2">
-                  <p className="text-lg font-mono bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text font-bold">
+                <div className="flex items-center gap-3 mt-2">
+                  <p className="text-xl font-mono bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text font-bold">
                     {userDetails?.referralCode || 'Not available'}
                   </p>
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(userDetails?.referralCode);
-                      toast.success('Referral code copied to clipboard!');
+                      toast.success('Referral code copied!');
                     }}
-                    className="text-sm text-gray-500 hover:text-gray-700"
+                    className="text-gray-500 hover:text-gray-700 transition-all duration-300 hover:scale-110"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -170,7 +168,7 @@ function UserProfile() {
                       viewBox="0 0 24 24"
                       strokeWidth={1.5}
                       stroke="currentColor"
-                      className="w-5 h-5"
+                      className="w-6 h-6"
                     >
                       <path
                         strokeLinecap="round"
@@ -181,32 +179,27 @@ function UserProfile() {
                   </button>
                 </div>
               </div>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-500">Member Since</Label>
-                <p className="text-sm font-medium">
-                  {userDetails?.createdAt
-                    ? new Date(userDetails.createdAt).toLocaleDateString()
-                    : 'Not available'
-                  }
-                </p>
-              </div>
             </div>
 
             {/* Addresses Section */}
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-lg font-bold">Default Address</h2>
-                <Button variant="link" onClick={() => navigate('/profile/addresses')}>
+            <div className="mt-8">
+              <div className="flex flex-col sm:flex-row items-center justify-between mb-6">
+                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 text-transparent bg-clip-text mb-4 sm:mb-0">
+                  Default Address
+                </h2>
+                <Button 
+                  variant="outline"
+                  onClick={() => navigate('/profile/addresses')}
+                  className="transition-all duration-300 hover:scale-105"
+                >
                   Manage Addresses
                 </Button>
               </div>
 
-              <div className="border p-3 rounded-lg text-sm">
+              <div className="border p-6 rounded-lg text-sm bg-gray-50 transition-all duration-300 hover:shadow-lg">
                 {addresses.find(addr => addr.isDefault) ? (
-                  <div>
-                    {/* Show default address details */}
-                    <p className="font-semibold">{addresses.find(addr => addr.isDefault).fullName}</p>
+                  <div className="space-y-2">
+                    <p className="font-semibold text-lg">{addresses.find(addr => addr.isDefault).fullName}</p>
                     <p className="text-gray-600">{addresses.find(addr => addr.isDefault).phone}</p>
                     <p className="text-gray-600">{addresses.find(addr => addr.isDefault).street}</p>
                     <p className="text-gray-600">
@@ -215,12 +208,11 @@ function UserProfile() {
                     <p className="text-gray-600">{addresses.find(addr => addr.isDefault).country}</p>
                   </div>
                 ) : (
-                  <div className="text-center py-4">
-                    <p className="text-gray-500">No default address set</p>
+                  <div className="text-center py-6">
+                    <p className="text-gray-500 mb-4">No default address set</p>
                     <Button
-                      variant="link"
                       onClick={() => navigate('/addresses')}
-                      className="mt-2"
+                      className="transition-all duration-300 hover:scale-105"
                     >
                       Add Address
                     </Button>
