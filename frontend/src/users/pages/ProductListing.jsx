@@ -110,6 +110,16 @@ const ProductListing = () => {
   };
 
 
+  useEffect(() => {
+    const searchFromUrl = searchParams.get('search');
+    if (searchFromUrl) {
+      setSearchQuery(searchFromUrl);
+      setSearch(searchFromUrl);
+    }
+  }, [searchParams]);
+
+  
+
   const fetchProducts = async (params) => {
     try {
       const queryParams = new URLSearchParams(params);
