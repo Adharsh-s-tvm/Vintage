@@ -37,6 +37,7 @@ import { Pagination, PaginationContent, PaginationItem, PaginationLink, Paginati
 import { debounce } from 'lodash';
 import { useSearchParams } from 'react-router-dom';
 import { userCancelOrderApi, userfetchOrdersApi, userReturnOrderApi } from '../../services/api/userApis/userOrderApi';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
@@ -199,112 +200,183 @@ export default function Orders() {
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    visible: {
+      y: 0,
+      opacity: 1,
+      transition: {
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
+
+  const LoadingSkeleton = () => (
+    <div className="space-y-4">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="bg-white rounded-lg shadow-sm p-4 animate-pulse">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <Layout>
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Your Orders</h1>
-          <Button asChild variant="outline" className="flex items-center gap-2">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-6xl mx-auto px-4 py-8"
+      >
+        <motion.div 
+          className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-800 tracking-tight">
+            Your Orders
+          </h1>
+          <Button asChild variant="outline" className="group flex items-center gap-2 hover:scale-105 transition-transform">
             <Link to="/products">
-              Continue Shopping <ArrowRight className="h-4 w-4" />
+              Continue Shopping 
+              <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
           </Button>
-        </div>
+        </motion.div>
 
-        <div className="mb-6">
+        <motion.div 
+          className="mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3 }}
+        >
           <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
             <Input
               type="text"
               placeholder="Search orders by ID, status, amount, or date..."
               value={searchQuery}
               onChange={handleSearch}
-              className="pl-10 w-full md:w-96"
+              className="pl-10 w-full md:w-96 transition-all focus:ring-2 focus:ring-primary/20"
             />
           </div>
-        </div>
+        </motion.div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-          </div>
+          <LoadingSkeleton />
         ) : orders.length > 0 ? (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <div
-                key={order._id}
-                className="bg-white rounded-lg shadow-sm overflow-hidden p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
-                    <div>
-                      <div className="text-sm font-medium">Order #{order.orderId}</div>
-                      <div className="text-xs text-gray-500">
-                        {new Date(order.createdAt).toLocaleDateString()}
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            <AnimatePresence>
+              {orders.map((order) => (
+                <motion.div
+                  key={order._id}
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit={{ opacity: 0, y: -20 }}
+                  className="bg-white rounded-lg shadow-sm overflow-hidden p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 flex-1">
+                      <div>
+                        <div className="text-sm font-medium text-primary">Order #{order.orderId}</div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="text-sm flex items-center gap-2">
+                        <Package className="h-4 w-4 text-gray-400" />
+                        {order.items?.length} items
+                      </div>
+                      <div className="text-sm font-medium text-green-600">
+                        ₹{order.totalAmount.toFixed(2)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(order.orderStatus)}
+                        <span className="text-sm capitalize">{order.orderStatus}</span>
                       </div>
                     </div>
-                    <div className="text-sm">
-                      {order.items?.length} items
-                    </div>
-                    <div className="text-sm font-medium">
-                      ₹{order.totalAmount.toFixed(2)}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(order.orderStatus)}
-                      <span className="text-sm capitalize">{order.orderStatus}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-2">
-                    {['pending', 'Processing'].includes(order.orderStatus) && (
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      {['pending', 'Processing'].includes(order.orderStatus) && (
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleCancelClick(order.orderId)}
+                          className="hover:scale-105 transition-transform"
+                        >
+                          Cancel
+                        </Button>
+                      )}
+                      {order.orderStatus === 'Delivered' && (
+                        <>
+                          {order.items.some(item => item.returnRequested) ? (
+                            <div className={`text-sm px-2 py-1 rounded ${
+                              order.items.find(item => item.returnRequested)?.returnStatus === 'Return Approved' 
+                                ? 'bg-green-100 text-green-800'
+                                : order.items.find(item => item.returnRequested)?.returnStatus === 'Return Rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {order.items.find(item => item.returnRequested)?.returnStatus}
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleReturnClick(order.orderId)}
+                            >
+                              Return
+                            </Button>
+                          )}
+                        </>
+                      )}
                       <Button
-                        variant="destructive"
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleCancelClick(order.orderId)}
+                        asChild
                       >
-                        Cancel
+                        <Link to={`/order-details/${order.orderId}`}>
+                          View Details
+                        </Link>
                       </Button>
-                    )}
-                    {order.orderStatus === 'Delivered' && (
-                      <>
-                        {order.items.some(item => item.returnRequested) ? (
-                          <div className={`text-sm px-2 py-1 rounded ${
-                            order.items.find(item => item.returnRequested)?.returnStatus === 'Return Approved' 
-                              ? 'bg-green-100 text-green-800'
-                              : order.items.find(item => item.returnRequested)?.returnStatus === 'Return Rejected'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {order.items.find(item => item.returnRequested)?.returnStatus}
-                          </div>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleReturnClick(order.orderId)}
-                          >
-                            Return
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      asChild
-                    >
-                      <Link to={`/order-details/${order.orderId}`}>
-                        View Details
-                      </Link>
-                    </Button>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
         ) : (
-          <div className="text-center py-12">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-12"
+          >
+            <Package className="h-16 w-16 mx-auto text-gray-300 mb-4" />
             <p className="text-gray-500">No orders found</p>
-          </div>
+          </motion.div>
         )}
 
         {/* Confirmation Dialog */}
@@ -496,7 +568,12 @@ export default function Orders() {
         </Dialog>
 
         {totalPages > 1 && (
-          <div className="mt-6">
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="mt-6"
+          >
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
@@ -525,9 +602,9 @@ export default function Orders() {
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </Layout>
   );
-}
+};
