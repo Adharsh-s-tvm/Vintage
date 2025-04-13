@@ -110,8 +110,7 @@ export function Navbar() {
   };
 
   const categories = [
-    { name: '', href: '/products' },
-
+    { name: 'Products', href: '/products' },
   ];
 
   const handleLogout = () => {
@@ -149,9 +148,6 @@ export function Navbar() {
 
   // Get profile image URL
   const getProfileImage = () => {
-
-    console.log(currentUser);
-    
     if (!currentUser) return null;
     return currentUser.profileImage || currentUser.image || null;
   };
@@ -168,6 +164,20 @@ export function Navbar() {
               </Link>
             </div>
 
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <button
+                className="p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
+
             {/* Navigation links - desktop */}
             <nav className="hidden md:flex space-x-8">
               {categories.map((category) => (
@@ -181,84 +191,202 @@ export function Navbar() {
               ))}
             </nav>
 
-            {/* Check if user is logged in */}
-            {user || storedUser ? (
-              <div className="hidden md:flex items-center space-x-4">
-                <button
-                  className="p-2 text-gray-500 hover:text-primary"
-                  onClick={() => setSearchOpen(!searchOpen)}
-                >
-                  {/* <Search className="h-5 w-5" /> */}
-                </button>
+            {/* Check if user is logged in - Desktop view */}
+            <div className="hidden md:flex items-center space-x-4">
+              {currentUser ? (
+                <>
+                  <button
+                    className="p-2 text-gray-500 hover:text-primary"
+                    onClick={() => setSearchOpen(!searchOpen)}
+                  >
+                    <Search className="h-5 w-5" />
+                  </button>
 
-                <Link to="/wishlist" className="p-2 text-gray-500 hover:text-primary relative">
-                  <Heart className="h-5 w-5" />
-                  {wishlistCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-
-                <Link to="/cart" className="p-2 text-gray-500 hover:text-primary relative">
-                  <ShoppingBag className="h-5 w-5" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 px-2">
-                      {/* {getProfileImage() ? (
-                        <img 
-                          src={getProfileImage()}
-                          alt="Profile"
-                          className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-                          {getFullName().charAt(0)}
-                        </div>
-                      )} */}
-                      <span className="text-sm font-medium">
-                        {getFullName()}
+                  <Link to="/wishlist" className="p-2 text-gray-500 hover:text-primary relative">
+                    <Heart className="h-5 w-5" />
+                    {wishlistCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                        {wishlistCount}
                       </span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <DropdownMenuItem onClick={() => navigate('/profile')}>
-                      <UserCircle className="mr-2 h-4 w-4" />
-                      <span>My Account</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/orders')}>
-                      <ShoppingBag className="mr-2 h-4 w-4" />
-                      <span>My Orders</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/wishlist')}>
-                      <Heart className="mr-2 h-4 w-4" />
-                      <span>My Wishlist</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate('/wallet')}>
-                      <Wallet className="mr-2 h-4 w-4" />
-                      <span>Wallet</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Logout</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            ) : (
-              <>
-              <Button onClick={() => navigate('/login')} variant="outline">
-                Sign In
-              </Button>
-              </>
-            )}
+                    )}
+                  </Link>
+
+                  <Link to="/cart" className="p-2 text-gray-500 hover:text-primary relative">
+                    <ShoppingBag className="h-5 w-5" />
+                    {cartCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-primary text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="flex items-center gap-2 px-2">
+                        {getProfileImage() ? (
+                          <img 
+                            src={getProfileImage()}
+                            alt="Profile"
+                            className="h-8 w-8 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            {getFullName().charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        <span className="text-sm font-medium">
+                          {getFullName()}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <DropdownMenuItem onClick={() => navigate('/profile')}>
+                        <UserCircle className="mr-2 h-4 w-4" />
+                        <span>My Account</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/orders')}>
+                        <ShoppingBag className="mr-2 h-4 w-4" />
+                        <span>My Orders</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                        <Heart className="mr-2 h-4 w-4" />
+                        <span>My Wishlist</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => navigate('/wallet')}>
+                        <Wallet className="mr-2 h-4 w-4" />
+                        <span>Wallet</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Logout</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <Button onClick={() => navigate('/login')} variant="outline">
+                  Sign In
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Mobile Menu */}
+          <div className={`md:hidden transition-all duration-300 ${isMenuOpen ? 'max-h-96' : 'max-h-0'} overflow-hidden`}>
+            <div className="px-4 py-2 space-y-3">
+              {currentUser ? (
+                <>
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg my-3">
+                    {getProfileImage() ? (
+                      <img 
+                        src={getProfileImage()}
+                        alt="Profile"
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                        {getFullName().charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-medium">{getFullName()}</p>
+                      <p className="text-sm text-gray-500">{currentUser.email}</p>
+                    </div>
+                  </div>
+
+                  {categories.map((category) => (
+                    <Link 
+                      key={category.name}
+                      to={category.href}
+                      className="block py-2 text-gray-700 hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                  
+                  <Link 
+                    to="/profile" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Account
+                  </Link>
+                  
+                  <Link 
+                    to="/orders" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    My Orders
+                  </Link>
+                  
+                  <Link 
+                    to="/wishlist" 
+                    className="block py-2 text-gray-700 hover:text-primary flex items-center justify-between"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span>My Wishlist</span>
+                    {wishlistCount > 0 && (
+                      <span className="bg-primary text-white text-xs rounded-full px-2 py-1">
+                        {wishlistCount}
+                      </span>
+                    )}
+                  </Link>
+                  
+                  <Link 
+                    to="/cart" 
+                    className="block py-2 text-gray-700 hover:text-primary flex items-center justify-between"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <span>Cart</span>
+                    {cartCount > 0 && (
+                      <span className="bg-primary text-white text-xs rounded-full px-2 py-1">
+                        {cartCount}
+                      </span>
+                    )}
+                  </Link>
+                  
+                  <Link 
+                    to="/wallet" 
+                    className="block py-2 text-gray-700 hover:text-primary"
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    Wallet
+                  </Link>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left py-2 text-red-600 hover:text-red-700"
+                  >
+                    Logout
+                  </button>
+                </>
+              ) : (
+                <>
+                  {categories.map((category) => (
+                    <Link 
+                      key={category.name}
+                      to={category.href}
+                      className="block py-2 text-gray-700 hover:text-primary"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      {category.name}
+                    </Link>
+                  ))}
+                  
+                  <Button 
+                    onClick={() => {
+                      navigate('/login');
+                      setIsMenuOpen(false);
+                    }} 
+                    className="w-full mt-2"
+                  >
+                    Sign In
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </header>
