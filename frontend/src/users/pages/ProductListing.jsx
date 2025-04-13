@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Layout } from '../layout/Layout';
 import { Card } from '../../ui/card';
 import { Button } from '../../ui/button';
-import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight, Search, X, StarHalf } from 'lucide-react';
+import { ShoppingCart, Heart, Star, ChevronLeft, ChevronRight, Search, X, StarHalf, Menu } from 'lucide-react';
 import { cn } from '../../lib/util';
 import { Input } from '../../ui/input';
 import { Checkbox } from '../../ui/Checkbox';
@@ -47,6 +47,7 @@ const DEFAULT_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL', '4XL'];
 
 const ProductListing = () => {
 
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const [activeImage, setActiveImage] = useState({});
   const [categories, setCategories] = useState([])
@@ -714,17 +715,48 @@ const ProductListing = () => {
 
   return (
     <Layout showSidebar={true} sidebarContent={sidebarContent}>
-      {/* Search Icon Button */}
-      <div className="fixed top-4 right-4 z-50">
-        <Button
-          variant="outline"
-          size="icon"
-          className="rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200"
-          onClick={() => setShowSearchBar(true)}
-        >
-          <Search className="h-4 w-4" />
-        </Button>
+    {/* Add Filter Toggle Button for both mobile and desktop */}
+    <div className="fixed top-20 left-4 z-50">
+      <Button
+        variant="outline"
+        size="icon"
+        className="rounded-full bg-white shadow-md hover:shadow-lg transition-all duration-200 mt-4"
+        onClick={() => setShowMobileFilters(!showMobileFilters)}
+      >
+        {showMobileFilters ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4 " />}
+      </Button>
+    </div>
+
+    {/* Mobile Filter Overlay */}
+    <div
+      className={cn(
+        "fixed inset-0 bg-black/50 z-40 transition-opacity duration-300",
+        showMobileFilters ? "opacity-100" : "opacity-0 pointer-events-none"
+      )}
+      onClick={() => setShowMobileFilters(false)}
+    />
+
+    {/* Mobile Filter Sidebar */}
+    <div
+      className={cn(
+        "fixed inset-y-0 left-0 w-[80%] max-w-sm bg-white z-50 transform transition-transform duration-300 overflow-auto",
+        showMobileFilters ? "translate-x-0" : "-translate-x-full"
+      )}
+    >
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Filters</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowMobileFilters(false)}
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        {sidebarContent}
       </div>
+    </div>
 
       {/* Animated Search Container */}
       <div
